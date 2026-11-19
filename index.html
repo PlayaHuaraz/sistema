@@ -330,6 +330,25 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block;justify-self:end}.dot.bad{background:#e0566b}
 @media (max-width:480px){.abhead,.abrow>summary{grid-template-columns:1.25fr .95fr .45fr 1fr 10px;gap:6px;font-size:13.5px;padding-left:10px;padding-right:10px}}
 .abrow>summary .esp{font-weight:700}
+
+/* reloj */
+.hright{margin-left:auto;display:flex;flex-direction:row;align-items:center;gap:12px;align-self:flex-start}
+.hright .rolebar{margin-left:0}
+.clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.05;text-align:right;padding-right:12px;border-right:1px solid var(--line)}
+.ck-t{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.02em;color:var(--ink);white-space:nowrap}
+.ck-s{opacity:.55;font-size:.7em}.ck-ap{font-size:.5em;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.ck-d{font-size:13px;color:var(--muted);white-space:nowrap}
+@media (max-width:480px){.brand h1{font-size:22px;white-space:nowrap}.head-in .logo{width:64px;height:auto}.ck-t{font-size:21px}.ck-d{font-size:11px}.hright{flex-direction:column;align-items:flex-end;gap:4px}.clock{padding-right:0;border-right:0}.ck-y{display:none}}
+
+.pinwrap{margin:4px 2px 0}.pinwrap>summary{list-style:none;cursor:pointer;display:inline-block;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.pinwrap>summary::-webkit-details-marker{display:none}.pinwrap>summary::after{content:" ›"}.pinwrap[open]>summary::after{content:" ‹"}
+
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0}
+details.fold>summary::after{content:"";width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 6px 4px 0;transition:transform .15s}
+details.fold[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+details.fold[open]>summary{margin-bottom:12px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -342,7 +361,10 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       <h1>Playa Huaraz</h1>
       <p>Jr. Huaraz 747, Breña</p>
     </div>
-    <div class="rolebar" id="roleBar" aria-live="polite"></div>
+    <div class="hright">
+      <div class="clock" id="clock" aria-label="Hora actual"><span class="ck-t num" id="ckT">--:--</span><span class="ck-d" id="ckD"></span></div>
+      <div class="rolebar" id="roleBar" aria-live="polite"></div>
+    </div>
   </div>
   <div class="stripe" aria-hidden="true"></div>
   <nav aria-label="Secciones">
@@ -351,7 +373,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     <a href="#boleta" data-v="boleta">Boletas</a>
     <a href="#abonados" data-v="abonados">Abonados</a>
     <a href="#ingresos" data-v="ingresos">Ingresos</a>
-    <a href="#tarifas" data-v="tarifas">Tarifas</a>
+    <a href="#tarifas" data-v="tarifas">⚙ Opciones</a>
   </nav>
 </header>
 
@@ -760,12 +782,16 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   <!-- TARIFAS -->
   <section class="view" id="v-tarifas" hidden>
     <div class="card">
-      <h2>PIN de administrador</h2>
-      <p class="note" style="margin-top:0">Con este PIN se desbloquean Ingresos y Tarifas en cualquier celular. Los trabajadores solo ven el cierre del día.</p>
-      <div class="exprow"><div><label for="pinNew">Nuevo PIN (4 a 8 números)</label><input id="pinNew" class="num" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><button class="btn primary" id="pinSave" type="button">Cambiar PIN</button></div>
+      <h2>Reloj</h2>
+      <p class="note" style="margin-top:0">Formato de la hora que se muestra arriba en todos los equipos.</p>
+      <div class="chips" id="ckFmt" role="radiogroup" aria-label="Formato del reloj">
+        <button type="button" class="chip" data-ckf="24" role="radio">24 horas · 16:05</button>
+        <button type="button" class="chip" data-ckf="12" role="radio">a. m. / p. m. · 4:05 p. m.</button>
+      </div>
     </div>
-    <div class="card tarif">
-      <h2>Tarifas por vehículo (S/)</h2>
+    <details class="card tarif fold">
+      <summary><h2>Tarifas por vehículo (S/)</h2></summary>
+      <div class="fold-in">
       <div class="tablewrap">
         <table>
           <thead><tr><th>Vehículo</th><th>Hora o fracción</th><th>Noche</th><th>Día (tarifa plana)</th></tr></thead>
@@ -782,14 +808,24 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       </div>
       <div class="formfoot"><button class="btn primary" id="saveTar" type="button">Guardar tarifas</button></div>
     </div>
-    <div class="card">
-      <h2>Numeración de tickets</h2>
+    </details>
+    <details class="card fold">
+      <summary><h2>Numeración de tickets</h2></summary>
+      <div class="fold-in">
       <div class="fields">
         <div><label for="tNext">Próximo N° de ticket</label><input id="tNext" class="num" type="number" min="1" step="1"></div>
       </div>
       <div class="formfoot"><button class="btn" id="saveNext" type="button">Guardar numeración</button></div>
       <p class="note">Sigue la numeración del talonario de papel. Cámbiala solo si empiezan otro talonario.</p>
     </div>
+    </details>
+    <details class="pinwrap">
+      <summary>Cambiar PIN de administrador</summary>
+      <div class="card" style="margin-top:8px">
+      <p class="note" style="margin-top:0">Con este PIN se desbloquean Ingresos y Opciones en cualquier celular. Los trabajadores solo ven el cierre del día.</p>
+      <div class="exprow"><div><label for="pinNew">Nuevo PIN (4 a 8 números)</label><input id="pinNew" class="num" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><button class="btn primary" id="pinSave" type="button">Cambiar PIN</button></div>
+    </div>
+    </details>
   </section>
 </main>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -2674,13 +2710,27 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     if(!data||data.sistema!=="Sistema Integral - Playa Huaraz"){ toast("Ese archivo no es una copia del sistema."); return; }
     const n=k=>Object.keys(data[k]||{}).length;
     if(!confirm("Se cargarán "+n("abonados")+" abonados, "+n("dias")+" días, "+n("tickets")+" tickets dentro y la configuración. Si ya existen, se reemplazan. ¿Continuar?")) return;
+    const limpiar=confirm("¿Dejar el sistema EXACTAMENTE como en la copia?\n\nAceptar: se borra todo lo que no está en la copia (tickets, boletas y pagos de prueba).\nCancelar: solo se cargan los datos de la copia y lo demás se queda.");
     expBusy(true,"Restaurando copia…");
-    try{ for(const col of ["config","abonados","dias","tickets"]) for(const [id,v] of Object.entries(data[col]||{})) if(v) await db.doc(col+"/"+id).set(v);
-      expBusy(false,"Copia restaurada: "+n("abonados")+" abonados y "+n("dias")+" días."); }
+    try{ let borr=0;
+      if(limpiar) for(const col of ["config","abonados","dias","tickets"]){ const sn=await db.collection(col).get(); for(const d of sn.docs) if(!(data[col]||{})[d.id]){ await db.doc(col+"/"+d.id).delete(); borr++; } }
+      for(const col of ["config","abonados","dias","tickets"]) for(const [id,v] of Object.entries(data[col]||{})) if(v) await db.doc(col+"/"+id).set(v);
+      expBusy(false,"Copia restaurada: "+n("abonados")+" abonados y "+n("dias")+" días."+(limpiar?" Se borraron "+borr+" registros que no estaban en la copia.":"")); }
     catch(er){ expBusy(false,"No se pudo terminar de restaurar. Inténtalo otra vez."); }
   });
   fillExpPer();
   window.__buildBook=buildBook;
+  // reloj en tiempo real (hora de Lima del equipo)
+  (function(){ const T=$("#ckT"), Dd=$("#ckD"); if(!T) return; const DS=["dom.","lun.","mar.","mié.","jue.","vie.","sáb."], MS=["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","set.","oct.","nov.","dic."];
+    const tick=()=>{ const d=new Date(), p2=n=>String(n).padStart(2,"0");
+      if(cfg.reloj==="12"){ const h=d.getHours(); T.innerHTML=(h%12||12)+":"+p2(d.getMinutes())+'<span class="ck-s">:'+p2(d.getSeconds())+'</span> <span class="ck-ap">'+(h<12?"a.m.":"p.m.")+'</span>'; }
+      else T.innerHTML=p2(d.getHours())+":"+p2(d.getMinutes())+'<span class="ck-s">:'+p2(d.getSeconds())+'</span>';
+      Dd.innerHTML=DS[d.getDay()]+" "+d.getDate()+" "+MS[d.getMonth()]+'<span class="ck-y"> '+d.getFullYear()+'</span>'; };
+    window.__ckTick=tick; tick(); setTimeout(()=>{ tick(); setInterval(tick,1000); },1000-Date.now()%1000); })();
+  function renderCkFmt(){ const f=cfg.reloj==="12"?"12":"24"; document.querySelectorAll("[data-ckf]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.ckf===f)); b.setAttribute("aria-checked",String(b.dataset.ckf===f)); }); if(window.__ckTick) window.__ckTick(); }
+  $("#ckFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-ckf]"); if(!b||!isAdmin()||!needDb()) return; const v=b.dataset.ckf;
+    cfg.reloj=v; renderCkFmt(); queue(()=>db.doc("config/general").update({reloj:v}).then(()=>toast("Reloj en formato "+(v==="12"?"a. m. / p. m.":"24 horas")))); });
+  renderCkFmt();
 
   (async ()=>{
     for(let i=0;i<50&&!(window.claude&&window.claude.use);i++) await sleep(200);
@@ -2694,7 +2744,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     }
     try{ db=await window.claude.use("db"); }catch(e){ db=null; }
     if(!db){ $("#bConnTxt").textContent="Para generar tickets y guardar ingresos, abre esta página con tu cuenta de Claude."; $("#bConn").hidden=false; return; }
-    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); },subErr);
+    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);
     db.collection("abonados").onSnapshot(s=>{ abonadosAll=s.docs.map(d=>Object.assign({id:d.id},d.data())); abonados=abonadosAll.filter(a=>!a.retiro); checkDup(); renderAbonados(); renderMes(); renderPlano(); refreshEspSelects(); renderInside(); },subErr);

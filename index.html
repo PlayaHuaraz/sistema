@@ -796,7 +796,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   async function call(a, body){
     const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, k: key }, body || {})) });
     const j = await r.json();
-    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; throw e; }
+    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; if (j.err === "bad_key" && a !== "init") askKey(true); throw e; }
     return j;
   }
   function setOnline(v){ if (online === v) return; online = v; const b = document.getElementById("bConn"), t = document.getElementById("bConnTxt");
@@ -1113,7 +1113,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
 
   async function claimNumber(){
     const ref=db.doc("config/contador");
-    if(ref.claim){ try{ return await ref.claim("next"); }catch(e){ const er=new Error("claim"); er.userMsg=e.code==="sin_numero"?"Falta el próximo N° de ticket. Ponlo en la pestaña Tarifas.":"Sin conexión: no se pudo sacar el número de ticket. Revisa el internet e inténtalo otra vez."; throw er; } }
+    if(ref.claim){ try{ return await ref.claim("next"); }catch(e){ const er=new Error("claim"); er.userMsg=e.code==="sin_numero"?"Falta el próximo N° de ticket. Ponlo en la pestaña Tarifas.":e.code==="bad_key"?"La clave de acceso cambió. Escríbela de nuevo y vuelve a generar el ticket.":"Sin conexión: no se pudo sacar el número de ticket. Revisa el internet e inténtalo otra vez."; throw er; } }
     let got=false;
     for(let i=0;i<10 && !got;i++){ const r=await ref.acquire({holder:ME,ttlMs:5000}); got=r.acquired; if(!got) await sleep(500+Math.random()*400); }
     if(!got){ const e=new Error("busy"); e.userMsg="Otro celular está generando un ticket. Inténtalo de nuevo."; throw e; }
@@ -1268,15 +1268,21 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   // convierte la imagen a comandos ESC/POS (raster GS v 0, en bloques)
   async function escposFromBlob(bl){ const bmp=await createImageBitmap(bl); const W=384, H=Math.round(bmp.height*W/bmp.width);
     const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,H); x.drawImage(bmp,0,0,W,H);
-    const d=x.getImageData(0,0,W,H).data, bw=W/8, out=[0x1b,0x40];
-    for(let y0=0;y0<H;y0+=128){ const h=Math.min(128,H-y0); out.push(0x1d,0x76,0x30,0x00,bw&255,bw>>8,h&255,h>>8);
+    const d=x.getImageData(0,0,W,H).data, bw=W/8, out=[0x18,0x1b,0x40,0x1c,0x2e];
+    for(let y0=0;y0<H;y0+=64){ const h=Math.min(64,H-y0); out.push(0x1d,0x76,0x30,0x00,bw&255,bw>>8,h&255,h>>8);
       for(let y=y0;y<y0+h;y++) for(let bx=0;bx<bw;bx++){ let v=0; for(let k=0;k<8;k++){ const i=((y*W)+bx*8+k)*4; const g=(d[i]*299+d[i+1]*587+d[i+2]*114)/1000; if(g<150) v|=(0x80>>k); } out.push(v); } }
     out.push(0x1b,0x64,0x04); return new Uint8Array(out); }
   window.__escpos=escposFromBlob;
+  // envío por Bluetooth a ritmo controlado: si se manda muy rápido, la impresora pierde datos
+  // y lo que sigue sale como letras raras
+  async function btWrite(data){
+    const pr=btChar.properties, nr=pr.writeWithoutResponse, STEP=nr?120:100;
+    for(let i=0;i<data.length;i+=STEP){ const ch=data.slice(i,i+STEP);
+      if(nr){ await btChar.writeValueWithoutResponse(ch); await sleep(22); } else await btChar.writeValue(ch);
+      if(i>0&&i%3000<STEP) await sleep(90); }
+  }
   async function btPrint(bl){ if(btBusy){ toast("Imprimiendo… espera un momento."); return true; } btBusy=true;
-    try{ const data=await escposFromBlob(bl); const nr=btChar.properties.writeWithoutResponse, step=nr?180:100;
-      for(let i=0;i<data.length;i+=step){ const ch=data.slice(i,i+step); if(nr) await btChar.writeValueWithoutResponse(ch); else await btChar.writeValue(ch); if(nr&&i%3600===0) await sleep(20); }
-      toast("Enviado a la impresora"); return true;
+    try{ const data=await escposFromBlob(bl); toast("Imprimiendo…"); await btWrite(data); toast("Enviado a la impresora"); return true;
     }catch(e){ btChar=null; btSetState("Se perdió la conexión con la impresora. Toca Conectar."); toast("No se pudo imprimir por Bluetooth"); return false; }
     finally{ btBusy=false; } }
   $("#btConnect").addEventListener("click",()=>{ if(btChar) btDisconnect(); else btConnect(); });
@@ -1351,7 +1357,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   async function escposFromDoc(D){
     const o=[]; const P=(...a)=>a.forEach(v=>Array.isArray(v)?o.push(...v):o.push(v));
     const cp=pCP();
-    P(0x1B,0x40, 0x1C,0x2E); // reinicia y apaga el modo chino
+    P(0x18, 0x1B,0x40, 0x1C,0x2E); // cancela restos, reinicia y apaga el modo chino
     if(cp!=="none") P(0x1B,0x74, cp==="858"?19:2);
     for(const e of D){
       if(e.t==="logo"){ const L=await getLogoBits(); if(L){ P(0x1B,0x61,1, 0x1D,0x76,0x30,0, L.bw&255,L.bw>>8, L.h&255,L.h>>8); for(const b of L.bytes) o.push(b); P(0x0A); } continue; }
@@ -1385,9 +1391,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   window.__tkDoc=tkDoc; window.__escposDoc=escposFromDoc; window.__previewDoc=previewDoc;
   async function sendBytes(data){ // impresora conectada por Bluetooth desde el navegador
     if(btBusy){ toast("Imprimiendo… espera un momento."); return true; } btBusy=true;
-    try{ const nr=btChar.properties.writeWithoutResponse, step=nr?180:100;
-      for(let i=0;i<data.length;i+=step){ const ch=data.slice(i,i+step); if(nr) await btChar.writeValueWithoutResponse(ch); else await btChar.writeValue(ch); if(nr&&i%3600===0) await sleep(20); }
-      return true;
+    try{ await btWrite(data); return true;
     }catch(e){ btChar=null; btSetState("Se perdió la conexión con la impresora. Toca Conectar."); toast("No se pudo imprimir por Bluetooth"); return false; } finally{ btBusy=false; } }
   function bytesB64(u8){ let s=""; for(let i=0;i<u8.length;i+=8192) s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(s); }
   // imprime un documento en modo rápido; devuelve false si en este equipo no se puede (iPhone sin Bluetooth web)

@@ -1875,6 +1875,8 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   $("#aMonthList").addEventListener("toggle",e=>{ if(e.target.classList&&e.target.classList.contains("amd")) aListOpen=e.target.open; },true);
   $("#aCal").addEventListener("click",e=>{ const b=e.target.closest("[data-aday]"); if(!b) return; aSelDay=aSelDay===b.dataset.aday?null:b.dataset.aday; renderAbonados(); if(aSelDay) $("#aDayCard").scrollIntoView({behavior:"smooth",block:"start"}); });
   $("#v-abonados").addEventListener("click",e=>{
+    const av=e.target.closest("[data-adv]"); if(av){ abAdv=av.dataset.adv; renderAbonados(); return; }
+    if(e.target.closest("[data-advx]")){ abAdv=null; renderAbonados(); return; }
     const bb=e.target.closest("[data-abbol]"); if(bb){ const [id,per]=bb.dataset.abbol.split("|"); const ab=abonadosAll.find(x=>x.id===id); if(ab&&ab.pagos&&ab.pagos[per]) showAbBol(ab,per,ab.pagos[per]); return; }
     const fl=e.target.closest("[data-abf]"); if(fl){ abFilter=fl.dataset.abf; renderAbonados(); return; } if(e.target.closest("[data-abday]")){ aSelDay=null; renderAbonados(); } },true);
   $("#prevA").addEventListener("click",()=>{ aCur.m--; if(aCur.m<0){aCur.m=11;aCur.y--;} renderACal(); });
@@ -1925,7 +1927,20 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       if(!needDb()) return; queue(()=>db.doc("abonados/"+d.dataset.delret).delete().then(()=>toast("Abonado borrado"))); } });
   const esMig=a=>/migraci/i.test(a.obs||"");
   let abFilter="todos";
-  function abCard(a,ctx){ const s=abState(a);
+  // último pago del abonado y si cubre el día de hoy
+  function abLastPay(a){ const E=Object.entries(a.pagos||{}).filter(([,v])=>v).sort((x,y)=>x[0]<y[0]?-1:1); if(!E.length) return null; const [per,v]=E[E.length-1]; return {per,v,hasta:v.hasta||addMonths(per,1)}; }
+  function bolBtn(a,per,v,lbl){ return v&&v.comp?'<button class="btn small primary" type="button" data-abbol="'+a.id+'|'+per+'">🧾 '+(lbl||'Ver boleta')+'</button>':'<span class="pill ok">Pago registrado'+(v&&v.p?' · '+(v.p==="yape"?"Yape":"Efectivo"):'')+'</span>'; }
+  function payCtl(a,lbl,cls){ return '<label class="muted" for="pm-'+a.id+'" style="margin:0">Pagó con</label><select id="pm-'+a.id+'"><option value="efectivo">Efectivo</option><option value="yape">Yape</option></select><button class="btn small '+(cls||'primary')+'" type="button" data-pay="'+a.id+'">'+lbl+'</button>'; }
+  function abPayArea(a,opt){ opt=opt||{}; const today=iso(new Date());
+    if(opt.paid) return bolBtn(a,opt.per,opt.paid);                       // en el calendario: ese día ya pagó
+    if(opt.later) return '<span class="muted">Su pago pendiente es el '+(a.vence?ddmm(parse(a.vence)):'—')+'</span>'; // fecha proyectada, aún no toca
+    const lp=abLastPay(a);
+    if(lp&&lp.per<=today&&lp.hasta>today){ // ya pagó el periodo actual
+      if(abAdv===a.id) return payCtl(a,"Confirmar pago adelantado ("+mesTxt(a.vence||today)+")")+'<button class="btn small" type="button" data-advx="1">Cancelar</button>';
+      return bolBtn(a,lp.per,lp.v,'Ver boleta ('+mesTxt(lp.per)+')')+'<button class="btn small" type="button" data-adv="'+a.id+'">Adelantar pago</button>'; }
+    return payCtl(a,"Registrar pago del mes"); }
+  let abAdv=null;
+  function abCard(a,ctx,opt){ const s=abState(a);
       const mc=abMC(a), info=[a.mod?ABMOD[a.mod]:"",mc.marca,mc.color].filter(Boolean).map(esc).join(" · ");
       const extra=(a.cel?'<div>Celular: '+telHtml(a.cel)+'</div>':'')+(a.dir?'<div>Dirección: '+esc(a.dir)+'</div>':'')+(a.obs?'<div>Obs.: '+esc(a.obs)+'</div>':'');
       return '<div class="ab"><div class="top"><span class="nm">'+esc(a.nombre)+' <span class="muted">· '+esc(a.placa||"sin placa")+(abVeh(a)?' · '+esc(abVeh(a)):'')+'</span>'+(esMig(a)?' <span class="tag mig">Migraciones</span>':'')+'</span>'+(ctx||'<span class="pill '+s.c+'">'+esc(s.txt)+'</span>')+'</div>'
@@ -1934,7 +1949,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
         +(extra?'<div class="muted abx">'+extra+'</div>':'')
         +histHtml(a)
         +(abEdit===a.id?abEditor(a):'')
-        +'<div class="act"><label class="muted" for="pm-'+a.id+'" style="margin:0">Pagó con</label><select id="pm-'+a.id+'"><option value="efectivo">Efectivo</option><option value="yape">Yape</option></select><button class="btn small primary" type="button" data-pay="'+a.id+'">Registrar pago del mes</button>'+(abEdit===a.id?'':'<button class="btn small" type="button" data-abedit="'+a.id+'">Editar datos</button>')+'<button class="btn small danger" type="button" data-delab="'+a.id+'">Retiro</button></div></div>'; }
+        +'<div class="act">'+abPayArea(a,opt)+(abEdit===a.id?'':'<button class="btn small" type="button" data-abedit="'+a.id+'">Editar datos</button>')+'<button class="btn small danger" type="button" data-delab="'+a.id+'">Retiro</button></div></div>'; }
   let aSelDay=null;
   function abDayItems(f){ const R=[];
     abonadosAll.forEach(a=>{ const v=(a.pagos||{})[f]; if(v){ R.push({a,paid:v}); return; }
@@ -1969,7 +1984,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     const tP=pg.reduce((s,x)=>s+num(x.paid.m||x.a.monto),0), tE=pe.reduce((s,x)=>s+num(x.a.monto),0);
     const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
     $("#aDayList").innerHTML='<div class="abg sel"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong><span class="muted num">'+pg.length+' pagaron · '+money(tP)+' &nbsp; | &nbsp; '+pe.length+' faltan · '+money(tE)+'</span><button class="btn small" type="button" data-abday="">Cerrar</button></div>'
-      +(R.length?R.map(x=>abCard(x.a,ctx(x))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
+      +(R.length?R.map(x=>abCard(x.a,ctx(x),x.paid?{paid:x.paid,per:aSelDay}:(x.k>0?{later:true}:{}))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
   }
   function renderAbonados(){ renderACal(); renderFijos(); renderRetirados(); applyATab(); renderAbList(); renderAbDay(); }
   document.querySelectorAll("[data-atab]").forEach(b=>b.addEventListener("click",()=>{ aTab=b.dataset.atab; lsSet("ph_atab",aTab==="cal"?"cal":null); applyATab(); }));
@@ -2001,7 +2016,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       if(!p.tipo) delete p.tipo; if(!p.mod) delete p.mod; if(a.desc) p.desc="";
       abEdit=null; queue(()=>db.doc("abonados/"+id).update(p).then(()=>toast("Datos guardados: "+p.nombre))); return; }
     const p=e.target.closest("[data-pay]"), d=e.target.closest("[data-delab]");
-    if(p){ const a=abonados.find(x=>x.id===p.dataset.pay); if(!a) return; const medio=$("#pm-"+a.id).value, today=iso(new Date());
+    if(p){ const a=abonados.find(x=>x.id===p.dataset.pay); if(!a) return; abAdv=null; const medio=$("#pm-"+a.id).value, today=iso(new Date());
       const per=a.vence||today, nv=addMonths(per,1); p.disabled=true;
       queue(async()=>{ try{ const comp=await claimComp("comp"), compAt=Date.now();
         await writeDay(today,{movs:{[rid()]:{t:"Abonado",m:num(a.monto),p:medio,h:hhmm(),placa:a.placa||"",n:a.nombre,ab:a.id,per,comp,compAt}}});

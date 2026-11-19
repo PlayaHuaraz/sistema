@@ -1784,7 +1784,7 @@ details.fold[open]>summary{margin-bottom:12px}
     { const L=movs(dayData), nAb=L.filter(m=>m.t==="Abonado").length; $("#dSplit").innerHTML=splitTiles(split(t),t.total,{ab:nAb?nAb+(nAb===1?" pago":" pagos"):"",est:(n=>n?n+(n===1?" vehículo":" vehículos"):"")(new Set(L.filter(m=>m.tk&&m.t!=="Abonado").map(m=>m.tk)).size),ss:t.bano?t.bano+" usos":""}); }
     const list=movs(dayData).sort((a,b)=>(b.h||"").localeCompare(a.h||""));
     $("#dCount").textContent=list.length?list.length+" pagos":"";
-    $("#dRows").innerHTML=list.length?list.map(m=>'<tr><td class="num">'+esc(m.h||"")+'</td><td>'+esc(m.t)+(m.n?' <span class="muted">· '+esc(m.n)+'</span>':'')+(m.c&&m.t==="Baño"?' <span class="muted">× '+esc(m.c)+'</span>':'')+'</td><td class="num">'+esc(m.tk||"—")+'</td><td>'+esc(m.placa||"—")+'</td><td>'+(m.p==="yape"?"Yape":"Efectivo")+'</td><td class="r num">'+money(m.m)+'</td><td class="r"><button class="btn small danger" type="button" data-del="'+m.id+'">Quitar</button></td></tr>').join("")
+    $("#dRows").innerHTML=list.length?list.map(m=>'<tr><td class="num">'+esc(m.h||"")+'</td><td>'+esc(m.t)+(m.n?' <span class="muted">· '+esc(m.n)+'</span>':'')+(m.c&&m.t==="Baño"?' <span class="muted">× '+esc(m.c)+'</span>':'')+'</td><td class="num">'+esc(m.tk||"—")+'</td><td>'+esc(m.placa||"—")+'</td><td>'+(m.p==="yape"?"Yape":"Efectivo")+'</td><td class="r num">'+money(m.m)+'</td><td class="r">'+(isAdmin()?'<button class="btn small danger" type="button" data-del="'+m.id+'">Quitar</button>':'')+'</td></tr>').join("")
       :'<tr><td colspan="7" class="muted">'+(t.src==="rep"?"Este día se registró con el reporte diario.":"Todavía no hay pagos registrados este día.")+'</td></tr>';
     const tl=ticketsOfDay(); $("#tCount").textContent=tl.length?tl.length+" tickets":"";
     $("#tRows").innerHTML=tl.length?tl.map(k=>'<tr><td class="num">'+k.num+'</td><td><strong>'+esc(k.placa)+'</strong></td><td>'+esc(vehL(k.tipo))+'</td><td><span class="modo '+k.modo+'">'+MODOL[k.modo]+'</span></td><td class="num">'+esc(k.hi)+'</td><td class="num">'+(k.estado==="dentro"?'<span class="pill mut">En playa</span>':k.estado==="anulado"?'<span class="pill warn">Anulado</span>':esc((k.sal&&iso(new Date(k.sal))!==k.fecha?ddmm(new Date(k.sal))+' ':'')+k.ho))+'</td><td>'+esc(k.esp||"—")+(k.llave==="con"?' · llave':'')+'</td><td>'+esc([vDesc(k),k.obs].filter(Boolean).join(" · "))+(k.tel?(k.obs||vDesc(k)?' · ':'')+'tel. '+esc(k.tel):'')+'</td><td class="r num">'+(k.estado==="pagado"?money(num(k.saldo)+((k.adel||[]).reduce((s,a)=>s+num(a.m),0)))+' '+((k.medio==="mixto"?"Mixto":k.medio==="yape"?"Yape":"Ef.")):"—")+'</td></tr>').join("")
@@ -1859,6 +1859,7 @@ details.fold[open]>summary{margin-bottom:12px}
   });
   $("#dRows").addEventListener("click",e=>{
     const b=e.target.closest("[data-del]"); if(!b) return;
+    if(!isAdmin()){ toast("Solo el administrador puede quitar pagos."); return; }
     if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="¿Quitar? Toca otra vez"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Quitar"; } },3000); return; }
     const id=b.dataset.del, f=selDay; queue(()=>db.doc("dias/"+f).update({movs:{[id]:null}}).then(()=>toast("Pago quitado")));
   });
@@ -2476,7 +2477,7 @@ details.fold[open]>summary{margin-bottom:12px}
     const l=banoMovs();
     const usos=l.reduce((s,m)=>s+(num(m.c)||1),0), ef=l.filter(m=>m.p!=="yape").reduce((s,m)=>s+num(m.m),0), ya=l.filter(m=>m.p==="yape").reduce((s,m)=>s+num(m.m),0);
     $("#shUsos").textContent=usos; $("#shTEf").textContent=money(ef); $("#shTYa").textContent=money(ya);
-    $("#shRows").innerHTML=l.length? l.map(m=>'<tr data-sh="'+m.id+'" style="cursor:pointer'+(m.id===shSel?';background:color-mix(in srgb,var(--accent) 10%,transparent)':'')+'"><td class="num">'+(m.comp?pad6(m.comp):"—")+'</td><td class="num">'+esc(m.h||"")+'</td><td class="num">'+(num(m.c)||1)+'</td><td>'+(m.p==="yape"?"Yape":"Efectivo")+'</td><td class="r num">'+money(m.m)+'</td><td class="r"><button class="btn small danger" type="button" data-shdel="'+m.id+'">Quitar</button></td></tr>').join("")
+    $("#shRows").innerHTML=l.length? l.map(m=>'<tr data-sh="'+m.id+'" style="cursor:pointer'+(m.id===shSel?';background:color-mix(in srgb,var(--accent) 10%,transparent)':'')+'"><td class="num">'+(m.comp?pad6(m.comp):"—")+'</td><td class="num">'+esc(m.h||"")+'</td><td class="num">'+(num(m.c)||1)+'</td><td>'+(m.p==="yape"?"Yape":"Efectivo")+'</td><td class="r num">'+money(m.m)+'</td><td class="r">'+(isAdmin()?'<button class="btn small danger" type="button" data-shdel="'+m.id+'">Quitar</button>':'')+'</td></tr>').join("")
       : '<tr><td colspan="6" class="muted">Todavía no hay cobros de SS.HH. hoy.</td></tr>';
     if(shSel){ const m=l.find(x=>x.id===shSel); if(m) showBanoPrev(m); else { shSel=null; $("#shPrev").innerHTML='<p class="muted">Toca un cobro de la lista para ver su comprobante.</p>'; } }
   }
@@ -2497,6 +2498,7 @@ details.fold[open]>summary{margin-bottom:12px}
   $("#shYa").addEventListener("click",()=>cobrarBano("yape"));
   $("#shRows").addEventListener("click",e=>{
     const del=e.target.closest("[data-shdel]");
+    if(del&&!isAdmin()){ toast("Solo el administrador puede quitar cobros."); return; }
     if(del){ if(del.dataset.armed!=="1"){ del.dataset.armed="1"; del.textContent="¿Quitar? Toca otra vez"; setTimeout(()=>{ if(del.isConnected){ del.dataset.armed=""; del.textContent="Quitar"; } },3000); return; }
       const id=del.dataset.shdel, f=shDay; queue(()=>db.doc("dias/"+f).update({movs:{[id]:null}}).then(()=>toast("Cobro de SS.HH. quitado"))); return; }
     const tr=e.target.closest("[data-sh]"); if(!tr) return; shSel=tr.dataset.sh; renderBano();
@@ -2545,7 +2547,7 @@ details.fold[open]>summary{margin-bottom:12px}
     if(isAdmin()) rb.innerHTML='<span class="rb-tag adm">Admin</span><button class="btn small" type="button" id="rbOut">Salir</button>';
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
-  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar();
+  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
     const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]');
     if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });

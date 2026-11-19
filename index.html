@@ -312,6 +312,24 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
 
 .pmode{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}.pmode select{min-height:0;padding:4px 8px;font-size:13px;width:auto}.pmode label{display:inline-flex;gap:6px;align-items:center;font-weight:500}.pmode .chk input{width:16px;height:16px;min-height:0}
 #tkFastBtn{margin-top:10px}
+
+/* Abonados: pestañas, buscador y lista compacta */
+.subtabs{display:flex;gap:6px;margin:0 0 14px;background:var(--surface);padding:5px;border-radius:12px;border:1px solid var(--line,#2c343e)}
+.subtabs button{flex:1;border:0;background:transparent;color:inherit;font:600 15px Barlow,sans-serif;padding:10px 8px;border-radius:9px;cursor:pointer}
+.subtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.subtabs small{opacity:.8;font-weight:500}
+.absearch{margin-bottom:10px;display:flex;gap:8px}.absearch input{flex:1;min-width:0}.absearch select{width:auto;flex:none;max-width:44%}
+.abhead{display:grid;grid-template-columns:1.5fr 1fr .5fr 1.1fr 12px;gap:8px;padding:6px 12px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;opacity:.6}
+.abrow{border:1px solid var(--line,#2c343e);border-radius:10px;margin:6px 0;background:rgba(255,255,255,.02)}
+.abrow>summary{display:grid;grid-template-columns:1.5fr 1fr .5fr 1.1fr 12px;gap:8px;align-items:center;padding:11px 12px;cursor:pointer;list-style:none}
+.abrow>summary::-webkit-details-marker{display:none}
+.abrow>summary .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.abrow>summary .pl,.abrow>summary .cel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abrow[open]>summary{border-bottom:1px solid var(--line,#2c343e)}
+.abrow-in{padding:4px 10px 10px}.abrow-in .ab{border:0;margin:0;padding:8px 2px 0;background:none}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;justify-self:end}.dot.bad{background:#e0566b}
+@media (max-width:480px){.abhead,.abrow>summary{grid-template-columns:1.25fr .95fr .45fr 1fr 10px;gap:6px;font-size:13.5px;padding-left:10px;padding-right:10px}}
+.abrow>summary .esp{font-weight:700}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -382,8 +400,8 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
 
         <div class="formfoot"><button class="btn primary" id="btnTicket" type="button" style="flex:1">Generar ticket</button></div>
         <label class="autoprint"><input type="checkbox" id="autoPrint"> Imprimir automáticamente tickets y boletas</label>
-        <div class="pmode"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto) · Android y Chrome</option><option value="img">Imagen (como se ve en pantalla)</option></select></label>
-          <span id="pFastOpts"><label class="chk"><input type="checkbox" id="pLogo"> Logo</label></span></div>
+        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
+        <p class="note" id="pIosNote" hidden>En iPhone, al tocar 🖨 Imprimir se abre Compartir: elige la app de la impresora (por ejemplo, Express Thermal Print).</p>
         <div class="btprn"><button class="btn small" type="button" id="btConnect">🖨 Conectar impresora Bluetooth</button><span class="muted" id="btState">Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)</span></div>
       </div>
 
@@ -400,7 +418,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
           </div>
           <button class="btn small" type="button" id="tkFastBtn">Ver cómo sale en modo rápido</button>
           <div id="tkFastWrap" hidden><img id="tkFastImg" class="tkimg" alt="Vista aproximada en modo rápido"><p class="note">Vista aproximada: la impresora usa su propia letra.</p></div>
-          <p class="note">En iPhone se imprime como imagen con la app de la impresora (el modo rápido necesita Android con RawBT o Chrome con la impresora conectada).</p>
+
         </div>
 
         <div id="tkEmpty"><h2>Ticket</h2><p class="muted">Al generar un ticket aparece aquí para descargarlo e imprimirlo, o enviarlo por WhatsApp. Para agregar el teléfono u observaciones después, toca el vehículo en «En la playa ahora». La salida y el cobro se hacen en la sección Boletas.</p></div>
@@ -541,21 +559,11 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       <img id="abBolImg" class="tkimg" alt="Comprobante de pago del abonado">
       <div class="formfoot"><button class="btn primary" type="button" data-print="ab">🖨 Imprimir</button><button class="btn" id="abBolSave" type="button">Descargar</button><button class="btn" id="abBolX" type="button">Cerrar</button></div>
     </div>
-    <div class="card">
-      <div class="monthbar">
-        <button class="btn small" id="prevA" type="button" aria-label="Mes anterior">‹</button>
-        <h2 id="aMLabel">Pagos de abonados</h2>
-        <button class="btn small" id="nextA" type="button" aria-label="Mes siguiente">›</button>
-      </div>
-      <div class="cal acal" id="aCal"></div>
-      <div class="legend">
-        <span><i class="ach pd">ABC</i>Ya pagó</span>
-        <span><i class="ach proj">ABC</i>Por cobrar</span>
-        <span><i class="ach warn">ABC</i>Vence en 5 días o menos</span>
-        <span><i class="ach bad">ABC</i>Vencido</span>
-      </div>
-      <div class="rows" id="aMonthList" style="margin-top:12px"></div>
+    <div class="subtabs" role="tablist" aria-label="Abonados">
+      <button type="button" role="tab" data-atab="lista">Lista de abonados <small id="aCount"></small></button>
+      <button type="button" role="tab" data-atab="cal">Calendario de pagos</button>
     </div>
+    <div id="aTabLista">
     <details class="card newab" id="newAb">
       <summary class="btn primary">+ Nuevo abonado</summary>
       <div class="newab-in">
@@ -577,7 +585,29 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       <div class="formfoot"><button class="btn primary" id="addAb" type="button">Agregar abonado</button><button class="btn" id="addAbX" type="button">Cancelar</button></div>
       </div>
     </details>
-    <div class="card"><h2>Abonados <small id="aCount"></small></h2><div id="aList"></div><div id="aRet"></div></div>
+      <div class="card">
+        <div class="absearch"><input id="aQ" type="search" placeholder="🔎 Nombre, placa, celular…" autocomplete="off" aria-label="Buscar abonados"><select id="aQEsp" aria-label="Filtrar por espacio"><option value="">Todos los espacios</option></select></div>
+        <div id="aList"></div><div id="aRet"></div>
+      </div>
+    </div>
+    <div id="aTabCal" hidden>
+    <div class="card">
+      <div class="monthbar">
+        <button class="btn small" id="prevA" type="button" aria-label="Mes anterior">‹</button>
+        <h2 id="aMLabel">Pagos de abonados</h2>
+        <button class="btn small" id="nextA" type="button" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="cal acal" id="aCal"></div>
+      <div class="legend">
+        <span><i class="ach pd">ABC</i>Ya pagó</span>
+        <span><i class="ach proj">ABC</i>Por cobrar</span>
+        <span><i class="ach warn">ABC</i>Vence en 5 días o menos</span>
+        <span><i class="ach bad">ABC</i>Vencido</span>
+      </div>
+      <div class="rows" id="aMonthList" style="margin-top:12px"></div>
+    </div>
+      <div class="card" id="aDayCard"><div id="aDayList"></div></div>
+    </div>
   </section>
 
   <!-- INGRESOS -->
@@ -1293,7 +1323,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   const COLS=32; // fuente A de 58 mm: 32 caracteres por línea
   function pModeFast(){ return lsGet("ph_pmode")!=="img"; }
   function pCP(){ return "none"; } // siempre sin tildes: evita símbolos raros en cualquier impresora
-  function pLogoOn(){ return lsGet("ph_plogo")!=="0"; }
+  function pLogoOn(){ return true; } // el logo sale siempre
   const CP850={"á":0xA0,"é":0x82,"í":0xA1,"ó":0xA2,"ú":0xA3,"Á":0xB5,"É":0x90,"Í":0xD6,"Ó":0xE0,"Ú":0xE9,"ñ":0xA4,"Ñ":0xA5,"ü":0x81,"Ü":0x9A,"°":0xF8,"¡":0xAD,"¿":0xA8,"·":0xFA,"×":0x9E};
   function plain(s){ return String(s).replace(/[“”«»]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,"-").replace(/…/g,"..."); }
   function noTildes(s){ return plain(s).replace(/N°\s?/g,"Nro. ").replace(/°/g,"o").replace(/·/g,"-").replace(/×/g,"x").replace(/[¡¿]/g,"").normalize("NFD").replace(/[̀-ͯ]/g,""); }
@@ -1346,11 +1376,12 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   function docLines(o){ const cols=o.z===2?COLS/2:COLS;
     const cv=x=>pCP()==="none"?noTildes(x):plain(x);
     if(o.t==="txt"){ const L=wrapCols(cv(o.s),cols-(o.ind||0)); return L.map((l,i)=>(i&&o.ind?" ".repeat(o.ind):"")+l); }
+    if(o.t==="lr"){ const cols2=o.z===2?COLS/2:COLS; const k=cv(o.k), v=cv(String(o.v)); if(k.length+1+v.length<=cols2) return [k+" ".repeat(cols2-k.length-v.length)+v]; return [k, " ".repeat(Math.max(0,cols2-v.length))+v.slice(-cols2)]; }
     if(o.t==="kv"){ const w=o.w||10; const v=cv(String(o.v)); const L=wrapCols(v,COLS-w); return L.map((l,i)=>(i?" ".repeat(w):cv(o.k+":").padEnd(w))+l); }
     return []; }
   let logoBits=null;
   async function getLogoBits(){ if(logoBits) return logoBits; const img=await loadLogo(); if(!img) return null;
-    const w=144, h=Math.round(img.height*w/img.width); const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,0,0,w,h);
+    const lw=144, h=Math.round(img.height*lw/img.width), w=384; const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,(w-lw)/2,0,lw,h); // centrado en el ancho del papel
     const d=x.getImageData(0,0,w,h).data; const bw=w/8, bytes=new Uint8Array(bw*h);
     for(let yy=0;yy<h;yy++) for(let xx=0;xx<w;xx++){ const i=(yy*w+xx)*4; if((d[i]*299+d[i+1]*587+d[i+2]*114)/1000<140) bytes[yy*bw+(xx>>3)]|=0x80>>(xx&7); }
     logoBits={w,h,bw,bytes,canvas:c}; return logoBits; }
@@ -1380,7 +1411,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       c.font=(e.b?"700 ":"500 ")+"20px 'DejaVu Sans Mono','Courier New',monospace";
       [...(pCP()==="none"?noTildes(s):plain(s))].forEach((ch,i)=>{ c.save(); c.translate(x0+i*cw,y+2*sy); c.scale(sx*CW/12.04,sy); c.fillText(ch,0,0); c.restore(); }); y+=ch; };
     for(const e of D){
-      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ c.drawImage(L.canvas,(W-L.w)/2,y); y+=L.h+2; } continue; }
+      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ c.drawImage(L.canvas,0,y); y+=L.h+2; } continue; }
       if(e.t==="rule"){ line(e.c.repeat(COLS),{}); continue; }
       if(e.t==="feed"){ y+=CH*(e.n||1); continue; }
       if(e.t==="bar"){ drawCode128(c,e.s,W/2,y,W,72); y+=74; continue; }
@@ -1388,6 +1419,34 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     }
     y+=16; const out=document.createElement("canvas"); out.width=W; out.height=y; const ox=out.getContext("2d"); ox.drawImage(cv,0,0); return out;
   }
+  // ---------- boletas en modo rápido ----------
+  function docHead(D,titulo,nro){ const T=(s,o)=>D.push(Object.assign({t:"txt",s:String(s)},o||{}));
+    D.push({t:"logo"}); T("PLAYA DE ESTACIONAMIENTO",{a:"c",b:1}); T("\u201cHUARAZ\u201d",{a:"c",b:1,z:2});
+    T("Jr. Huaraz 747, Breña - Lima",{a:"c"}); T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
+    D.push({t:"rule",c:"="}); T(titulo,{a:"c",b:1,z:1}); T("N° "+pad6(nro),{a:"c",b:1,z:2}); D.push({t:"rule",c:"="}); return T; }
+  function docFoot(D,T,horario){ D.push({t:"feed",n:1}); T("¡Gracias por su preferencia!",{a:"c",b:1}); D.push({t:"rule",c:"-"}); T("Documento interno de control.");
+    if(horario){ T("Lunes a viernes:"); T("6:30 a.m. a 10:30 p.m.",{a:"r"}); T("Sáb., dom. y feriados:"); T("6:30 a.m. a 10:00 a.m.",{a:"r"}); T("6:30 p.m. a 10:30 p.m.",{a:"r"}); } }
+  const emiTxt=ms=>{ const e=new Date(ms||Date.now()); return ddmm(e)+"/"+e.getFullYear()+" "+hhmm(e); };
+  function bolDoc(t){ const D=[]; const T=docHead(D,"COMPROBANTE DE PAGO",t.comp); const R=(k,v,o)=>D.push(Object.assign({t:"lr",k,v:String(v)},o||{}));
+    R("Emitido",emiTxt(t.compAt)); R("Ticket N°",t.num); R("Placa",t.placa,{b:1,z:1}); R("Vehículo",vehL(t.tipo));
+    R("Entrada",ddmm(new Date(t.ent))+" "+t.hi); R("Salida",ddmm(new Date(t.sal))+" "+t.ho); const d=detalle(t); R("Tiempo",dur(d.mins));
+    D.push({t:"rule",c:"-"}); R("DESCRIPCIÓN","IMPORTE",{b:1}); d.L.forEach(([k,v])=>R("Estac. "+k,money(v)));
+    D.push({t:"rule",c:"="}); R("TOTAL",money(paidTotal(t)),{b:1,z:1});
+    const adel=(t.adel||[]).reduce((s,a)=>s+num(a.m),0);
+    if(adel){ T("Adelanto: "+money(adel)+" ("+adelTxt(t.adel)+")"); if(num(t.saldo)>0) T("A la salida: "+money(t.saldo)+" ("+medioTxt(t)+")"); } else T("Forma de pago: "+medioTxt(t));
+    docFoot(D,T,true); return D; }
+  function bolAbDoc(a,per,v){ const D=[]; const T=docHead(D,"PAGO DE ABONADO",v.comp); const R=(k,val,o)=>{ if(val) D.push(Object.assign({t:"lr",k,v:String(val)},o||{})); };
+    R("Emitido",emiTxt(v.compAt)); T("Abonado: "+a.nombre,{b:1}); R("Placa",a.placa||"",{b:1,z:1}); R("Vehículo",abVeh(a)); R("Modalidad",ABMOD[a.mod]||""); R("Espacio fijo",a.esp||"");
+    const hasta=v.hasta||addMonths(per,1);
+    D.push({t:"rule",c:"-"}); R("DESCRIPCIÓN","IMPORTE",{b:1}); R("Abono mensual",money(v.m||a.monto));
+    T("Periodo: "+ddmm(parse(per))+"/"+per.slice(0,4)+" al "+ddmm(parse(hasta))+"/"+hasta.slice(0,4));
+    D.push({t:"rule",c:"="}); R("TOTAL",money(v.m||a.monto),{b:1,z:1});
+    T("Forma de pago: "+(v.p==="yape"?"Yape":"Efectivo")); T("Próximo pago: "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),{b:1});
+    docFoot(D,T,true); return D; }
+  function banoDoc(m){ const D=[]; const T=docHead(D,"COMPROBANTE SS.HH.",m.comp); const R=(k,v,o)=>D.push(Object.assign({t:"lr",k,v:String(v)},o||{}));
+    const n=num(m.c)||1; R("Fecha",emiTxt(m.compAt)); R("Uso de SS.HH.",n+" x "+money(num(m.m)/n)); R("Forma de pago",m.p==="yape"?"Yape":"Efectivo");
+    D.push({t:"rule",c:"="}); R("TOTAL",money(m.m),{b:1,z:1}); docFoot(D,T,false); return D; }
+  window.__bolDoc=bolDoc; window.__bolAbDoc=bolAbDoc; window.__banoDoc=banoDoc;
   window.__tkDoc=tkDoc; window.__escposDoc=escposFromDoc; window.__previewDoc=previewDoc;
   async function sendBytes(data){ // impresora conectada por Bluetooth desde el navegador
     if(btBusy){ toast("Imprimiendo… espera un momento."); return true; } btBusy=true;
@@ -1404,19 +1463,25 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     if(!w){ try{ const l=document.createElement("a"); l.href=url; l.target="_blank"; l.rel="noopener"; document.body.appendChild(l); l.click(); l.remove(); }catch(e){ return false; } }
     return true;
   }
-  async function printTicket(){ if(lastTicket&&pModeFast()){ const ok=await fastPrint(tkDoc(lastTicket)); if(ok) return; } rawPrint(lastBlob); }
+  // modo rápido solo donde se puede mandar texto (Bluetooth del navegador o Android con RawBT);
+  // en iPhone va directo a la imagen, sin esperas, para que se abra el menú Compartir
+  function rawOK(){ return !!btChar||isAndroid; }
+  function fastAvail(){ return btSupported()||isAndroid; }
+  async function printAny(blob,docFn){ if(docFn&&pModeFast()&&rawOK()){ const ok=await fastPrint(docFn()); if(ok) return; } rawPrint(blob); }
+  let bDocFn=null, abDocFn=null, shDocFn=null;
+  function printTicket(){ printAny(lastBlob,lastTicket?(()=>tkDoc(lastTicket)):null); }
   // ajustes de impresión en esta pantalla
-  (function(){ const m=$("#pMode"), lg=$("#pLogo"); if(!m) return;
-    m.value=pModeFast()?"fast":"img"; lg.checked=pLogoOn();
-    const sync=()=>{ $("#pFastOpts").hidden=m.value!=="fast"; };
+  (function(){ const m=$("#pMode"); if(!m) return;
+    if(!fastAvail()){ $("#pModeWrap").hidden=true; $("#tkFastBtn").hidden=true; $("#pIosNote").hidden=false; }
+    m.value=pModeFast()?"fast":"img";
+    const sync=()=>{};
     m.addEventListener("change",()=>{ lsSet("ph_pmode",m.value==="img"?"img":null); sync(); refreshFastPrev(); });
-    lg.addEventListener("change",()=>{ lsSet("ph_plogo",lg.checked?null:"0"); refreshFastPrev(); });
     sync(); })();
   async function refreshFastPrev(){ const b=$("#tkFastWrap"); if(!b||b.hidden||!lastTicket) return; const cv=await previewDoc(tkDoc(lastTicket)); $("#tkFastImg").src=cv.toDataURL("image/png"); }
   $("#tkFastBtn").addEventListener("click",async()=>{ const b=$("#tkFastWrap"); b.hidden=!b.hidden; $("#tkFastBtn").textContent=b.hidden?"Ver cómo sale en modo rápido":"Ocultar vista de modo rápido"; refreshFastPrev(); });
-  function maybeAuto(bl){ if(autoPrintOn()&&Date.now()-autoNextAt<20000){ autoNextAt=0; rawPrint(bl); } }
+  function maybeAuto(bl,docFn){ if(autoPrintOn()&&Date.now()-autoNextAt<20000){ autoNextAt=0; printAny(bl,docFn); } }
   document.addEventListener("click",e=>{ const p=e.target.closest("[data-print]"); if(!p) return; const k=p.dataset.print;
-    if(k==="tk"){ printTicket(); return; } rawPrint(k==="b"?bBlob:k==="sh"?shBlob:k==="ab"?abBolBlob:null); });
+    if(k==="tk"){ printTicket(); return; } if(k==="b") printAny(bBlob,bDocFn); else if(k==="sh") printAny(shBlob,shDocFn); else if(k==="ab") printAny(abBolBlob,abDocFn); });
   async function showTicket(tk){
     const cv=await drawTicket(tk); lastTicket=tk;
     $("#tkImg").src=cv.toDataURL("image/png"); $("#tkNum").textContent="N° "+tk.num;
@@ -1808,8 +1873,8 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       : '<p class="muted">Ningún abonado tiene pagos este mes.</p>') : '<p class="muted">Todavía no hay abonados. Agrega el primero con «+ Nuevo abonado».</p>';
   }
   $("#aMonthList").addEventListener("toggle",e=>{ if(e.target.classList&&e.target.classList.contains("amd")) aListOpen=e.target.open; },true);
-  $("#aCal").addEventListener("click",e=>{ const b=e.target.closest("[data-aday]"); if(!b) return; aSelDay=aSelDay===b.dataset.aday?null:b.dataset.aday; renderAbonados(); if(aSelDay) $("#aList").scrollIntoView({behavior:"smooth",block:"start"}); });
-  $("#aList").addEventListener("click",e=>{
+  $("#aCal").addEventListener("click",e=>{ const b=e.target.closest("[data-aday]"); if(!b) return; aSelDay=aSelDay===b.dataset.aday?null:b.dataset.aday; renderAbonados(); if(aSelDay) $("#aDayCard").scrollIntoView({behavior:"smooth",block:"start"}); });
+  $("#v-abonados").addEventListener("click",e=>{
     const bb=e.target.closest("[data-abbol]"); if(bb){ const [id,per]=bb.dataset.abbol.split("|"); const ab=abonadosAll.find(x=>x.id===id); if(ab&&ab.pagos&&ab.pagos[per]) showAbBol(ab,per,ab.pagos[per]); return; }
     const fl=e.target.closest("[data-abf]"); if(fl){ abFilter=fl.dataset.abf; renderAbonados(); return; } if(e.target.closest("[data-abday]")){ aSelDay=null; renderAbonados(); } },true);
   $("#prevA").addEventListener("click",()=>{ aCur.m--; if(aCur.m<0){aCur.m=11;aCur.y--;} renderACal(); });
@@ -1822,7 +1887,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   function aboEspOpts(a){ let h='<option value="">Ninguno</option>'; SPACES.slice().sort((x,y)=>espSort(x.id,y.id)).forEach(s=>{ const mine=espKey(a.esp)===s.id; const otros=aboEn(s.id).filter(x=>x.id!==a.id);
     const choque=s.k!=="moto"&&!mine&&otros.find(x=>aboSolapa(x.mod,a.mod)); const nm=s.k==="moto"&&!abMotoOk(a.tipo)&&!mine; const comp=s.k!=="moto"&&!choque&&otros[0];
     h+='<option value="'+s.id+'"'+(mine?' selected':'')+(choque||nm?' disabled':'')+'>'+s.id+(choque?' · '+esc(choque.placa||choque.nombre):(nm?' · solo motos':(s.k==="moto"?' · motos (compartido)':(comp?' · compartido con '+esc(comp.placa||comp.nombre)+' ('+(ABMOD[comp.mod]||"")+')':''))))+'</option>'; }); return h; }
-  $("#aList").addEventListener("change",e=>{
+  $("#v-abonados").addEventListener("change",e=>{
     const sel=e.target.closest("[data-abesp]"); if(!sel||!needDb()) return; const id=sel.dataset.abesp, v=sel.value; queue(()=>db.doc("abonados/"+id).update({esp:v}).then(()=>toast(v?"Espacio fijo "+v+" asignado":"Espacio fijo quitado"))); });
   const COLORES=["blanco","negro","plata","gris","gris oscuro","azul","rojo","verde","amarillo","naranja","marrón","beige","dorado","celeste","guinda","morado","plomo"];
   function abMC(a){ if(a.marca!=null||a.color!=null) return {marca:a.marca||"",color:a.color||""}; const d=String(a.desc||"").trim(); if(!d) return {marca:"",color:""};
@@ -1875,24 +1940,42 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     abonadosAll.forEach(a=>{ const v=(a.pagos||{})[f]; if(v){ R.push({a,paid:v}); return; }
       if(a.retiro||!a.vence) return; for(let k=0;k<36;k++){ const d=addMonths(a.vence,k); if(d===f){ R.push({a,k}); break; } if(d>f) break; } });
     return R.sort((x,y)=>(x.paid?1:0)-(y.paid?1:0)||x.a.nombre.localeCompare(y.a.nombre)); }
-  function renderAbonados(){
-    renderACal(); renderFijos(); renderRetirados();
-    const FIL={todos:["Todos",x=>true],mig:["Migraciones",esMig],"24h":["24 horas",x=>x.mod==="24h"],dia:["Día",x=>x.mod==="dia"],noche:["Noche",x=>x.mod==="noche"]};
-    const l=abonados.filter(FIL[abFilter][1]).sort((a,b)=>(a.vence||"").localeCompare(b.vence||""));
-    $("#aCount").textContent=abonados.length?abonados.length+" activos":"";
-    const chips='<div class="chips tight abfil">'+Object.entries(FIL).map(([k,[lb,f]])=>'<button type="button" class="chip" data-abf="'+k+'" aria-pressed="'+(abFilter===k)+'">'+lb+' ('+abonados.filter(f).length+')</button>').join("")+'</div>';
-    if(aSelDay){ const R=abDayItems(aSelDay), d=parse(aSelDay), pg=R.filter(x=>x.paid), pe=R.filter(x=>!x.paid);
-      const tP=pg.reduce((s,x)=>s+num(x.paid.m||x.a.monto),0), tE=pe.reduce((s,x)=>s+num(x.a.monto),0);
-      const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
-      $("#aList").innerHTML='<div class="abg sel"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong><span class="muted num">'+pg.length+' pagaron · '+money(tP)+' &nbsp; | &nbsp; '+pe.length+' faltan · '+money(tE)+'</span><button class="btn small" type="button" data-abday="">Ver todos</button></div>'
-        +(R.length?R.map(x=>abCard(x.a,ctx(x))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
-      return; }
-    const grpHead=f=>{ const G=l.filter(x=>(x.vence||"")===f), tot=G.reduce((s,x)=>s+num(x.monto),0);
-      if(!f) return '<div class="abg"><strong>Sin fecha de pago</strong><span class="muted num">'+G.length+(G.length===1?' abonado':' abonados')+'</span></div>';
-      const d=parse(f), st=abState(G[0]); return '<div class="abg"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong> <span class="pill '+st.c+'">'+esc(st.c==="ok"?"Próximo pago":st.txt)+'</span><span class="muted num">'+G.length+(G.length===1?' abonado':' abonados')+' · '+money(tot)+'</span></div>'; };
-    let lastF=null;
-    $("#aList").innerHTML=chips+(abFilter!=="todos"&&l.length?'<p class="note" style="margin-top:0">'+l.length+' abonados · '+money(l.reduce((s,x)=>s+num(x.monto),0))+' al mes</p>':'')+(l.length?'<p class="note" style="margin-top:0">Toca un día del calendario para ver solo los abonados de esa fecha.</p>'+l.map(a=>{ const hd=(a.vence||"")!==lastF?grpHead(a.vence||""):""; lastF=a.vence||""; return hd+abCard(a); }).join(""):'<p class="muted">'+(abonados.length?'Ningún abonado en este filtro.':'Todavía no hay abonados. Agrega el primero con «+ Nuevo abonado».')+'</p>');
+  const AFIL={todos:["Todos",x=>true],mig:["Migraciones",a=>esMig(a)],"24h":["24 horas",x=>x.mod==="24h"],dia:["Día",x=>x.mod==="dia"],noche:["Noche",x=>x.mod==="noche"]};
+  let aTab=lsGet("ph_atab")==="cal"?"cal":"lista"; const abOpen=new Set();
+  const normQ=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  function abMatch(a,q){ if(!q) return true; const mc=abMC(a);
+    const hay=normQ([a.nombre,a.placa,(a.placa||"").replace(/-/g,""),a.cel,(a.cel||"").replace(/\D/g,""),mc.marca,mc.color,a.dir,a.obs,a.esp?"espacio "+a.esp:"",ABMOD[a.mod],abVeh(a)].join(" "));
+    return normQ(q).split(/\s+/).filter(Boolean).every(w=>hay.includes(w)||hay.includes(w.replace(/[^a-z0-9]/g,""))); }
+  function abRow(a){ const open=abOpen.has(a.id)||abEdit===a.id; const st=abState(a);
+    return '<details class="abrow" data-abrow="'+a.id+'"'+(open?' open':'')+'><summary><span class="nm">'+esc(a.nombre)+'</span><span class="pl num">'+esc(a.placa||"sin placa")+'</span><span class="esp num">'+(espKey(a.esp)?esc(a.esp):'<span class="muted">—</span>')+'</span><span class="cel num">'+(a.cel?esc(a.cel):'<span class="muted">sin celular</span>')+'</span>'+(st.c==="bad"?'<i class="dot bad" title="'+esc(st.txt)+'"></i>':'')+'</summary>'+(open?'<div class="abrow-in">'+abCard(a)+'</div>':'')+'</details>'; }
+  function applyATab(){ $("#aTabLista").hidden=aTab!=="lista"; $("#aTabCal").hidden=aTab!=="cal";
+    document.querySelectorAll("[data-atab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.atab===aTab))); }
+  function renderAbList(){
+    const q=$("#aQ").value.trim(), fe=$("#aQEsp").value;
+    // lista de espacios ocupados por abonados para el filtro
+    const esps=[...new Set(abonados.map(a=>espKey(a.esp)).filter(Boolean))].sort(espSort);
+    const se=$("#aQEsp"); se.innerHTML='<option value="">Todos los espacios</option><option value="-">Sin espacio fijo</option>'+esps.map(k=>'<option value="'+esc(k)+'">Espacio '+esc(k)+' ('+abonados.filter(a=>espKey(a.esp)===k).length+')</option>').join(""); se.value=(fe&&(fe==="-"||esps.includes(fe)))?fe:"";
+    const fe2=se.value;
+    const base=abonados.filter(AFIL[abFilter][1]).filter(a=>!fe2||(fe2==="-"?!espKey(a.esp):espKey(a.esp)===fe2)); const l=base.filter(a=>abMatch(a,q)).sort((x,y)=>(x.nombre||"").localeCompare(y.nombre||"","es"));
+    $("#aCount").textContent=abonados.length?"("+abonados.length+")":"";
+    const chips='<div class="chips tight abfil">'+Object.entries(AFIL).map(([k,[lb,f]])=>'<button type="button" class="chip" data-abf="'+k+'" aria-pressed="'+(abFilter===k)+'">'+lb+' ('+abonados.filter(f).length+')</button>').join("")+'</div>';
+    const info=(q||abFilter!=="todos"||fe2)?'<p class="note" style="margin:0 0 6px">'+l.length+(l.length===1?' abonado':' abonados')+(q?' encontrados':'')+' · '+money(l.reduce((s,x)=>s+num(x.monto),0))+' al mes</p>':'';
+    $("#aList").innerHTML=chips+info+(l.length?'<div class="abhead"><span>Nombre</span><span>Placa</span><span>Esp.</span><span>Celular</span></div>'+l.map(abRow).join("")
+      :'<p class="muted">'+(!abonados.length?'Todavía no hay abonados. Agrégalos con «+ Nuevo abonado».':q?'No hay abonados que coincidan con «'+esc(q)+'».':'Ningún abonado en este filtro.')+'</p>');
   }
+  function renderAbDay(){
+    if(!aSelDay){ $("#aDayList").innerHTML='<p class="note" style="margin:0">Toca un día del calendario para ver quién paga ese día y registrar sus pagos.</p>'; return; }
+    const R=abDayItems(aSelDay), d=parse(aSelDay), pg=R.filter(x=>x.paid), pe=R.filter(x=>!x.paid);
+    const tP=pg.reduce((s,x)=>s+num(x.paid.m||x.a.monto),0), tE=pe.reduce((s,x)=>s+num(x.a.monto),0);
+    const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
+    $("#aDayList").innerHTML='<div class="abg sel"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong><span class="muted num">'+pg.length+' pagaron · '+money(tP)+' &nbsp; | &nbsp; '+pe.length+' faltan · '+money(tE)+'</span><button class="btn small" type="button" data-abday="">Cerrar</button></div>'
+      +(R.length?R.map(x=>abCard(x.a,ctx(x))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
+  }
+  function renderAbonados(){ renderACal(); renderFijos(); renderRetirados(); applyATab(); renderAbList(); renderAbDay(); }
+  document.querySelectorAll("[data-atab]").forEach(b=>b.addEventListener("click",()=>{ aTab=b.dataset.atab; lsSet("ph_atab",aTab==="cal"?"cal":null); applyATab(); }));
+  $("#aQ").addEventListener("input",renderAbList); $("#aQEsp").addEventListener("change",renderAbList);
+  $("#aList").addEventListener("toggle",e=>{ const r=e.target; if(!r.classList||!r.classList.contains("abrow")) return; const id=r.dataset.abrow;
+    if(r.open){ abOpen.add(id); if(!r.querySelector(".abrow-in")){ const a=abonados.find(x=>x.id===id); if(a) r.insertAdjacentHTML("beforeend",'<div class="abrow-in">'+abCard(a)+'</div>'); } } else { abOpen.delete(id); if(abEdit===id) abEdit=null; } },true);
   $("#aTipo").addEventListener("change",()=>{ const o=$("#aTipo").value==="otro"; $("#aOtroW").hidden=!o; if(o) $("#aOtro").focus(); });
   $("#addAbX").addEventListener("click",()=>{ $("#newAb").open=false; });
   $("#newAb").addEventListener("toggle",()=>{ if($("#newAb").open){ fillEspSelect($("#aEsp"),$("#aEsp").value,{abo:true,empty:"Sin espacio fijo",mod:$("#aMod").value}); setTimeout(()=>$("#aNom").focus(),50); } });
@@ -1906,7 +1989,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     if(tipo==="otro") a.tipoOtro=otro;
     queue(()=>db.collection("abonados").doc(rid()).set(a).then(()=>{ toast("Abonado agregado"); $("#newAb").open=false; ["aNom","aPlaca","aMonto","aVence","aEsp","aOtro","aMarca","aColor","aCel","aDir","aObs"].forEach(i=>$("#"+i).value=""); $("#aMod").value="24h"; $("#aTipo").value="auto"; $("#aOtroW").hidden=true; }));
   });
-  $("#aList").addEventListener("click",e=>{
+  $("#v-abonados").addEventListener("click",e=>{
     const tg=e.target.closest("[data-abtog]"); if(tg){ aboPresTog(tg.dataset.abtog,tg.dataset.fuera==="1"); return; }
     const ed=e.target.closest("[data-abedit]"); if(ed){ abEdit=ed.dataset.abedit; renderAbonados(); const f=$("#e-nom-"+abEdit); if(f) f.focus(); return; }
     if(e.target.closest("[data-abcancel]")){ abEdit=null; renderAbonados(); return; }
@@ -2212,6 +2295,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
       +'<div><span>Placa</span><strong>'+esc(a.placa||"—")+'</strong></div><div><span>Periodo</span><strong class="num">'+ddmm(parse(per))+' al '+ddmm(parse(v.hasta||addMonths(per,1)))+'</strong></div>'
       +'<div><span>Forma de pago</span><strong>'+(v.p==="yape"?"Yape":"Efectivo")+'</strong></div><div class="tot"><span>Total pagado</span><strong class="num">'+money(v.m)+'</strong></div></div>'
       +'<img id="bImg" class="tkimg" alt="Boleta N° '+pad6(m.comp)+'" style="margin-top:14px"><div class="formfoot"><button class="btn primary" type="button" data-print="b">🖨 Imprimir</button><button class="btn" id="bSave" type="button"'+(dl?'':' hidden')+'>Descargar</button></div>';
+    bDocFn=()=>bolAbDoc(a,per,v);
     drawBoletaAb(a,per,v).then(async cv=>{ const img=$("#bImg"); if(!img) return; img.src=cv.toDataURL("image/png"); bBlob=await new Promise(r=>cv.toBlob(r,"image/png")); });
   }
   function renderBSel(t){
@@ -2226,7 +2310,8 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     if(t.comp) h+='<img id="bImg" class="tkimg" alt="Boleta N° '+pad6(t.comp)+'" style="margin-top:14px"><div class="formfoot"><button class="btn primary" type="button" data-print="b">🖨 Imprimir</button><button class="btn" id="bSave" type="button"'+(dl?'':' hidden')+'>Descargar</button><a class="btn" id="bWa" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">Enviar por WhatsApp</a></div>';
     else h+='<div class="formfoot"><button class="btn primary" id="bGen" type="button" style="flex:1">Generar boleta</button></div>';
     $("#bBox").innerHTML=h;
-    if(t.comp) drawBoleta(t).then(async cv=>{ const img=$("#bImg"); if(!img) return; img.src=cv.toDataURL("image/png"); bBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(bBlob);
+    if(t.comp) bDocFn=()=>bolDoc(t);
+    if(t.comp) drawBoleta(t).then(async cv=>{ const img=$("#bImg"); if(!img) return; img.src=cv.toDataURL("image/png"); bBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(bBlob,bDocFn);
       const txt="Playa de Estacionamiento Huaraz\nBoleta N° "+pad6(t.comp)+"\nPlaca: "+t.placa+" · Ticket N° "+t.num+"\nEntrada: "+ddmm(new Date(t.ent))+" "+t.hi+" · Salida: "+ddmm(new Date(t.sal))+" "+t.ho+"\nTotal pagado: "+money(paidTotal(t))+" ("+medioTxt(t)+")\n¡Gracias por su preferencia!";
       const wa=$("#bWa"); if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(txt); });
   }
@@ -2315,7 +2400,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   }
   window.__drawBoletaAb=drawBoletaAb;
   let abBolBlob=null, abBolNum=null;
-  async function showAbBol(a,per,v){ const cv=await drawBoletaAb(a,per,v); $("#abBolImg").src=cv.toDataURL("image/png"); abBolBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(abBolBlob); abBolNum=v.comp;
+  async function showAbBol(a,per,v){ const cv=await drawBoletaAb(a,per,v); $("#abBolImg").src=cv.toDataURL("image/png"); abDocFn=()=>bolAbDoc(a,per,v); abBolBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(abBolBlob,abDocFn); abBolNum=v.comp;
     $("#abBolT").textContent="N° "+pad6(v.comp)+" · "+a.nombre; $("#abBolCard").hidden=false; $("#abBolCard").scrollIntoView({behavior:"smooth",block:"start"}); }
   $("#abBolX").addEventListener("click",()=>{ $("#abBolCard").hidden=true; });
   $("#abBolSave").addEventListener("click",async()=>{ if(!dl||!abBolBlob){ toast("Mantén presionada la imagen para guardarla."); return; } try{ await dl.save({filename:"abonado-"+pad6(abBolNum)+".png",data:abBolBlob}); }catch(err){ if(err&&err.code!=="declined") toast("No se pudo descargar. Mantén presionada la imagen para guardarla."); } });
@@ -2367,7 +2452,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   });
   async function showBanoPrev(m){
     const cv=await drawBano(m); if(shSel!==m.id) return;
-    shBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(shBlob);
+    shDocFn=()=>banoDoc(m); shBlob=await new Promise(r=>cv.toBlob(r,"image/png")); maybeAuto(shBlob,shDocFn);
     $("#shPrev").innerHTML='<img class="tkimg" alt="Comprobante SS.HH. N° '+pad6(m.comp)+'" src="'+cv.toDataURL("image/png")+'"><div class="formfoot" style="justify-content:center"><button class="btn primary small" type="button" data-print="sh">🖨 Imprimir</button><button class="btn small" type="button" id="shSave"'+(dl?'':' hidden')+'>Descargar</button></div>';
   }
   $("#shPrev").addEventListener("click",async e=>{

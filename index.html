@@ -826,7 +826,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   async function call(a, body){
     const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, k: key }, body || {})) });
     const j = await r.json();
-    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; if (j.err === "bad_key" && a !== "init") askKey(true); throw e; }
+    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; if (j.err === "bad_key" && a !== "init" && a !== "ping" && !document.getElementById("phLogin")) askKey(true); throw e; }
     return j;
   }
   function setOnline(v){ if (online === v) return; online = v; const b = document.getElementById("bConn"), t = document.getElementById("bConnTxt");
@@ -926,7 +926,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
   const downloads = { async save({ filename, data }){ const u = URL.createObjectURL(data); const a = document.createElement("a"); a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); } };
 
   // ---------- clave de acceso ----------
-  let keyReady, keyResolve; keyReady = new Promise(r => keyResolve = r);
+  let keyReady, keyResolve, keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); });
   function askKey(bad, first){
     let ov = document.getElementById("phLogin");
     if (!ov){ ov = document.createElement("div"); ov.id = "phLogin";
@@ -940,7 +940,7 @@ button.hpb{cursor:pointer;background:transparent;font:inherit;font-size:13px}
     const msg = t => { ov.querySelector("#phLoginMsg").textContent = t; };
     ov.dataset.first = first ? "1" : "";
     msg(first ? "Primera vez: crea la clave de acceso que usarán todos los celulares de la playa." : bad ? "La clave guardada ya no es válida. Escríbela de nuevo." : "Escribe la clave de acceso de la playa.");
-    if (bad){ key = ""; localStorage.removeItem(LS_KEY); keyReady = new Promise(r => keyResolve = r); }
+    if (bad){ key = ""; localStorage.removeItem(LS_KEY); if (keyDone){ keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); }); } }
     setTimeout(() => ov.querySelector("#phLoginKey").focus(), 50);
   }
 

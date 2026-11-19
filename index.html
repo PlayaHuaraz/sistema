@@ -125,6 +125,7 @@ td.r,th.r{text-align:right}
   .tile .v{font-size:26px}
   .brk{grid-template-columns:100px 1fr auto}
 }
+[hidden]{display:none !important}
 
 /* ---- Playa: entrada y salida ---- */
 .big-in{font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:center;min-height:58px}
@@ -349,6 +350,27 @@ details.fold>summary h2{margin:0}
 details.fold>summary::after{content:"";width:10px;height:10px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 6px 4px 0;transition:transform .15s}
 details.fold[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
 details.fold[open]>summary{margin-bottom:12px}
+
+.abxa{border:1px solid #d9a521;background:rgba(217,165,33,.12);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.abxr{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(217,165,33,.35)}
+.abxb{display:flex;gap:6px;flex-wrap:wrap}
+
+.abxi{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.abxi .ae{font-family:var(--display);font-weight:700;font-size:22px;text-align:center}
+.abxi .an{display:flex;flex-direction:column;min-width:0}.abxi .an b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.abxi .an small{font-size:12.5px}
+#abxCard .abxa{margin-bottom:10px}
+
+.intabs{margin:-4px -4px 14px}.intabs button{font-size:14px;padding:9px 6px}
+.tbadge{display:inline-block;background:#d9a521;color:#1b1b1b;border-radius:999px;font-size:11px;padding:1px 6px;margin-left:4px;font-weight:700}
+
+#chk .cj-tot strong,#chk .cj-tot span{font-weight:700}
+#chk .cj-sep{border-top:1px dashed var(--line);margin:4px 0;padding:0}
+.banner-warn{background:rgba(217,165,33,.15);border:1px solid #d9a521;border-radius:10px;padding:8px 10px;margin:0 0 10px;color:inherit}
+nav a.navwarn::after{content:" ⏰"}
+#chk .cj-h{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding-bottom:0}
+.pmx{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.pmx label{display:inline-flex;gap:4px;align-items:center;font-weight:500;margin:0}.pmx input{width:84px;min-height:34px;padding:4px 8px}
+.pcv{display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px}.pcv strong{font-size:22px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -371,6 +393,7 @@ details.fold[open]>summary{margin-bottom:12px}
     <a href="#ticketera" data-v="ticketera">Ticketera</a>
     <a href="#planograma" data-v="planograma">Planograma</a>
     <a href="#boleta" data-v="boleta">Boletas</a>
+    <a href="#sshh" data-v="sshh">SS.HH.</a>
     <a href="#abonados" data-v="abonados">Abonados</a>
     <a href="#ingresos" data-v="ingresos">Ingresos</a>
     <a href="#tarifas" data-v="tarifas">⚙ Opciones</a>
@@ -385,6 +408,11 @@ details.fold[open]>summary{margin-bottom:12px}
     <div class="grid2">
       <!-- ENTRADA -->
       <div class="card" id="cardIn">
+        <div class="subtabs intabs" role="tablist" aria-label="Tipo de entrada">
+          <button type="button" role="tab" data-itab="in" aria-selected="true">Entrada</button>
+          <button type="button" role="tab" data-itab="abx" aria-selected="false">Abonados (tiempo extra) <span class="tbadge" id="abxBadge" hidden></span></button>
+        </div>
+        <div id="inTabIn">
         <h2>Entrada <small id="nextNum"></small></h2>
         <label for="inPlaca">Placa</label>
         <div class="inrow">
@@ -425,6 +453,14 @@ details.fold[open]>summary{margin-bottom:12px}
         <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
         <p class="note" id="pIosNote" hidden>En iPhone, al tocar 🖨 Imprimir se abre Compartir: elige la app de la impresora (por ejemplo, Express Thermal Print).</p>
         <div class="btprn"><button class="btn small" type="button" id="btConnect">🖨 Conectar impresora Bluetooth</button><span class="muted" id="btState">Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)</span></div>
+              </div>
+        <div id="inTabAbx" hidden>
+      <h2>Abonados · tiempo extra</h2>
+      <p class="note" style="margin-top:0">Para abonados de día o de noche que llegan antes de su hora o se quedan después. Se cobra la hora normal, solo por el tiempo fuera de su plan.</p>
+      <div id="abxAlert" hidden></div>
+      <input id="abxQ" type="search" placeholder="🔎 Espacio, nombre o placa" autocomplete="off" aria-label="Buscar abonado" style="margin-bottom:8px">
+      <div id="abxList"></div>
+        </div>
       </div>
 
       <!-- TICKET GENERADO / SALIDA -->
@@ -544,6 +580,9 @@ details.fold[open]>summary{margin-bottom:12px}
       <div class="inside" id="bList" style="margin-top:12px"></div>
     </div>
 
+    <p class="note">Por ahora es un comprobante interno, sin RUC. No reemplaza a la boleta de venta de SUNAT.</p>
+  </section>
+  <section class="view" id="v-sshh" hidden>
     <div class="card">
       <h2>Boleta de SS.HH. <small>alquiler de baño</small></h2>
       <div class="grid2" style="gap:12px">
@@ -571,7 +610,6 @@ details.fold[open]>summary{margin-bottom:12px}
         <tbody id="shRows"></tbody>
       </table></div>
     </div>
-    <p class="note">Por ahora es un comprobante interno, sin RUC. No reemplaza a la boleta de venta de SUNAT.</p>
   </section>
 
   <!-- ABONADOS -->
@@ -661,7 +699,7 @@ details.fold[open]>summary{margin-bottom:12px}
       <div class="check" id="repChk" style="margin-top:0;padding-top:0;border-top:0"></div>
       <label style="margin-top:12px">Mensaje para WhatsApp</label>
       <pre class="repmsg" id="repMsg"></pre>
-      <div style="margin-top:10px"><label for="rNota">Nota (opcional, se agrega al mensaje)</label><input id="rNota" placeholder="Ej.: cerró Alberto, faltó sencillo"></div>
+      <div style="margin-top:10px"><label for="rNota">Nota (opcional, se agrega al mensaje)</label><input id="rNota" placeholder="Ej.: faltó sencillo"></div>
       <div class="formfoot">
         <button class="btn primary" id="copyRep" type="button">Copiar para WhatsApp</button>
         <button class="btn" id="saveRep" type="button">Guardar nota</button>
@@ -670,11 +708,14 @@ details.fold[open]>summary{margin-bottom:12px}
 
     <div class="grid2">
       <div class="card">
-        <h2>Cierre de caja</h2>
+        <h2>Cierre de caja <small>efectivo</small></h2>
+        <p class="note banner-warn" id="cierreBanner" hidden></p>
         <div class="fields">
-          <div><label for="cEf">Efectivo entregado y contado (S/)</label><input id="cEf" class="num" type="number" min="0" step="0.5" inputmode="decimal"></div>
+          <div><label for="cEf">Ingresos contados (S/)</label><input id="cEf" class="num" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Sin el fondo"></div>
+          <div><label for="cFondoC">Fondo de caja contado (S/)</label><input id="cFondoC" class="num" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Debe ser 500"></div>
+          <div><label for="cFondo">Fondo que debe quedar (S/)</label><input id="cFondo" class="num" type="number" min="0" step="0.5" inputmode="decimal" value="500"></div>
         </div>
-        <div style="margin-top:10px"><label for="cNota">Nota</label><textarea id="cNota" placeholder="Ej.: faltó sencillo, cerró Alberto"></textarea></div>
+        <div style="margin-top:10px"><label for="cNota">Nota</label><textarea id="cNota" placeholder="Ej.: faltó sencillo"></textarea></div>
         <div class="formfoot"><button class="btn primary" id="saveCierre" type="button">Guardar cierre</button></div>
         <div class="check" id="chk"></div>
       </div>
@@ -1057,11 +1098,14 @@ details.fold[open]>summary{margin-bottom:12px}
   // ---------- cálculo de cobro (función pura) ----------
   function horas(m, min1, tol){ if(m<=tol) return min1?1:0; return Math.ceil((m-tol)/60); }
   function finTramo(ent, hm){ const [h,m]=hm.split(":").map(Number); const d=new Date(ent); d.setHours(h,m,0,0); if(d.getTime()<=ent) d.setDate(d.getDate()+1); return d.getTime(); }
+  // minutos que un abonado pasa fuera de su horario (día 06:30–20:00, noche 20:00–08:00)
+  function minsFuera(ent,at,mod){ let n=0; for(let t=ent;t<at;t+=60000){ if(!aboEnHorario({mod},new Date(t))) n+=Math.min(1,(at-t)/60000); } return n; }
   function calc(tk, at, conf){
     conf=conf||cfg; const tar=(conf.tar||{})[tk.tipo]||{}; const tol=num(conf.tol);
     const hr = tar.hora==null||tar.hora===""?null:num(tar.hora);
     const mins=(at-tk.ent)/60000; const o={mins,base:0,extra:0,h:0,eh:0,end:null,falta:false};
-    if(tk.modo==="hora"){ o.h=horas(mins,true,tol); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
+    if(tk.abx){ const fm=minsFuera(tk.ent,at,tk.abx.mod); o.fm=fm; o.h=fm<=tol?0:Math.ceil((fm-tol)/60); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
+    else if(tk.modo==="hora"){ o.h=horas(mins,true,tol); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
     else{
       const flat = tar[tk.modo]==null||tar[tk.modo]===""?null:num(tar[tk.modo]); if(flat==null) o.falta=true;
       o.base=flat||0; o.end=finTramo(tk.ent, tk.modo==="noche"?conf.nocheFin:conf.diaFin);
@@ -1109,7 +1153,7 @@ details.fold[open]>summary{margin-bottom:12px}
       +(S.ot?'<div class="tile"><div class="k">Otros ingresos</div><div class="v num">'+money(S.ot)+'</div><div class="s">'+p(S.ot)+'</div></div>':''); }
   function cierreState(doc){
     if(!doc||!doc.cierre||doc.cierre.ef==null||doc.cierre.ef==="") return {s:"sin"};
-    const dif=num(doc.cierre.ef)-totals(doc).ef; return {s:Math.abs(dif)<0.5?"ok":"bad",dif};
+    const dif=num(doc.cierre.ef)-totals(doc).ef; return {s:Math.abs(dif)<0.5?"ok":"bad",dif}; // se cuentan solo los ingresos; el fondo de vuelto va aparte
   }
 
   // ---------- escritura ----------
@@ -1129,7 +1173,7 @@ details.fold[open]>summary{margin-bottom:12px}
   function needDb(){ if(!db){ toast("Abre la página con tu cuenta de Claude para guardar."); return false; } return true; }
 
   // ---------- navegación ----------
-  const VIEWS=["ticketera","planograma","boleta","abonados","ingresos","tarifas"];
+  const VIEWS=["ticketera","planograma","boleta","sshh","abonados","ingresos","tarifas"];
   let ingSub="dia";
   function show(v){
     if(v==="playa") v="ticketera";
@@ -1160,20 +1204,52 @@ details.fold[open]>summary{margin-bottom:12px}
     const d = n.length>=5 && active.find(t=>t.placaN===n);
     if(d){ w.textContent="Esta placa ya está en la playa con el ticket N° "+d.num+" (entró a las "+d.hi+")."; w.classList.remove("hide"); }
     else w.classList.add("hide");
-    const ab=$("#inAbo"); const A=n.length>=5?abonadosAll.find(a=>normP(a.placa)===n):null;
-    if(!A){ ab.classList.add("hide"); ab.innerHTML=""; return; }
-    if(A.retiro){ ab.className="abonote warn"; ab.innerHTML='<strong>'+esc(A.nombre)+'</strong> fue abonado y se retiró ('+retTxt(A.retiro)+'). Si entra hoy, se le cobra ticket normal.'; return; }
+    const ab=$("#inAbo");
+    // solo se redibuja si cambió: así un toque en sus botones no se pierde al salir del campo placa
+    const setAbo=(cls,html)=>{ if(ab.className!==cls) ab.className=cls; if(ab.dataset.h!==html){ ab.dataset.h=html; ab.innerHTML=html; } }; const A=n.length>=5?abonadosAll.find(a=>normP(a.placa)===n):null;
+    if(!A){ ab.classList.add("hide"); ab.innerHTML=""; ab.dataset.h=""; return; }
+    if(A.retiro){ setAbo("abonote warn",'<strong>'+esc(A.nombre)+'</strong> fue abonado y se retiró ('+retTxt(A.retiro)+'). Si entra hoy, se le cobra ticket normal.'); return; }
     const st=abState(A); const fuera=(A.mod==="dia"||A.mod==="noche")&&!aboEnHorario(A);
-    ab.className="abonote "+(st.c==="bad"?"bad":"ok");
-    ab.innerHTML='<strong>Es abonado: '+esc(A.nombre)+'</strong> · '+(ABMOD[A.mod]||"abonado")+(A.esp?' · espacio fijo '+esc(A.esp):'')+'<br><span class="pill '+st.c+'">'+esc(st.txt)+'</span>'
-      +(st.c==="bad"?' No se le genera ticket: cóbrale su mensualidad en <a href="#" data-goab="1">Abonados</a>.':' No necesita ticket.')
-      +(fuera?'<br>Ojo: su plan es '+horarioTxt(A)+'. Fuera de ese horario se cobra aparte.':'')
-      +(espKey(A.esp)&&aboEnHorario(A)?'<div style="margin-top:8px"><button class="btn small'+(aboFuera(A)?' primary':'')+'" type="button" data-abtog="'+A.id+'" data-fuera="'+(aboFuera(A)?0:1)+'">'+(aboFuera(A)?'Registrar ingreso · ocupa el espacio '+esc(A.esp):'Marcar salida · libera el espacio '+esc(A.esp))+'</button></div>':'');
+    if(active.find(t=>t.abx&&t.abx.id===A.id)){ setAbo("abonote ok",'<strong>'+esc(A.nombre)+'</strong> ya tiene un ticket de tiempo extra abierto.'); return; }
+    setAbo("abonote "+(st.c==="bad"?"bad":"ok"),'<strong>Es abonado: '+esc(A.nombre)+'</strong> · '+(ABMOD[A.mod]||"abonado")+(A.esp?' · espacio fijo '+esc(A.esp):'')+'<br><span class="pill '+st.c+'">'+esc(st.txt)+'</span>'
+      +(st.c==="bad"?' No se le genera ticket: cóbrale su mensualidad en <a href="#" data-goab="1">Abonados</a>.':(fuera?'':' No necesita ticket.'))
+      +(fuera&&st.c!=="bad"?'<br>Está <strong>fuera de su horario</strong> ('+horarioTxt(A)+'): se cobra por hora solo el tiempo fuera de su plan.<div style="margin-top:6px"><a href="#" data-goabx="'+A.id+'">Generar su ticket en la pestaña «Abonados (tiempo extra)»</a></div>':'')
+      +(espKey(A.esp)&&aboEnHorario(A)?'<div style="margin-top:8px"><button class="btn small'+(aboFuera(A)?' primary':'')+'" type="button" data-abtog="'+A.id+'" data-fuera="'+(aboFuera(A)?0:1)+'">'+(aboFuera(A)?'Registrar ingreso · ocupa el espacio '+esc(A.esp):'Marcar salida · libera el espacio '+esc(A.esp))+'</button></div>':''));
   }
   $("#inTipo").addEventListener("click",e=>{ const b=e.target.closest("[data-tipo]"); if(!b) return; inTipo=b.dataset.tipo; renderEntrada(); });
   $("#inModo").addEventListener("click",e=>{ const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); });
   $("#inPlaca").addEventListener("input",checkDup);
-  $("#inAbo").addEventListener("click",e=>{ const tg=e.target.closest("[data-abtog]"); if(tg){ aboPresTog(tg.dataset.abtog,tg.dataset.fuera==="1"); return; } if(e.target.closest("[data-goab]")){ e.preventDefault(); const t=document.querySelector('[data-v="abonados"]'); if(t) t.click(); } });
+  let abxPend=null;
+  function abxTipo(a){ return a.tipo&&a.tipo!=="otro"&&rate(a.tipo,"hora")!=null?a.tipo:(a.tipo==="otro"&&rate("moto","hora")!=null?"moto":"auto"); }
+  function abxTicket(a,desde){ if(!needDb()) return; if(active.find(t=>t.abx&&t.abx.id===a.id)){ toast(a.nombre+" ya tiene un ticket de tiempo extra abierto."); return; }
+    const tipo=abxTipo(a); if(rate(tipo,"hora")==null){ toast("No hay tarifa por hora para "+vehL(tipo).toLowerCase()+"."); return; }
+    queue(async()=>{ try{
+      const n=await claimNumber(), d=new Date(), entT=desde||d.getTime(), de=new Date(entT);
+      const placa=a.placa?fmtP(a.placa):("ABON. "+(a.esp||a.nombre.split(" ")[0])).toUpperCase();
+      const tk={num:n, placa, placaN:normP(a.placa||("AB"+a.id)), tipo, modo:"hora", tarifa:rate(tipo,"hora"), ent:entT, fecha:iso(de), hi:hhmm(de),
+        esp:a.esp||"", llave:"sin", obs:"Abonado "+(ABMOD[a.mod]||"").toLowerCase()+": "+a.nombre, marca:abMC(a).marca||"", color:abMC(a).color||"", tel:a.cel||"", adel:[], estado:"dentro",
+        abx:{id:a.id,nombre:a.nombre,mod:a.mod}};
+      await db.doc("tickets/"+n).set(tk);
+      armAuto(); await showTicket(tk); active=active.filter(x=>x.num!==tk.num).concat([tk]); renderInside(); renderAbxList();
+      $("#cardOut").scrollIntoView({behavior:"smooth",block:"start"});
+      toast("Ticket de tiempo extra N° "+n+" · "+a.nombre+(desde?" · desde las "+hhmm(de):""));
+    }catch(e){ toast(e.userMsg||"No se pudo generar el ticket. Inténtalo otra vez."); } }); }
+  // lista para elegir al abonado por espacio, nombre o placa
+  function renderAbxList(){ const box=$("#abxList"); if(!box) return; const q=normQ($("#abxQ").value.trim());
+    const L=abonados.filter(a=>(a.mod==="dia"||a.mod==="noche")).filter(a=>!q||normQ([a.esp?"esp "+a.esp:"",a.esp,a.nombre,a.placa,(a.placa||"").replace(/-/g,"")].join(" ")).includes(q)||espKey(a.esp)===q.toUpperCase())
+      .map(a=>({a,fuera:!aboEnHorario(a),tk:active.find(t=>t.abx&&t.abx.id===a.id)}))
+      .sort((x,y)=>(y.fuera-x.fuera)||espSort(x.a.esp||"zz",y.a.esp||"zz"));
+    const vis=q?L:L.filter(x=>x.fuera||x.tk);
+    if(!vis.length){ box.innerHTML='<p class="muted" style="margin:0">'+(q?'Ningún abonado de día o de noche coincide.':'Ahora todos los abonados de día y de noche están dentro de su horario. Busca por espacio o nombre si necesitas a uno en particular.')+'</p>'; return; }
+    box.innerHTML=(q?'':'<p class="note" style="margin:0 0 6px">Fuera de su horario ahora:</p>')+vis.map(x=>{ const a=x.a, st=abState(a);
+      return '<div class="abxi"><span class="ae num">'+(espKey(a.esp)?esc(a.esp):'—')+'</span><span class="an"><b>'+esc(a.nombre)+'</b><small class="muted">'+esc(a.placa||"sin placa")+' · '+(ABMOD[a.mod]||"")+' ('+horarioTxt(a)+')</small></span>'
+        +(x.tk?'<span class="pill ok">Ticket N° '+x.tk.num+'</span>':st.c==="bad"?'<span class="pill bad">Debe su mensualidad</span>':(!x.fuera?'<span class="pill mut">En su horario</span>':'<button class="btn small primary" type="button" data-abxgo="'+a.id+'">Generar ticket</button>'))+'</div>'; }).join(""); }
+  $("#abxQ").addEventListener("input",renderAbxList);
+  let inTab="in";
+  function setInTab(t){ inTab=t; $("#inTabIn").hidden=t!=="in"; $("#inTabAbx").hidden=t!=="abx"; document.querySelectorAll("[data-itab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.itab===t))); if(t==="abx") renderAbxList(); }
+  document.querySelectorAll("[data-itab]").forEach(b=>b.addEventListener("click",()=>setInTab(b.dataset.itab)));
+  $("#abxList").addEventListener("click",e=>{ const b=e.target.closest("[data-abxgo]"); if(!b) return; const a=abonados.find(z=>z.id===b.dataset.abxgo); if(a) abxTicket(a); });
+  $("#inAbo").addEventListener("click",e=>{ const x=e.target.closest("[data-goabx]"); if(x){ e.preventDefault(); const a=abonados.find(z=>z.id===x.dataset.goabx); $("#abxQ").value=a?(a.esp||a.nombre):""; setInTab("abx"); $("#cardIn").scrollIntoView({behavior:"smooth",block:"start"}); return; } const tg=e.target.closest("[data-abtog]"); if(tg){ aboPresTog(tg.dataset.abtog,tg.dataset.fuera==="1"); return; } if(e.target.closest("[data-goab]")){ e.preventDefault(); const t=document.querySelector('[data-v="abonados"]'); if(t) t.click(); } });
   $("#aMod").addEventListener("change",()=>fillEspSelect($("#aEsp"),$("#aEsp").value,{abo:true,empty:"Sin espacio fijo",mod:$("#aMod").value}));
   $("#inPlaca").addEventListener("blur",()=>{ const v=$("#inPlaca").value; if(v) $("#inPlaca").value=fmtP(v); checkDup(); });
 
@@ -1195,7 +1271,7 @@ details.fold[open]>summary{margin-bottom:12px}
     if(placaN.length<5){ toast("Escribe o dicta la placa."); $("#inPlaca").focus(); return; }
     if(active.find(t=>t.placaN===placaN)){ toast("Esa placa ya tiene un ticket abierto."); return; }
     if(rate(inTipo,inModo)==null){ toast("No hay tarifa "+MODOL[inModo].toLowerCase()+" para "+vehL(inTipo).toLowerCase()+"."); return; }
-    const espV=$("#inEsp").value, ve=checkEsp(espV,inTipo,null);
+    const espV=(abxPend&&normP(abxPend.a.placa)===placaN&&espKey(abxPend.a.esp))?abxPend.a.esp:$("#inEsp").value, ve=(abxPend&&espKey(abxPend.a.esp)&&espKey(abxPend.a.esp)===espKey(espV))?{ok:true,key:false,warn:[]}:checkEsp(espV,inTipo,null); // el abonado usa su propio espacio
     if(!ve.ok){ toast(ve.msg); return; }
     const llaveIni = ve.key ? "con" : "sin";
     const adelEf=num($("#inAdel").value), adelYa=num($("#inAdelY").value), adel=adelEf+adelYa;
@@ -1203,9 +1279,11 @@ details.fold[open]>summary{margin-bottom:12px}
     queue(async ()=>{
       try{
         const n=await claimNumber(); const d=new Date();
-        const tk={num:n, placa:fmtP(placaN), placaN, tipo:inTipo, modo:inModo, tarifa:rate(inTipo,inModo), ent:d.getTime(), fecha:iso(d), hi:hhmm(d),
+        const ax=(abxPend&&normP(abxPend.a.placa)===placaN)?abxPend:null; abxPend=null; const entT=ax&&ax.desde?ax.desde:d.getTime(), de=new Date(entT);
+        const tk={num:n, placa:fmtP(placaN), placaN, tipo:inTipo, modo:inModo, tarifa:rate(inTipo,inModo), ent:entT, fecha:iso(de), hi:hhmm(de),
           esp:espV, llave:llaveIni, obs:$("#inObs").value.trim(), marca:$("#inMarca").value.trim(), color:$("#inColor").value.trim(), tel:"",
           adel: [adelEf>0?{m:adelEf,p:"efectivo",h:hhmm(d)}:null, adelYa>0?{m:adelYa,p:"yape",h:hhmm(d)}:null].filter(Boolean), estado:"dentro"};
+        if(ax) tk.abx={id:ax.a.id,nombre:ax.a.nombre,mod:ax.a.mod};
         await db.doc("tickets/"+n).set(tk);
         if(adel>0){ const mv={}; tk.adel.forEach(a=>{ mv[rid()]={t:MODOL[tk.modo],m:a.m,p:a.p,h:tk.hi,tk:n,placa:tk.placa,n:"Adelanto"}; }); await writeDay(tk.fecha,{movs:mv}); }
         armAuto(); await showTicket(tk); active=active.filter(x=>x.num!==tk.num).concat([tk]); openEd(tk.num);
@@ -1244,13 +1322,14 @@ details.fold[open]>summary{margin-bottom:12px}
     y=Math.max(y+lh,ty)+12;
     const center=(t,f,dy)=>{ c.font=f; c.textAlign="center"; c.fillText(t,W/2,y); y+=dy; c.textAlign="left"; };
     // franja de tarifa: el precio en grande
-    const modoTxt={hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
+    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
     // recuadro con borde (sin relleno negro: imprime más rápido y más nítido en térmica)
     c.fillRect(P,y,cw,4); c.fillRect(P,y+62,cw,4); c.fillRect(P,y,4,66); c.fillRect(W-P-4,y,4,66);
     c.font="700 58px 'Barlow Condensed'"; const pw=c.measureText(money(tk.tarifa)).width; c.textAlign="right"; c.fillText(money(tk.tarifa),W-P-12,y+3); c.textAlign="left";
     const lw2=cw-pw-40;
     c.font="700 26px 'Barlow Condensed'"; c.fillText(modoTxt,P+12,y+(tk.modo==="hora"?8:19),lw2);
-    if(tk.modo==="hora"){ c.font="600 15px Barlow"; c.fillText("+ "+money(tk.tarifa)+" cada hora adicional",P+12,y+38,lw2); }
+    if(tk.abx){ c.font="600 15px Barlow"; c.fillText("por hora fuera de su plan",P+12,y+38,lw2); }
+    else if(tk.modo==="hora"){ c.font="600 15px Barlow"; c.fillText("+ "+money(tk.tarifa)+" cada hora adicional",P+12,y+38,lw2); }
     y+=78;
     center("N° "+tk.num,"700 50px 'Barlow Condensed'",56);
     const ent=new Date(tk.ent);
@@ -1377,9 +1456,10 @@ details.fold[open]>summary{margin-bottom:12px}
     T("Jr. Huaraz 747, Breña - Lima",{a:"c"});
     T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
     D.push({t:"rule",c:"="});
-    const modoTxt={hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
+    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
     T(modoTxt,{a:"c",b:1,z:1}); T(money(tk.tarifa),{a:"c",b:1,z:2});
-    if(tk.modo==="hora") T("+ "+money(tk.tarifa)+" cada hora adicional",{a:"c"});
+    if(tk.abx) T("por hora fuera de su plan ("+horarioTxt({mod:tk.abx.mod})+")",{a:"c"});
+    else if(tk.modo==="hora") T("+ "+money(tk.tarifa)+" cada hora adicional",{a:"c"});
     D.push({t:"rule",c:"="});
     T("N° "+tk.num,{a:"c",b:1,z:2});
     D.push({t:"kv",k:"Placa",v:tk.placa,b:1,z:1});
@@ -1470,6 +1550,7 @@ details.fold[open]>summary{margin-bottom:12px}
     D.push({t:"rule",c:"="}); R("TOTAL",money(paidTotal(t)),{b:1,z:1});
     const adel=(t.adel||[]).reduce((s,a)=>s+num(a.m),0);
     if(adel){ T("Adelanto: "+money(adel)+" ("+adelTxt(t.adel)+")"); if(num(t.saldo)>0) T("A la salida: "+money(t.saldo)+" ("+medioTxt(t)+")"); } else T("Forma de pago: "+medioTxt(t));
+    if(num(t.rec)>0){ const efp=t.pagos?num(t.pagos.ef):num(t.saldo); T("Recibido "+money(t.rec)+" · vuelto "+money(Math.max(0,num(t.rec)-efp))); }
     docFoot(D,T,true); return D; }
   function bolAbDoc(a,per,v){ const D=[]; const T=docHead(D,"PAGO DE ABONADO",v.comp); const R=(k,val,o)=>{ if(val) D.push(Object.assign({t:"lr",k,v:String(val)},o||{})); };
     R("Emitido",emiTxt(v.compAt)); T("Abonado: "+a.nombre,{b:1}); R("Placa",a.placa||"",{b:1,z:1}); R("Vehículo",abVeh(a)); R("Modalidad",ABMOD[a.mod]||""); R("Espacio fijo",a.esp||"");
@@ -1477,7 +1558,7 @@ details.fold[open]>summary{margin-bottom:12px}
     D.push({t:"rule",c:"-"}); R("DESCRIPCIÓN","IMPORTE",{b:1}); R("Abono mensual",money(v.m||a.monto));
     T("Periodo: "+ddmm(parse(per))+"/"+per.slice(0,4)+" al "+ddmm(parse(hasta))+"/"+hasta.slice(0,4));
     D.push({t:"rule",c:"="}); R("TOTAL",money(v.m||a.monto),{b:1,z:1});
-    T("Forma de pago: "+(v.p==="yape"?"Yape":"Efectivo")); T("Próximo pago: "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),{b:1});
+    T("Forma de pago: "+medTxt(v)); if(vueltoTxt(v)) T(vueltoTxt(v)); T("Próximo pago: "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),{b:1});
     docFoot(D,T,true); return D; }
   function banoDoc(m){ const D=[]; const T=docHead(D,"COMPROBANTE SS.HH.",m.comp); const R=(k,v,o)=>D.push(Object.assign({t:"lr",k,v:String(v)},o||{}));
     const n=num(m.c)||1; R("Fecha",emiTxt(m.compAt)); R("Uso de SS.HH.",n+" x "+money(num(m.m)/n)); R("Forma de pago",m.p==="yape"?"Yape":"Efectivo");
@@ -1579,14 +1660,19 @@ details.fold[open]>summary{margin-bottom:12px}
       +'<div class="fields grp"><div><label>'+(c.adel?'El saldo lo paga con':'Paga con')+'</label><div class="chips tight" id="pcMedio"><button type="button" class="chip" data-m="efectivo" aria-pressed="'+(outMedio==="efectivo")+'">Efectivo</button><button type="button" class="chip" data-m="yape" aria-pressed="'+(outMedio==="yape")+'">Yape</button><button type="button" class="chip" data-m="mixto" aria-pressed="'+(outMedio==="mixto")+'">Mixto</button></div></div>'
       +'</div>'
       +(outMedio==="mixto"&&c.saldo>0?'<div class="fields grp"><div><label for="pcEf">En efectivo (S/)</label><input id="pcEf" class="num" type="number" min="0" step="0.5" inputmode="decimal" value="'+esc(outMix.ef)+'"></div><div><label for="pcYa">Por Yape (S/)</label><input id="pcYa" class="num" type="number" min="0" step="0.5" inputmode="decimal" value="'+esc(outMix.ya)+'"></div></div><p class="note" id="pcMixNote">Escribe una parte y la otra se completa sola hasta '+money(c.saldo)+'.</p>':'')
+      +(c.saldo>0&&outMedio!=="yape"?'<div class="fields grp"><div><label for="pcRec">Recibido en efectivo (S/) <span class="muted">opcional</span></label><input id="pcRec" class="num" type="number" min="0" step="0.5" inputmode="decimal" value="'+esc(outRec)+'"></div><div class="pcv"><span class="muted">Vuelto</span><strong class="num" id="pcVuelto">'+vueltoTk(c)+'</strong></div></div>':'')
       +'<div class="formfoot"><button class="btn primary" id="pcPay" type="button" style="flex:1">'+(c.saldo>0?'Cobrar '+money(c.saldo)+' y emitir boleta':'Dar salida y emitir boleta (ya pagó)')+'</button>'
       +'<button class="btn small danger" id="pcVoid" type="button">Anular ticket</button></div>';
   }
-  let outMix={ef:"",ya:""};
+  let outMix={ef:"",ya:""}, outRec="";
+  function efParte(c){ return outMedio==="mixto"?num(outMix.ef):c.saldo; }
+  function vueltoTk(c){ if(outRec==="") return "—"; const r=num(outRec), e=efParte(c); return r<e?"No alcanza":money(Math.round((r-e)*100)/100); }
   $("#pcBox").addEventListener("input",e=>{
     const tk=active.find(t=>t.num===selTk); if(!tk) return; const sal=calc(tk,Date.now()).saldo;
+    if(e.target.id==="pcRec"){ outRec=e.target.value; }
     if(e.target.id==="pcEf"){ outMix.ef=e.target.value; const r=Math.max(0,Math.round((sal-num(e.target.value))*100)/100); outMix.ya=e.target.value===""?"":String(r); $("#pcYa").value=outMix.ya; }
     if(e.target.id==="pcYa"){ outMix.ya=e.target.value; const r=Math.max(0,Math.round((sal-num(e.target.value))*100)/100); outMix.ef=e.target.value===""?"":String(r); $("#pcEf").value=outMix.ef; }
+    { const tkv=active.find(t=>t.num===selTk), vv=$("#pcVuelto"); if(tkv&&vv) vv.textContent=vueltoTk(calc(tkv,Date.now())); }
   });
   $("#pcBox").addEventListener("click",e=>{
     const g=e.target.closest("[data-goboleta]"); if(g){ const [f,n,day]=g.dataset.goboleta.split("|"); goBoleta(f,num(n),day); return; }
@@ -1607,20 +1693,22 @@ details.fold[open]>summary{margin-bottom:12px}
       if(!ef||!ya){ toast("Para pago mixto, pon un monto en efectivo y otro por Yape."); return; }
       pagos={ef,ya};
     }
-    const arch=Object.assign({},tk,{estado:anular?"anulado":"pagado",sal:at,ho:hhmm(d),total:anular?0:c.total,saldo:anular?0:c.saldo,medio:anular?null:(c.saldo>0?outMedio:(c.adel?"adelanto":outMedio)),pagos,bol,base:c.base,extra:c.extra,h:c.h,eh:c.eh,mins:Math.round(c.mins),adelT:c.adel});
+    const recV=(!anular&&c.saldo>0&&outMedio!=="yape"&&num(outRec)>0)?num(outRec):0;
+    if(recV&&recV<(pagos?pagos.ef:c.saldo)){ toast("Lo recibido no alcanza para la parte en efectivo."); return; }
+    const arch=Object.assign({},tk,{estado:anular?"anulado":"pagado",sal:at,ho:hhmm(d),total:anular?0:c.total,saldo:anular?0:c.saldo,medio:anular?null:(c.saldo>0?outMedio:(c.adel?"adelanto":outMedio)),pagos,bol,base:c.base,extra:c.extra,h:c.h,eh:c.eh,mins:Math.round(c.mins),adelT:c.adel},recV?{rec:recV}:{});
     delete arch.id;
     const b=$("#pcPay"); if(b) b.disabled=true;
     queue(async ()=>{
       await writeDay(tk.fecha,{tickets:{[tk.num]:arch}});
       if(!anular && c.saldo>0){ const base={t:MODOL[tk.modo],h:hhmm(d),tk:tk.num,placa:tk.placa,c:tk.modo==="hora"?c.h:(c.eh||null),bol}; const mv={};
-        if(pagos){ mv[rid()]=Object.assign({},base,{m:pagos.ef,p:"efectivo"}); mv[rid()]=Object.assign({},base,{m:pagos.ya,p:"yape"}); }
-        else mv[rid()]=Object.assign({},base,{m:c.saldo,p:outMedio});
+        if(pagos){ mv[rid()]=Object.assign({},base,{m:pagos.ef,p:"efectivo"},recV?{rec:recV}:{}); mv[rid()]=Object.assign({},base,{m:pagos.ya,p:"yape"}); }
+        else mv[rid()]=Object.assign({},base,{m:c.saldo,p:outMedio},recV&&outMedio==="efectivo"?{rec:recV}:{});
         await writeDay(iso(d),{movs:mv}); }
       await db.doc("tickets/"+tk.num).delete();
       selTk=null; $("#outQ").value="";
       $("#pcBox").innerHTML = anular ? "" : '<div class="paidbox"><span><strong>'+esc(tk.placa)+'</strong> salió · cobrado '+money(c.saldo)+(c.saldo>0?' ('+medioTxt(arch)+')':'')+'</span></div>';
       if(!anular){ const n=await claimComp("comp"); await writeDay(tk.fecha,{tickets:{[tk.num]:{comp:n,compAt:Date.now()}}}); bDayVal=iso(d); $("#bDay").value=bDayVal; bSel=tk.num; await loadBoleta(); }
-      outMix={ef:"",ya:""}; if(outMedio==="mixto") outMedio="efectivo";
+      outMix={ef:"",ya:""}; outRec=""; if(outMedio==="mixto") outMedio="efectivo";
       toast(anular?"Ticket N° "+tk.num+" anulado":"Salida registrada: "+tk.placa+" · "+money(c.saldo));
     });
   }
@@ -1643,8 +1731,25 @@ details.fold[open]>summary{margin-bottom:12px}
   });
 
   // vehículos dentro
-  function vrow(t){ const c=calc(t,Date.now()); return '<button type="button" class="vrow" data-n="'+t.num+'"><span><span class="modo '+t.modo+'">'+MODOL[t.modo]+'</span></span><span><span class="pl">'+esc(t.placa)+'</span><div class="meta">N° '+t.num+' · '+esc(vehL(t.tipo))+(vDesc(t)?' '+esc(vDesc(t)):'')+' · entró '+esc(t.hi)+(t.fecha!==iso(new Date())?' ('+ddmm(parse(t.fecha))+')':'')+(t.esp?' · '+esc(t.esp):'')+(t.llave==="con"?' · <strong>llave</strong>':'')+(t.tel?' · tel. '+esc(t.tel):'')+'</div></span><span class="amt num">'+money(c.saldo)+'<small>'+dur(c.mins)+'</small></span></button>'; }
+  function vrow(t){ const c=calc(t,Date.now()); return '<button type="button" class="vrow" data-n="'+t.num+'"><span><span class="modo '+t.modo+'">'+(t.abx?'Abonado':MODOL[t.modo])+'</span></span><span><span class="pl">'+esc(t.placa)+'</span><div class="meta">N° '+t.num+' · '+esc(vehL(t.tipo))+(vDesc(t)?' '+esc(vDesc(t)):'')+' · entró '+esc(t.hi)+(t.fecha!==iso(new Date())?' ('+ddmm(parse(t.fecha))+')':'')+(t.esp?' · '+esc(t.esp):'')+(t.llave==="con"?' · <strong>llave</strong>':'')+(t.tel?' · tel. '+esc(t.tel):'')+'</div></span><span class="amt num">'+money(c.saldo)+'<small>'+dur(c.mins)+'</small></span></button>'; }
+  // fin del último turno de un abonado de día/noche (si terminó hace menos de 6 h)
+  function aboUltimoFin(a,now){ now=now||Date.now(); const d=new Date(now), base=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    const hm=x=>hmin(x)*60000; let fin=null, ini=null;
+    if(a.mod==="noche"){ fin=base+hm(cfg.nocheFin||"08:00"); if(fin>now) return null; ini=fin-(hm(cfg.nocheFin||"08:00")+86400000-hm(cfg.diaFin||"20:00")); }
+    else if(a.mod==="dia"){ fin=base+hm(cfg.diaFin||"20:00"); if(fin>now) fin-=86400000; ini=fin-(hm(cfg.diaFin||"20:00")-hm("06:30")); }
+    else return null;
+    if(aboEnHorario(a,new Date(now))||now-fin>6*3600000) return null; return {fin,ini}; }
+  function abxPendientes(){ const now=Date.now(); return abonados.filter(a=>espKey(a.esp)&&abState(a).c!=="bad").map(a=>({a,v:aboUltimoFin(a,now)})).filter(x=>x.v
+      &&!(x.a.fuera&&(x.a.movAt||0)>=x.v.ini)                                  // salió durante su turno
+      &&String(x.a.abxVisto||"")!==String(x.v.fin)                              // ya se confirmó que se fue
+      &&!active.find(t=>t.abx&&t.abx.id===x.a.id)); }
+  function renderAbxAlert(){ const box=$("#abxAlert"); if(!box) return; const P=abxPendientes();
+    const bd=$("#abxBadge"); if(bd){ bd.hidden=!P.length; bd.textContent=P.length?"⏰ "+P.length:""; }
+    if(!P.length){ box.innerHTML=""; box.hidden=true; return; } box.hidden=false;
+    box.innerHTML='<div class="abxa"><strong>⏰ Terminó el horario de '+(P.length===1?'un abonado':P.length+' abonados')+'.</strong> ¿Sigue en la playa? Si sigue, se le cobra por hora desde que terminó su turno.'
+      +P.map(x=>'<div class="abxr"><span><b>'+esc(x.a.placa||x.a.nombre)+'</b> · '+esc(x.a.nombre)+' · esp. '+esc(x.a.esp)+' <span class="muted">· '+(ABMOD[x.a.mod]||"")+', terminó '+hhmm(new Date(x.v.fin))+'</span></span><span class="abxb"><button class="btn small primary" type="button" data-abxs="'+x.a.id+'|'+x.v.fin+'">Sigue aquí · ticket desde '+hhmm(new Date(x.v.fin))+'</button><button class="btn small" type="button" data-abxn="'+x.a.id+'|'+x.v.fin+'">Ya se fue</button></span></div>').join("")+'</div>'; }
   function renderInside(){
+    renderAbxAlert(); try{ renderAbxList(); }catch(e){}
     const l=active.slice().sort((a,b)=>a.ent-b.ent);
     $("#inCount").textContent=l.length? l.length+(l.length===1?" vehículo":" vehículos"):"";
     renderPlano(); refreshEspSelects();
@@ -1653,7 +1758,7 @@ details.fold[open]>summary{margin-bottom:12px}
     if(edNum && !l.find(t=>t.num===edNum)) closeEd();
     if(selTk && !l.find(t=>t.num===selTk)){ selTk=null; $("#pcBox").innerHTML=""; }
   }
-  function pickVeh(e){ const v=e.target.closest(".vrow"); if(!v) return; selTk=num(v.dataset.n); if(location.hash!=="#boleta"){ location.hash="boleta"; show("boleta"); } renderPre(); $("#cardSal").scrollIntoView({behavior:"smooth",block:"start"}); }
+  function pickVeh(e){ const v=e.target.closest(".vrow"); if(!v) return; if(selTk!==num(v.dataset.n)) outRec=""; selTk=num(v.dataset.n); if(location.hash!=="#boleta"){ location.hash="boleta"; show("boleta"); } renderPre(); $("#cardSal").scrollIntoView({behavior:"smooth",block:"start"}); }
   $("#inList2").addEventListener("click",pickVeh);
   $("#inList").addEventListener("click",e=>{ const v=e.target.closest(".vrow"); if(!v) return; openEd(num(v.dataset.n)); $("#cardOut").scrollIntoView({behavior:"smooth",block:"start"}); });
   let edNum=null, edLlave="sin";
@@ -1678,7 +1783,7 @@ details.fold[open]>summary{margin-bottom:12px}
     delete $("#edEsp").dataset.dirty;
     queue(()=>db.doc("tickets/"+n).update(p).then(()=>toast("Datos guardados · ticket N° "+n)));
   });
-  setInterval(()=>{ if(!$("#v-ticketera").hidden || !$("#v-boleta").hidden){ renderInside(); if(selTk && !(document.activeElement&&["pcEf","pcYa"].includes(document.activeElement.id))) renderPre(); } },30000);
+  setInterval(()=>{ if(!$("#v-ticketera").hidden || !$("#v-boleta").hidden){ renderInside(); if(selTk && !(document.activeElement&&["pcEf","pcYa","pcRec"].includes(document.activeElement.id))) renderPre(); } },30000);
 
   // dictado
   const MIC={placa:$("#micPlaca"),obs:$("#micObs"),ed:$("#micEd")}; let dTarget=null, dRaw="";
@@ -1781,7 +1886,7 @@ details.fold[open]>summary{margin-bottom:12px}
     const d=parse(selDay); $("#dLabel").textContent=DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+" "+d.getDate()+" de "+MESES[d.getMonth()]; $("#dPick").value=selDay;
     const t=totals(dayData);
     $("#dTotal").textContent=money(t.total); $("#dEf").textContent=money(t.ef); $("#dYa").textContent=money(t.ya); $("#dCar").textContent=t.car; $("#dBano").textContent="SS.HH.: "+t.bano+" usos";
-    { const L=movs(dayData), nAb=L.filter(m=>m.t==="Abonado").length; $("#dSplit").innerHTML=splitTiles(split(t),t.total,{ab:nAb?nAb+(nAb===1?" pago":" pagos"):"",est:(n=>n?n+(n===1?" vehículo":" vehículos"):"")(new Set(L.filter(m=>m.tk&&m.t!=="Abonado").map(m=>m.tk)).size),ss:t.bano?t.bano+" usos":""}); }
+    { const L=movs(dayData), nAb=new Set(L.filter(m=>m.t==="Abonado").map(m=>m.comp||m.id)).size; $("#dSplit").innerHTML=splitTiles(split(t),t.total,{ab:nAb?nAb+(nAb===1?" pago":" pagos"):"",est:(n=>n?n+(n===1?" vehículo":" vehículos"):"")(new Set(L.filter(m=>m.tk&&m.t!=="Abonado").map(m=>m.tk)).size),ss:t.bano?t.bano+" usos":""}); }
     const list=movs(dayData).sort((a,b)=>(b.h||"").localeCompare(a.h||""));
     $("#dCount").textContent=list.length?list.length+" pagos":"";
     $("#dRows").innerHTML=list.length?list.map(m=>'<tr><td class="num">'+esc(m.h||"")+'</td><td>'+esc(m.t)+(m.n?' <span class="muted">· '+esc(m.n)+'</span>':'')+(m.c&&m.t==="Baño"?' <span class="muted">× '+esc(m.c)+'</span>':'')+'</td><td class="num">'+esc(m.tk||"—")+'</td><td>'+esc(m.placa||"—")+'</td><td>'+(m.p==="yape"?"Yape":"Efectivo")+'</td><td class="r num">'+money(m.m)+'</td><td class="r">'+(isAdmin()?'<button class="btn small danger" type="button" data-del="'+m.id+'">Quitar</button>':'')+'</td></tr>').join("")
@@ -1792,7 +1897,7 @@ details.fold[open]>summary{margin-bottom:12px}
     const ae=document.activeElement&&document.activeElement.id;
     if(ae!=="rNota") $("#rNota").value=((dayData&&dayData.rep)||{}).nota||"";
     renderRepCheck();
-    const c=(dayData&&dayData.cierre)||{}; if(!["cEf","cNota"].includes(ae)){ $("#cEf").value=c.ef??""; $("#cNota").value=c.nota??""; }
+    const c=(dayData&&dayData.cierre)||{}; if(!["cEf","cNota","cFondo","cFondoC"].includes(ae)){ $("#cEf").value=c.ef??""; $("#cNota").value=c.nota??""; $("#cFondo").value=c.fondo??(cfg.fondo??500); $("#cFondoC").value=c.fondoCont??""; }
     renderCheck();
   }
   function lastTicketOf(doc){ if(!doc) return null; const n=dayTickets(doc).map(t=>t.num); if(n.length) return Math.max(...n); return doc.rep&&doc.rep.t2!=null?doc.rep.t2:null; }
@@ -1828,22 +1933,36 @@ details.fold[open]>summary{margin-bottom:12px}
     if(num(r.ya)) L.push("• Ingreso por Yape = "+num(r.ya)+".");
     if(num(r.car)||num(r.moto)){ const x=[]; if(num(r.car)) x.push(p2(r.car)+(num(r.car)===1?" carro":" carros")); if(num(r.moto)) x.push(p2(r.moto)+(num(r.moto)===1?" moto":" motos")); L.push("• "+x.join(" y ")+" x noche."); }
     if(r.t1!=null&&r.t2!=null) L.push("• Ticket del: "+r.t1+" al "+r.t2+"."); else if(r.t2!=null) L.push("• Último ticket: "+r.t2+".");
+    if(selDay===(dayData&&dayData.fecha||selDay)){ const C=cajaCalc(); const r2=x=>num(Math.abs(Math.round(x*100)/100));
+      if(C.cont!=null) L.push("• Efectivo contado = "+num(C.cont)+" → "+(Math.abs(C.dif)<0.5?"cuadra":(C.dif>0?"sobra ":"falta ")+r2(C.dif))+".");
+      if(C.fcont!=null) L.push("• Fondo de caja "+num(C.fondo)+": "+(Math.abs(C.fdif)<0.5?"intacto":(C.fdif>0?"sobra ":"falta ")+r2(C.fdif))+"."); }
     const nota=$("#rNota").value.trim(); if(nota) L.push("• Nota: "+nota);
     return L.join("\n");
   }
   $("#rNota").addEventListener("input",()=>{ $("#repMsg").textContent=repText(); });
   $("#saveRep").addEventListener("click",()=>{ if(!needDb()) return; const f=selDay, nota=$("#rNota").value.trim(); queue(async()=>{ const ref=db.doc("dias/"+f); const s=await ref.get(); if(!s.exists) await ref.set({fecha:f,rep:{nota}}); else await ref.update({rep:{nota}}); toast("Nota guardada"); }); });
   $("#copyRep").addEventListener("click",async ()=>{ try{ await navigator.clipboard.writeText(repText()); toast("Reporte copiado. Pégalo en WhatsApp."); }catch(e){ toast("No se pudo copiar. Mantén presionado el mensaje para copiarlo."); } });
+  // efectivo del día separado por concepto (lo que entró a la caja, ya sin el vuelto)
+  function efPor(doc){ const o={est:0,ab:0,ss:0,ot:0}; movs(doc).forEach(m=>{ if(m.p==="yape") return; const v=num(m.m);
+      if(m.t==="Abonado") o.ab+=v; else if(m.t==="Baño") o.ss+=v; else if(["Hora","Noche","Día","Estacionamiento","Adelanto"].includes(m.t)||m.tk) o.est+=v; else o.ot+=v; }); return o; }
+  function cajaCalc(){ const t=totals(dayData), fondo=num($("#cFondo").value), ef=$("#cEf").value, fc=$("#cFondoC").value;
+    return {t,fondo,cont:ef===""?null:num(ef),dif:ef===""?null:num(ef)-t.ef,fcont:fc===""?null:num(fc),fdif:fc===""?null:num(fc)-fondo}; }
   function renderCheck(){
-    const t=totals(dayData), ef=$("#cEf").value;
-    let h='<div><span>Efectivo que debería haber</span><strong class="num">'+money(t.ef)+'</strong></div>';
-    if(ef!==""){ const dif=num(ef)-t.ef; h+='<div><span>Efectivo contado</span><strong class="num">'+money(num(ef))+'</strong></div><div><span>Diferencia</span>'+(Math.abs(dif)<0.5?'<span class="pill ok">Cuadra</span>':'<span class="pill bad num">'+(dif>0?'Sobra ':'Falta ')+money(Math.abs(dif))+'</span>')+'</div>'; }
-    else h+='<div><span>Diferencia</span><span class="pill mut">Falta contar la caja</span></div>';
+    const C=cajaCalc(), t=C.t, E=efPor(dayData); const row=(k,v,cls)=>'<div'+(cls?' class="'+cls+'"':'')+'><span>'+k+'</span><strong class="num">'+v+'</strong></div>';
+    const difP=(d,ok)=>Math.abs(d)<0.5?'<span class="pill ok">'+ok+'</span>':'<span class="pill bad num">'+(d>0?'Sobra ':'Falta ')+money(Math.abs(d))+'</span>';
+    let h='<div class="cj-h">Ingresos en efectivo</div>';
+    if(t.src==="mov"){ if(E.est) h+=row("Estacionamiento",money(E.est)); if(E.ab) h+=row("Abonados",money(E.ab)); if(E.ss) h+=row("SS.HH.",money(E.ss)); if(E.ot) h+=row("Otros",money(E.ot)); }
+    h+=row("= Deben haber",money(t.ef),"cj-tot");
+    h+=C.cont!=null?row("Ingresos contados",money(C.cont))+'<div><span>Diferencia</span>'+difP(C.dif,"Cuadra")+'</div>':'<div><span>Diferencia</span><span class="pill mut">Falta contar los ingresos</span></div>';
+    h+='<div class="cj-sep"></div><div class="cj-h">Fondo de caja (para vuelto)</div>'+row("Debe quedar",money(C.fondo));
+    h+=C.fcont!=null?row("Fondo contado",money(C.fcont))+'<div><span>Estado</span>'+difP(C.fdif,"Intacto")+'</div>':'<div><span>Estado</span><span class="pill mut">Falta contar el fondo</span></div>';
+    h+='<div class="cj-sep"></div>'+row("Para entregar",money(C.cont!=null?C.cont:t.ef),"cj-tot");
+    if(t.ya) h+=row("Yape del día (no está en la caja)",money(t.ya));
     if(t.por["Baño"]) h+='<div><span>Boleta resumen SS.HH. (ventas del día)</span><strong class="num">'+money(t.por["Baño"])+'</strong></div>';
     $("#chk").innerHTML=h;
   }
-  $("#cEf").addEventListener("input",renderCheck);
-  $("#saveCierre").addEventListener("click",()=>{ if(!needDb()) return; const c={ef:nOrNull($("#cEf").value),nota:$("#cNota").value.trim(),hora:hhmm()}; const f=selDay; queue(()=>writeDay(f,{cierre:c}).then(()=>toast("Cierre guardado"))); });
+  $("#cEf").addEventListener("input",()=>{ renderCheck(); $("#repMsg").textContent=repText(); }); $("#cFondo").addEventListener("input",()=>{ renderCheck(); $("#repMsg").textContent=repText(); }); $("#cFondoC").addEventListener("input",()=>{ renderCheck(); $("#repMsg").textContent=repText(); });
+  $("#saveCierre").addEventListener("click",()=>{ if(!needDb()) return; const c={ef:nOrNull($("#cEf").value),fondo:num($("#cFondo").value),fondoCont:nOrNull($("#cFondoC").value),nota:$("#cNota").value.trim(),hora:hhmm()}; const f=selDay; queue(()=>writeDay(f,{cierre:c}).then(()=>toast("Cierre guardado"))); });
 
   function renderTipos(){
     $("#tipos").innerHTML=OTROS.map(k=>'<button type="button" class="chip" aria-pressed="'+(k===tipoOtro)+'" data-tipo="'+k+'">'+(k==="Baño"?"SS.HH.":k)+'</button>').join("");
@@ -1926,6 +2045,12 @@ details.fold[open]>summary{margin-bottom:12px}
   function aboEspOpts(a){ let h='<option value="">Ninguno</option>'; SPACES.slice().sort((x,y)=>espSort(x.id,y.id)).forEach(s=>{ const mine=espKey(a.esp)===s.id; const otros=aboEn(s.id).filter(x=>x.id!==a.id);
     const choque=s.k!=="moto"&&!mine&&otros.find(x=>aboSolapa(x.mod,a.mod)); const nm=s.k==="moto"&&!abMotoOk(a.tipo)&&!mine; const comp=s.k!=="moto"&&!choque&&otros[0];
     h+='<option value="'+s.id+'"'+(mine?' selected':'')+(choque||nm?' disabled':'')+'>'+s.id+(choque?' · '+esc(choque.placa||choque.nombre):(nm?' · solo motos':(s.k==="moto"?' · motos (compartido)':(comp?' · compartido con '+esc(comp.placa||comp.nombre)+' ('+(ABMOD[comp.mod]||"")+')':''))))+'</option>'; }); return h; }
+  $("#v-abonados").addEventListener("change",e=>{ const ps=e.target.closest("[data-pmsel]"); if(ps){ const id=ps.dataset.pmsel; abMix[id]=Object.assign(abMix[id]||{},{med:ps.value}); renderAbonados(); return; } });
+  $("#v-abonados").addEventListener("input",e=>{ const mx=e.target.closest("[data-mx]"); if(!mx) return; const id=mx.dataset.ab, a=abonados.find(z=>z.id===id); if(!a) return; const M=abMix[id]=abMix[id]||{med:"mixto"};
+    M[mx.dataset.mx]=mx.value; const tot=num(a.monto);
+    if(M.med==="mixto"&&(mx.dataset.mx==="ya"||mx.dataset.mx==="ef")){ const other=mx.dataset.mx==="ya"?"ef":"ya"; const r=Math.max(0,Math.round((tot-num(mx.value))*100)/100); M[other]=mx.value===""?"":String(r);
+      document.querySelectorAll('[data-mx="'+other+'"][data-ab="'+id+'"]').forEach(x=>{ x.value=M[other]; }); }
+    document.querySelectorAll("#pmv-"+id).forEach(x=>{ x.textContent=mixInfo(a); }); });
   $("#v-abonados").addEventListener("change",e=>{
     const sel=e.target.closest("[data-abesp]"); if(!sel||!needDb()) return; const id=sel.dataset.abesp, v=sel.value; queue(()=>db.doc("abonados/"+id).update({esp:v}).then(()=>toast(v?"Espacio fijo "+v+" asignado":"Espacio fijo quitado"))); });
   const COLORES=["blanco","negro","plata","gris","gris oscuro","azul","rojo","verde","amarillo","naranja","marrón","beige","dorado","celeste","guinda","morado","plomo"];
@@ -1965,14 +2090,25 @@ details.fold[open]>summary{margin-bottom:12px}
   const esMig=a=>/migraci/i.test(a.obs||"");
   let abFilter="todos";
   // último pago del abonado y si cubre el día de hoy
+  function medTxt(v){ if(!v) return ""; if(v.p==="mixto") return "Yape "+money(v.ya)+" + Efectivo "+money(v.ef); return v.p==="yape"?"Yape":"Efectivo"; }
+  function vueltoTxt(v){ return v&&num(v.rec)>0?"Recibido "+money(v.rec)+" · vuelto "+money(Math.max(0,num(v.rec)-num(v.p==="mixto"?v.ef:v.m))):""; }
   function abLastPay(a){ const E=Object.entries(a.pagos||{}).filter(([,v])=>v).sort((x,y)=>x[0]<y[0]?-1:1); if(!E.length) return null; const [per,v]=E[E.length-1]; return {per,v,hasta:v.hasta||addMonths(per,1)}; }
-  function bolBtn(a,per,v,lbl){ return v&&v.comp?'<button class="btn small primary" type="button" data-abbol="'+a.id+'|'+per+'">🧾 '+(lbl||'Ver boleta')+'</button>':'<span class="pill ok">Pago registrado'+(v&&v.p?' · '+(v.p==="yape"?"Yape":"Efectivo"):'')+'</span>'; }
-  function payCtl(a,lbl,cls){ return '<label class="muted" for="pm-'+a.id+'" style="margin:0">Pagó con</label><select id="pm-'+a.id+'"><option value="efectivo">Efectivo</option><option value="yape">Yape</option></select><button class="btn small '+(cls||'primary')+'" type="button" data-pay="'+a.id+'">'+lbl+'</button>'; }
+  function bolBtn(a,per,v,lbl){ return v&&v.comp?'<button class="btn small primary" type="button" data-abbol="'+a.id+'|'+per+'">🧾 '+(lbl||'Ver boleta')+'</button>':'<span class="pill ok">Pagó '+(per?mesTxt(per):'')+(v&&v.p?' · '+esc(v.p==="mixto"?"Mixto":v.p==="yape"?"Yape":"Efectivo"):'')+'</span>'; }
+  const abMix={}; // valores que se están escribiendo (para que no se borren al refrescar)
+  function payCtl(a,lbl,cls){ const M=abMix[a.id]||{}, med=M.med||"efectivo", tot=num(a.monto);
+    const sub=med==="mixto"?'<div class="pmx"><label>Yape S/ <input class="num" type="number" min="0" step="0.5" data-mx="ya" data-ab="'+a.id+'" value="'+esc(M.ya??"")+'"></label><label>Efectivo S/ <input class="num" type="number" min="0" step="0.5" data-mx="ef" data-ab="'+a.id+'" value="'+esc(M.ef??"")+'"></label><label>Recibido S/ <input class="num" type="number" min="0" step="0.5" data-mx="rec" data-ab="'+a.id+'" value="'+esc(M.rec??"")+'" placeholder="opcional"></label><span class="muted" id="pmv-'+a.id+'">'+mixInfo(a)+'</span></div>'
+      :med==="efectivo"?'<div class="pmx"><label>Recibido S/ <input class="num" type="number" min="0" step="0.5" data-mx="rec" data-ab="'+a.id+'" value="'+esc(M.rec??"")+'" placeholder="opcional"></label><span class="muted" id="pmv-'+a.id+'">'+mixInfo(a)+'</span></div>':'';
+    return '<label class="muted" for="pm-'+a.id+'" style="margin:0">Pagó con</label><select id="pm-'+a.id+'" data-pmsel="'+a.id+'"><option value="efectivo"'+(med==="efectivo"?' selected':'')+'>Efectivo</option><option value="yape"'+(med==="yape"?' selected':'')+'>Yape</option><option value="mixto"'+(med==="mixto"?' selected':'')+'>Yape + efectivo</option></select>'+sub+'<button class="btn small '+(cls||'primary')+'" type="button" data-pay="'+a.id+'">'+lbl+' · '+money(tot)+'</button>'; }
+  function mixInfo(a){ const M=abMix[a.id]||{}, tot=num(a.monto), med=M.med||"efectivo"; const efp=med==="mixto"?num(M.ef):tot; const parts=[];
+    if(med==="mixto"){ const sum=num(M.ya)+num(M.ef); if(M.ya!==undefined||M.ef!==undefined) parts.push(Math.abs(sum-tot)<0.01?"Suma "+money(sum)+" ✓":"Suma "+money(sum)+" de "+money(tot)); }
+    if(num(M.rec)>0) parts.push(num(M.rec)<efp?"Lo recibido no alcanza":"Vuelto: "+money(num(M.rec)-efp));
+    return parts.join(" · "); }
   function abPayArea(a,opt){ opt=opt||{}; const today=iso(new Date());
-    if(opt.paid) return bolBtn(a,opt.per,opt.paid);                       // en el calendario: ese día ya pagó
+    if(opt.paid) return bolBtn(a,opt.per,opt.paid);
+    if(opt.due) return payCtl(a,"Registrar pago del mes");                       // en el calendario: ese día ya pagó
     if(opt.later) return '<span class="muted">Su pago pendiente es el '+(a.vence?ddmm(parse(a.vence)):'—')+'</span>'; // fecha proyectada, aún no toca
-    const lp=abLastPay(a);
-    if(lp&&lp.per<=today&&lp.hasta>today){ // ya pagó el periodo actual
+    const lp=abLastPay(a), finMes=today.slice(0,8)+"31";
+    if(lp&&lp.per<=today&&lp.hasta>today&&!(a.vence&&a.vence<=finMes)){ // ya pagó y su próximo pago es el otro mes
       if(abAdv===a.id) return payCtl(a,"Confirmar pago adelantado ("+mesTxt(a.vence||today)+")")+'<button class="btn small" type="button" data-advx="1">Cancelar</button>';
       return bolBtn(a,lp.per,lp.v,'Ver boleta ('+mesTxt(lp.per)+')')+'<button class="btn small" type="button" data-adv="'+a.id+'">Adelantar pago</button>'; }
     return payCtl(a,"Registrar pago del mes"); }
@@ -2019,9 +2155,9 @@ details.fold[open]>summary{margin-bottom:12px}
     if(!aSelDay){ $("#aDayList").innerHTML='<p class="note" style="margin:0">Toca un día del calendario para ver quién paga ese día y registrar sus pagos.</p>'; return; }
     const R=abDayItems(aSelDay), d=parse(aSelDay), pg=R.filter(x=>x.paid), pe=R.filter(x=>!x.paid);
     const tP=pg.reduce((s,x)=>s+num(x.paid.m||x.a.monto),0), tE=pe.reduce((s,x)=>s+num(x.a.monto),0);
-    const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
+    const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="mixto"?"Mixto":x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
     $("#aDayList").innerHTML='<div class="abg sel"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong><span class="muted num">'+pg.length+' pagaron · '+money(tP)+' &nbsp; | &nbsp; '+pe.length+' faltan · '+money(tE)+'</span><button class="btn small" type="button" data-abday="">Cerrar</button></div>'
-      +(R.length?R.map(x=>abCard(x.a,ctx(x),x.paid?{paid:x.paid,per:aSelDay}:(x.k>0?{later:true}:{}))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
+      +(R.length?R.map(x=>abCard(x.a,ctx(x),x.paid?{paid:x.paid,per:aSelDay}:(x.k>0?{later:true}:{due:true}))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
   }
   function renderAbonados(){ renderACal(); renderFijos(); renderRetirados(); applyATab(); renderAbList(); renderAbDay(); }
   document.querySelectorAll("[data-atab]").forEach(b=>b.addEventListener("click",()=>{ aTab=b.dataset.atab; lsSet("ph_atab",aTab==="cal"?"cal":null); applyATab(); }));
@@ -2053,13 +2189,18 @@ details.fold[open]>summary{margin-bottom:12px}
       if(!p.tipo) delete p.tipo; if(!p.mod) delete p.mod; if(a.desc) p.desc="";
       abEdit=null; queue(()=>db.doc("abonados/"+id).update(p).then(()=>toast("Datos guardados: "+p.nombre))); return; }
     const p=e.target.closest("[data-pay]"), d=e.target.closest("[data-delab]");
-    if(p){ const a=abonados.find(x=>x.id===p.dataset.pay); if(!a) return; abAdv=null; const medio=$("#pm-"+a.id).value, today=iso(new Date());
-      const per=a.vence||today, nv=addMonths(per,1); p.disabled=true;
-      queue(async()=>{ try{ const comp=await claimComp("comp"), compAt=Date.now();
-        await writeDay(today,{movs:{[rid()]:{t:"Abonado",m:num(a.monto),p:medio,h:hhmm(),placa:a.placa||"",n:a.nombre,ab:a.id,per,comp,compAt}}});
-        await db.doc("abonados/"+a.id).update({vence:nv,pagos:{[per]:{f:today,m:num(a.monto),p:medio,comp,compAt,hasta:nv}}});
-        toast("Pago de "+mesTxt(per)+" registrado: "+a.nombre+" · comprobante N° "+pad6(comp));
-        armAuto(); showAbBol(Object.assign({},a,{vence:nv}),per,{f:today,m:num(a.monto),p:medio,comp,compAt,hasta:nv});
+    if(p){ const a=abonados.find(x=>x.id===p.dataset.pay); if(!a) return; const medio=$("#pm-"+a.id).value, today=iso(new Date()), tot=num(a.monto), M=abMix[a.id]||{};
+      let ya=0, ef=0; if(medio==="mixto"){ ya=num(M.ya); ef=num(M.ef); if(Math.abs(ya+ef-tot)>0.01||ya<=0||ef<=0){ toast("En un pago mixto, Yape + efectivo debe sumar "+money(tot)+"."); return; } } else if(medio==="yape") ya=tot; else ef=tot;
+      const rec=medio!=="yape"&&num(M.rec)>0?num(M.rec):0; if(rec&&rec<ef){ toast("Lo recibido no alcanza para la parte en efectivo ("+money(ef)+")."); return; }
+      abAdv=null; const per=a.vence||today, nv=addMonths(per,1); p.disabled=true;
+      queue(async()=>{ try{ const comp=await claimComp("comp"), compAt=Date.now(), base={t:"Abonado",h:hhmm(),placa:a.placa||"",n:a.nombre,ab:a.id,per,comp,compAt}, mv={};
+        if(ya>0) mv[rid()]=Object.assign({},base,{m:ya,p:"yape"}); if(ef>0) mv[rid()]=Object.assign({},base,{m:ef,p:"efectivo"},rec?{rec}:{});
+        await writeDay(today,{movs:mv});
+        const v={f:today,m:tot,p:medio,comp,compAt,hasta:nv}; if(medio==="mixto"){ v.ya=ya; v.ef=ef; } if(rec) v.rec=rec;
+        await db.doc("abonados/"+a.id).update({vence:nv,pagos:{[per]:v}});
+        delete abMix[a.id];
+        toast("Pago de "+mesTxt(per)+" registrado: "+a.nombre+" · comprobante N° "+pad6(comp)+(rec?" · vuelto "+money(rec-ef):""));
+        armAuto(); showAbBol(Object.assign({},a,{vence:nv}),per,v);
       } finally { p.disabled=false; } }); }
     if(d){ if(d.dataset.armed!=="1"){ d.dataset.armed="1"; d.textContent="¿Se retira? Toca otra vez"; setTimeout(()=>{ if(d.isConnected){ d.dataset.armed=""; d.textContent="Retiro"; } },3000); return; }
       const id=d.dataset.delab; queue(()=>db.doc("abonados/"+id).update({retiro:iso(new Date())}).then(()=>toast("Abonado pasado a retirados"))); }
@@ -2312,7 +2453,7 @@ details.fold[open]>summary{margin-bottom:12px}
       if(g!==bGen) return;
       const all=[]; snaps.forEach(s=>{ if(s.exists) dayTickets(s.data()).forEach(t=>{ if(t.estado==="pagado" && t.sal && iso(new Date(t.sal))===bDayVal) all.push(t); }); });
       bPaid=all.sort((a,b)=>b.sal-a.sal);
-      bAb=snaps[1].exists?movs(snaps[1].data()).filter(m=>m.t==="Abonado"&&m.comp).sort((x,y)=>(y.compAt||0)-(x.compAt||0)):[];
+      bAb=snaps[1].exists?(()=>{ const seen=new Set(); return movs(snaps[1].data()).filter(m=>m.t==="Abonado"&&m.comp).filter(m=>{ if(seen.has(m.comp)) return false; seen.add(m.comp); return true; }); })().sort((x,y)=>(y.compAt||0)-(x.compAt||0)):[];
       renderBList();
       if(bSel){ const t=bPaid.find(x=>x.num===bSel); if(t) renderBSel(t); }
     }catch(e){ console.error(e); }
@@ -2336,7 +2477,8 @@ details.fold[open]>summary{margin-bottom:12px}
     if(base==null){ const c=calc(t,t.sal); base=c.base; extra=c.extra; h=c.h; eh=c.eh; mins=c.mins; }
     const r=((cfg.tar||{})[t.tipo]||{});
     const L=[];
-    if(t.modo==="hora") L.push([h+(h===1?" hora":" horas")+" × "+money(r.hora),base]);
+    if(t.abx) L.push([h+(h===1?" hora":" horas")+" fuera de su plan × "+money(r.hora),base]);
+    else if(t.modo==="hora") L.push([h+(h===1?" hora":" horas")+" × "+money(r.hora),base]);
     else L.push(["Tarifa "+MODOL[t.modo].toLowerCase(),base]);
     if(eh) L.push([eh+(eh===1?" hora extra":" horas extra")+" × "+money(r.hora),extra]);
     return {L,total:num(base)+num(extra),mins};
@@ -2345,7 +2487,7 @@ details.fold[open]>summary{margin-bottom:12px}
     $("#bTitle").textContent="N° "+pad6(m.comp);
     $("#bBox").innerHTML='<div class="pre"><div class="ptitle"><span class="pl">'+esc(a.nombre)+'</span><span class="muted num">Abonado</span></div>'
       +'<div><span>Placa</span><strong>'+esc(a.placa||"—")+'</strong></div><div><span>Periodo</span><strong class="num">'+ddmm(parse(per))+' al '+ddmm(parse(v.hasta||addMonths(per,1)))+'</strong></div>'
-      +'<div><span>Forma de pago</span><strong>'+(v.p==="yape"?"Yape":"Efectivo")+'</strong></div><div class="tot"><span>Total pagado</span><strong class="num">'+money(v.m)+'</strong></div></div>'
+      +'<div><span>Forma de pago</span><strong>'+esc(medTxt(v))+'</strong></div>'+(vueltoTxt(v)?'<div><span>Efectivo</span><strong>'+esc(vueltoTxt(v))+'</strong></div>':'')+'<div class="tot"><span>Total pagado</span><strong class="num">'+money(v.m)+'</strong></div></div>'
       +'<img id="bImg" class="tkimg" alt="Boleta N° '+pad6(m.comp)+'" style="margin-top:14px"><div class="formfoot"><button class="btn primary" type="button" data-print="b">🖨 Imprimir</button><button class="btn" id="bSave" type="button"'+(dl?'':' hidden')+'>Descargar</button></div>';
     bDocFn=()=>bolAbDoc(a,per,v);
     drawBoletaAb(a,per,v).then(async cv=>{ const img=$("#bImg"); if(!img) return; img.src=cv.toDataURL("image/png"); bBlob=await new Promise(r=>cv.toBlob(r,"image/png")); });
@@ -2417,6 +2559,7 @@ details.fold[open]>summary{margin-bottom:12px}
     c.font="500 16px Barlow";
     if(adel){ c.fillText("Pagado por adelantado: "+money(adel)+" ("+adelTxt(t.adel)+")",P,y); y+=21; if(num(t.saldo)>0) c.fillText("Pagado a la salida: "+money(t.saldo)+" ("+medioTxt(t)+")",P,y); y+=21; }
     else { c.fillText("Forma de pago: "+medioTxt(t),P,y); y+=21; }
+    if(num(t.rec)>0){ const efp=t.pagos?num(t.pagos.ef):num(t.saldo); c.fillText("Recibido "+money(t.rec)+" · vuelto "+money(Math.max(0,num(t.rec)-efp)),P,y); y+=21; }
     y+=10; center("¡Gracias por su preferencia!","600 16px Barlow",26);
     c.fillRect(P,y,cw,1); y+=8;
     c.font="400 14.5px Barlow"; c.fillText("Documento interno de control.",P,y); y+=18;
@@ -2444,7 +2587,7 @@ details.fold[open]>summary{margin-bottom:12px}
     c.font="500 15px Barlow"; c.fillText("Periodo: del "+ddmm(parse(per))+"/"+per.slice(0,4)+" al "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),P,y); y+=20;
     y+=4; c.fillRect(P,y,cw,2); y+=10;
     c.font="700 26px 'Barlow Condensed'"; c.fillText("TOTAL",P,y); c.textAlign="right"; c.fillText(money(v.m||a.monto),W-P,y); c.textAlign="left"; y+=34;
-    c.font="500 16px Barlow"; c.fillText("Forma de pago: "+(v.p==="yape"?"Yape":"Efectivo"),P,y); y+=21; c.fillText("Próximo pago: "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),P,y); y+=21;
+    c.font="500 16px Barlow"; c.fillText("Forma de pago: "+medTxt(v),P,y,cw); y+=21; if(vueltoTxt(v)){ c.fillText(vueltoTxt(v),P,y,cw); y+=21; } c.fillText("Próximo pago: "+ddmm(parse(hasta))+"/"+hasta.slice(0,4),P,y); y+=21;
     y+=10; center("¡Gracias por su preferencia!","600 16px Barlow",26);
     c.fillRect(P,y,cw,1); y+=8; c.font="400 14.5px Barlow"; c.fillText("Documento interno de control.",P,y); y+=18;
     c.fillText("Lun. a vie.: 6:30 a. m. a 10:30 p. m.",P,y); y+=18; c.fillText("Sáb., dom. y feriados: 6:30–10:00 a. m.",P,y); y+=18; c.fillText("y 6:30–10:30 p. m.",P,y); y+=24;
@@ -2552,6 +2695,7 @@ details.fold[open]>summary{margin-bottom:12px}
     if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     ["#prevD","#nextD","#dPick"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
+    { const f=$("#cFondo"); if(f&&f.parentElement) f.parentElement.hidden=!isAdmin(); } // solo el administrador cambia el monto del fondo
     if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"){ location.hash="ticketera"; show("ticketera"); } }
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
@@ -2657,12 +2801,12 @@ details.fold[open]>summary{margin-bottom:12px}
   function buildBook(docs,label){
     docs=docs.slice().sort((a,b)=>a.fecha<b.fecha?-1:1);
     // Resumen por día
-    const R=[["Fecha","Total","Efectivo","Yape","Estacionamiento","Abonados","SS.HH. (S/)","SS.HH. (usos)","Otros","Tickets","Caja contada","Diferencia caja","Nota del día"]];
+    const R=[["Fecha","Total","Efectivo","Yape","Estacionamiento","Abonados","SS.HH. (S/)","SS.HH. (usos)","Otros","Tickets","Fondo contado","Efectivo contado","Diferencia caja","Nota del día"]];
     const T={total:0,ef:0,ya:0,est:0,ab:0,ss:0,usos:0,ot:0,tk:0};
     for(const d of docs){ const t=totals(d); if(!t.total&&!dayTickets(d).length&&!(d.rep&&d.rep.nota)) continue;
       const est=num(t.por["Hora"])+num(t.por["Noche"])+num(t.por["Día"])+num(t.por["Adelanto"])+num(t.por["Estacionamiento"]), ab=num(t.por["Abonado"]), ss=num(t.por["Baño"]), ot=t.total-est-ab-ss;
-      const c=d.cierre&&d.cierre.ef!=null&&d.cierre.ef!==""?num(d.cierre.ef):"";
-      R.push([d.fecha,t.total,t.ef,t.ya,est,ab,ss,t.bano,Math.round(ot*100)/100,t.tick,c,c===""?"":Math.round((c-t.ef)*100)/100,(d.rep&&d.rep.nota)||""]);
+      const c=d.cierre&&d.cierre.ef!=null&&d.cierre.ef!==""?num(d.cierre.ef):"", fo=d.cierre&&d.cierre.fondoCont!=null?num(d.cierre.fondoCont):"";
+      R.push([d.fecha,t.total,t.ef,t.ya,est,ab,ss,t.bano,Math.round(ot*100)/100,t.tick,fo,c,c===""?"":Math.round((c-t.ef)*100)/100,(d.rep&&d.rep.nota)||""]);
       T.total+=t.total;T.ef+=t.ef;T.ya+=t.ya;T.est+=est;T.ab+=ab;T.ss+=ss;T.usos+=t.bano;T.ot+=ot;T.tk+=t.tick; }
     R.push([]); R.push(["TOTAL "+label,T.total,T.ef,T.ya,T.est,T.ab,T.ss,T.usos,Math.round(T.ot*100)/100,T.tk]);
     // Pagos
@@ -2722,6 +2866,17 @@ details.fold[open]>summary{margin-bottom:12px}
   });
   fillExpPer();
   window.__buildBook=buildBook;
+  // recordatorio de cierre: desde las 22:00, si la caja de hoy no se cerró
+  function cierreAviso(){ const d=new Date(), t=d.getHours()*60+d.getMinutes(), hoy=iso(d); const a=document.querySelector('nav a[data-v="ingresos"]'); if(!a) return;
+    const hecho=selDay===hoy&&dayData&&dayData.cierre&&dayData.cierre.ef!=null&&dayData.cierre.ef!=="";
+    const on=t>=22*60&&!hecho; a.classList.toggle("navwarn",on); a.title=on?"Hora de cerrar caja (22:30)":"";
+    const b=$("#cierreBanner"); if(b){ b.hidden=!on; b.textContent=on?"⏰ El turno termina a las 22:30: cuenta la caja y guarda el cierre.":""; } }
+  setInterval(cierreAviso,30000); setTimeout(cierreAviso,1500);
+  $("#abxAlert").addEventListener("click",e=>{ const s1=e.target.closest("[data-abxs]"), s2=e.target.closest("[data-abxn]");
+    if(s1){ const [id,fin]=s1.dataset.abxs.split("|"); const a=abonados.find(z=>z.id===id); if(a) abxTicket(a,num(fin)); return; }
+    if(s2){ if(!needDb()) return; const [id,fin]=s2.dataset.abxn.split("|"); queue(()=>db.doc("abonados/"+id).update({abxVisto:fin}).then(()=>toast("Anotado: ya se fue"))); } });
+  setInterval(()=>{ renderAbxAlert(); renderAbxList(); },60000);
+  window.__abx={pend:abxPendientes,render:renderAbxAlert,calc:(t,at)=>calc(t,at)};
   // reloj en tiempo real (hora de Lima del equipo)
   (function(){ const T=$("#ckT"), Dd=$("#ckD"); if(!T) return; const DS=["dom.","lun.","mar.","mié.","jue.","vie.","sáb."], MS=["ene.","feb.","mar.","abr.","may.","jun.","jul.","ago.","set.","oct.","nov.","dic."];
     const tick=()=>{ const d=new Date(), p2=n=>String(n).padStart(2,"0");

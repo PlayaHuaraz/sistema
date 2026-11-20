@@ -932,7 +932,7 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
       <div class="fold-in">
         <p class="note" style="margin:0 0 10px">La <strong>copia completa</strong> guarda todo el sistema en un archivo: abonados, días, tickets dentro y configuración. Con <strong>Restaurar copia</strong> vuelves a cargar uno de esos archivos.</p>
         <div class="expbtns"><button class="btn" id="bkJson" type="button">Descargar copia completa</button>
-        <label class="btn filebtn" id="impBtn">Restaurar copia<input type="file" accept="application/json,.json" id="impJson"></label></div>
+        <label class="btn filebtn" id="impBtn">Restaurar copia<input type="file" accept="application/json,.json,.gz,application/gzip" id="impJson"></label></div>
         <p class="note" id="bkMsg" aria-live="polite"></p>
         <div class="bkauto" id="bkAuto"></div>
       </div>
@@ -993,7 +993,7 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
   async function call(a, body){
     const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st }, body || {})) });
     const j = await r.json();
-    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err;
+    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; e.msg = j.msg || "";
       if (j.err === "no_session" && a !== "login" && !document.getElementById("phLogin")) askLogin(true);
       throw e; }
     return j;
@@ -3028,12 +3028,13 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
     box.innerHTML='<h3 class="eqh">Respaldo automático</h3>'
       +'<div class="bkrow"><span>Estado</span>'+(bkI.activo?'<span class="pill ok">Activo · todas las noches 23:30</span>':'<span class="pill warn">No activado</span>')+'</div>'
       +'<div class="bkrow"><span>Último respaldo</span>'+(L?(L.ok?'<strong>'+ddmm(d)+'/'+d.getFullYear()+' '+hhmm(d)+'</strong> <span class="muted">· '+esc(L.name)+' · '+(L.kb||0)+' KB</span>':'<span class="pill bad">Falló el '+ddmm(d)+' '+hhmm(d)+'</span>'):'<span class="muted">Todavía no hay</span>')+'</div>'
+      +(L&&!L.ok&&/permiso|permission|DriveApp/i.test(L.msg||'')?'<p class="note" style="margin:6px 0"><strong>Falta el permiso de Google Drive.</strong> En Apps Script elige la función <strong>respaldoDiario</strong>, toca ▶ Ejecutar y, en la ventana de Google, marca <strong>todos</strong> los permisos (o «Seleccionar todo») antes de Continuar.</p>':(L&&!L.ok&&L.msg?'<p class="note" style="margin:6px 0">Detalle: '+esc(String(L.msg).slice(0,160))+'</p>':''))
       +(bkI.activo?'':'<p class="note" style="margin:6px 0">Para activarlo: en Apps Script, elige la función <strong>activarRespaldo</strong> y toca ▶ Ejecutar (una sola vez).</p>')
       +'<div class="expbtns" style="margin-top:8px"><button class="btn small" type="button" id="bkNow"'+(bkBusy?' disabled':'')+'>'+(bkBusy?'Respaldando…':'Respaldar ahora')+'</button>'+(bkI.folder?'<a class="btn small" href="'+esc(bkI.folder)+'" target="_blank" rel="noopener">Abrir carpeta en Drive</a>':'')+'</div>'; }
   async function loadBk(){ if(!window.PH||!window.PH.bkInfo||!isAdmin()) { renderBk(); return; } try{ bkI=await window.PH.bkInfo(); }catch(e){ bkI={activo:false,last:null,folder:""}; } renderBk(); }
   $("#bkCard").addEventListener("toggle",()=>{ if($("#bkCard").open) loadBk(); });
   $("#bkAuto").addEventListener("click",async e=>{ if(!e.target.closest("#bkNow")||bkBusy) return; if(!isAdmin()){ toast("Solo el administrador."); return; }
-    bkBusy=true; renderBk(); try{ bkI=await window.PH.bkNow(); toast("Respaldo guardado en el Drive de la playa"); }catch(er){ toast("No se pudo hacer el respaldo"+(er.code==="adm_req"?": vuelve a entrar como administrador.":".")); } bkBusy=false; renderBk(); });
+    bkBusy=true; renderBk(); try{ bkI=await window.PH.bkNow(); toast("Respaldo guardado en el Drive de la playa"); }catch(er){ const m=String(er.msg||""); toast(/permiso|permission|DriveApp/i.test(m)?"Falta el permiso de Google Drive: en Apps Script ejecuta «activarRespaldo» y acepta los permisos.":"No se pudo hacer el respaldo"+(er.code==="adm_req"?": vuelve a entrar como administrador.":m?": "+m.slice(0,120):".")); try{ bkI=await window.PH.bkInfo(); }catch(e2){} } bkBusy=false; renderBk(); });
   renderBk();
   $("#expXls").addEventListener("click",async()=>{
     if(!needDb()) return; const v=$("#expPer").value; if(!v) return; const [k,p]=v.split(":");
@@ -3059,7 +3060,10 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
   $("#impJson").addEventListener("change",async e=>{
     const f=e.target.files[0]; e.target.value=""; if(!f||!needDb()) return;
     if(!isAdmin()){ toast("Solo el administrador puede restaurar una copia."); return; }
-    let data; try{ data=JSON.parse(await f.text()); }catch(er){ toast("Ese archivo no es una copia válida."); return; }
+    let data; try{ let txt;
+      if(/\.gz$/i.test(f.name)){ if(typeof DecompressionStream==="undefined"){ toast("Este navegador no abre copias comprimidas (.gz). Usa Chrome actualizado."); return; } txt=await new Response(f.stream().pipeThrough(new DecompressionStream("gzip"))).text(); }
+      else txt=await f.text();
+      data=JSON.parse(txt); }catch(er){ toast("Ese archivo no es una copia válida."); return; }
     if(!data||data.sistema!=="Sistema Integral - Playa Huaraz"){ toast("Ese archivo no es una copia del sistema."); return; }
     const n=k=>Object.keys(data[k]||{}).length;
     if(!confirm("Se cargarán "+n("abonados")+" abonados, "+n("dias")+" días, "+n("tickets")+" tickets dentro y la configuración. Si ya existen, se reemplazan. ¿Continuar?")) return;

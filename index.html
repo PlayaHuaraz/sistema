@@ -1057,7 +1057,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   function askKey(bad, first){
     let ov = document.getElementById("phLogin");
     if (!ov){ ov = document.createElement("div"); ov.id = "phLogin";
-      ov.innerHTML = '<form>' + brand() + '<p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre del equipo (ej. Celular)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
+      ov.innerHTML = '<form>' + brand() + '<p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre del equipo (ej. Celular)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="new-password" name="ph-clave-" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
       document.body.appendChild(ov);
       ov.querySelector("form").addEventListener("submit", async e => { e.preventDefault(); const v = ov.querySelector("#phLoginKey").value.trim(); if (v.length < 4){ msg("La clave debe tener al menos 4 caracteres."); return; }
         const nm = ov.querySelector("#phLoginName").value.trim(); if (!nm){ msg("Ponle un nombre a este equipo, por ejemplo «Celular playa»."); return; } devName = nm.slice(0, 40); localStorage.setItem("ph_devname", devName);
@@ -1071,7 +1071,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     const msg = t => { ov.querySelector("#phLoginMsg").textContent = t; };
     ov.dataset.first = first ? "1" : "";
     const ni = ov.querySelector("#phLoginName"); ni.value = devName; ni.hidden = !!devName;
-    if (key && !bad) ov.querySelector("#phLoginKey").value = key;
+    ov.querySelector("#phLoginKey").value = ""; setTimeout(() => { const k = ov.querySelector("#phLoginKey"); if (k && !k.dataset.typed) k.value = ""; }, 400); ov.querySelector("#phLoginKey").addEventListener("keydown", e => { e.target.dataset.typed = "1"; }, { once: true });
     msg(first ? "Primera vez: crea la clave de acceso que usarán todos los celulares de la playa." : bad ? "La clave guardada ya no es válida. Escríbela de nuevo." : "Escribe la clave de acceso de la playa.");
     if (bad){ key = ""; localStorage.removeItem(LS_KEY); if (keyDone){ keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); }); } }
     setTimeout(() => ov.querySelector("#phLoginKey").focus(), 50);

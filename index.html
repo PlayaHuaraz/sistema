@@ -956,14 +956,15 @@ nav a.navnew::after{content:" •";color:#d9a521}
     if (b && t){ if (!v){ t.textContent = "Sin conexión a internet. Lo que registres se guardará cuando vuelva la señal."; b.hidden = false; } else b.hidden = true; } }
 
   // ---------- notificaciones a la pantalla ----------
-  function snapDoc(path){ const d = store.get(path); return { id: idOf(path), exists: d != null, data: () => clone(d), metadata: { fromCache: false } }; }
+  function snapDoc(path){ const d = store.get(path); return { id: idOf(path), exists: d != null, data: () => clone(d), metadata: { fromCache: !synced, hasPendingWrites: hasPending(path) } }; }
+  let synced = false;
   function inQuery(q, path, data){
     if (collOf(path) !== q.coll || data == null) return false;
     return q.where.every(([f, op, v]) => { const x = (f === "fecha" ? (data.fecha || idOf(path)) : data[f]);
       return op === ">=" ? x >= v : op === "<=" ? x <= v : op === "==" ? x === v : op === "<" ? x < v : op === ">" ? x > v : true; });
   }
   function snapCol(q){ const docs = []; store.forEach((d, p) => { if (inQuery(q, p, d)) docs.push({ id: idOf(p), exists: true, data: () => clone(d) }); });
-    return { docs, size: docs.length, empty: !docs.length, metadata: { fromCache: false } }; }
+    return { docs, size: docs.length, empty: !docs.length, metadata: { fromCache: !synced, hasPendingWrites: pending.some(o => collOf(o.path) === q.coll) } }; }
   let notifyT = null; const dirty = new Set();
   function changed(path){ dirty.add(path); if (!notifyT) notifyT = setTimeout(flushNotify, 0); }
   function flushNotify(){ notifyT = null; const ps = [...dirty]; dirty.clear();
@@ -1004,6 +1005,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
         try { let more = true;
           while (more){ const j = await call("changes", { since }); j.docs.forEach(d => { if (!hasPending(d.path)) apply(d.path, d.del ? null : d.data); }); since = j.now; more = j.more; }
           setOnline(true);
+          if (!synced && !pending.length){ synced = true; docSubs.forEach(x => changed(x.path)); colSubs.forEach(x => changed(x.q.coll + "/__sync")); }
         } catch (e) { if (e.code === "bad_key") { askKey(true); } else setOnline(false); }
       }
       await sleep(POLL);
@@ -2060,7 +2062,15 @@ nav a.navnew::after{content:" •";color:#d9a521}
     const b=e.target.closest("[data-del]"); if(!b) return;
     if(!isAdmin()){ toast("Solo el administrador puede quitar pagos."); return; }
     if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="¿Quitar? Toca otra vez"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Quitar"; } },3000); return; }
-    const id=b.dataset.del, f=selDay; queue(()=>db.doc("dias/"+f).update({movs:{[id]:null}}).then(()=>toast("Pago quitado")));
+    const id=b.dataset.del, f=selDay, mv=movs(dayData).find(m=>m.id===id);
+    if(mv&&mv.t==="Abonado"&&mv.ab&&mv.comp){ // pago de abonado: se quitan sus partes (Yape/efectivo) y vuelve a quedar pendiente
+      const del={}; movs(dayData).filter(m=>m.t==="Abonado"&&String(m.comp)===String(mv.comp)).forEach(m=>{ del[m.id]=null; });
+      const a=abonadosAll.find(x=>x.id===mv.ab), pg=a&&a.pagos&&mv.per?a.pagos[mv.per]:null;
+      queue(async()=>{ await db.doc("dias/"+f).update({movs:del});
+        if(pg&&String(pg.comp)===String(mv.comp)){ const up={pagos:{[mv.per]:null}}; if(a.vence===pg.hasta) up.vence=mv.per; await db.doc("abonados/"+a.id).update(up); }
+        toast("Pago de abonado quitado"+(a?": "+a.nombre+" vuelve a figurar pendiente":"")); });
+      return; }
+    queue(()=>db.doc("dias/"+f).update({movs:{[id]:null}}).then(()=>toast("Pago quitado")));
   });
   function setDay(f){ selDay=f; const d=parse(f); if(d.getFullYear()!==cur.y||d.getMonth()!==cur.m){ cur={y:d.getFullYear(),m:d.getMonth()}; subMonth(); } subDay(); renderDia(); }
   $("#prevD").addEventListener("click",()=>{ const d=parse(selDay); d.setDate(d.getDate()-1); setDay(iso(d)); });
@@ -2846,7 +2856,23 @@ nav a.navnew::after{content:" •";color:#d9a521}
     if(!db) return; if(unDay) unDay(); dayData=null; prevDoc=null;
     const pd=parse(selDay); pd.setDate(pd.getDate()-1); const want=selDay;
     db.doc("dias/"+iso(pd)).get().then(s=>{ if(selDay!==want) return; prevDoc=s.exists?s.data():null; renderDia(); }).catch(()=>{});
-    unDay=db.doc("dias/"+selDay).onSnapshot(s=>{ dayData=s.exists?s.data():null; okData(s.metadata); renderDia(); },subErr);
+    dayFresh=false;
+    unDay=db.doc("dias/"+selDay).onSnapshot(s=>{ dayData=s.exists?s.data():null; okData(s.metadata); if(s.metadata&&s.metadata.fromCache===false&&!s.metadata.hasPendingWrites) dayFresh=true; renderDia(); abFix(); },subErr);
+  }
+  // Si un pago de abonado quedó registrado en su ficha pero falta en los ingresos del día, se vuelve a poner.
+  let dayFresh=false, abLoaded=false; const fixDone=new Set();
+  function abFix(){
+    if(!db||!dayFresh||!abLoaded) return; const f=selDay, L=movs(dayData);
+    const have=new Set(L.filter(m=>m.t==="Abonado"&&m.comp).map(m=>String(m.comp))), mv={};
+    abonadosAll.forEach(a=>Object.entries(a.pagos||{}).forEach(([per,v])=>{
+      if(!v||v.f!==f||!v.comp||have.has(String(v.comp))) return;
+      const k=f+"|"+v.comp; if(fixDone.has(k)) return; fixDone.add(k);
+      const base={t:"Abonado",h:v.compAt?hhmm(new Date(v.compAt)):"",placa:a.placa||"",n:a.nombre,ab:a.id,per,comp:v.comp,compAt:v.compAt||0};
+      let ya=0, ef=0; if(v.p==="mixto"){ ya=num(v.ya); ef=num(v.ef); } else if(v.p==="yape") ya=num(v.m); else ef=num(v.m);
+      if(ya>0) mv["abfix"+v.comp+"y"]=Object.assign({},base,{m:ya,p:"yape"});
+      if(ef>0) mv["abfix"+v.comp+"e"]=Object.assign({},base,{m:ef,p:"efectivo"},v.rec?{rec:v.rec}:{});
+    }));
+    if(Object.keys(mv).length) queue(()=>writeDay(f,{movs:mv}));
   }
 
   show(location.hash.slice(1)||"ticketera");
@@ -3059,7 +3085,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);
-    db.collection("abonados").onSnapshot(s=>{ abonadosAll=s.docs.map(d=>Object.assign({id:d.id},d.data())); abonados=abonadosAll.filter(a=>!a.retiro); checkDup(); renderAbonados(); renderMes(); renderPlano(); refreshEspSelects(); renderInside(); },subErr);
+    db.collection("abonados").onSnapshot(s=>{ abonadosAll=s.docs.map(d=>Object.assign({id:d.id},d.data())); abonados=abonadosAll.filter(a=>!a.retiro); if(s.metadata&&s.metadata.fromCache===false) abLoaded=true; abFix(); checkDup(); renderAbonados(); renderMes(); renderPlano(); refreshEspSelects(); renderInside(); },subErr);
     subMonth(); subDay(); subBano();
     // tiempo real: cada minuto se recalcula el planograma (cambio de turno de abonados de día/noche)
     setInterval(()=>{ renderPlano(); refreshEspSelects(); if(!$("#v-abonados").hidden) renderAbonados(); checkDup(); },60000);

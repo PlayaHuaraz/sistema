@@ -2429,6 +2429,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     return {ok:true,key:s.key,warn};
   }
 
+  function abNm(a,n){ return String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,n); }
   function planoBase(){ return '<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
       +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="968" y="16" width="120" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
@@ -2479,13 +2480,14 @@ nav a.navnew::after{content:" •";color:#d9a521}
       g+='<g class="'+cls+'" data-sp="'+s.id+'" tabindex="0" role="button" aria-label="Espacio '+s.id+(o?', ocupado por '+o.placa:', libre')+'"><rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="3"/>';
       if(small){
         g+='<text x="'+cx+'" y="'+(o||a||off?s.y+16:cy+4)+'" class="pm-id'+(o||a||off?' sm':'')+'">'+s.id+'</text>';
-        const sh=x=>x.placa?normP(x.placa).slice(-4):String(x.nombre||"").split(" ")[0].slice(0,5); const lab=o?(o.abo?sh(o.abo):normP(o.placaN||o.placa).slice(-4)):a?sh(a):off?(off.mod==="noche"?"N":"D"):"";
+        const sh=x=>abNm(x,5); const lab=o?(o.abo?sh(o.abo):normP(o.placaN||o.placa).slice(-4)):a?sh(a):off?abNm(off,5):"";
         if(lab) g+='<text x="'+cx+'" y="'+(s.y+33)+'" class="'+(o?'pm-pl sm':'pm-ab sm'+(off?' off':''))+'">'+esc(lab)+'</text>';
       } else {
       g+='<text x="'+cx+'" y="'+(o||a||off?(vert?cy-14:cy-7):cy+5)+'" class="pm-id">'+s.id+'</text>';
-      if(o) g+=(vert?'<text x="'+cx+'" y="'+(cy+8)+'" class="pm-pl">'+esc(o.placaN.slice(0,3))+'</text><text x="'+cx+'" y="'+(cy+22)+'" class="pm-pl">'+esc(o.placaN.slice(3))+'</text>':'<text x="'+cx+'" y="'+(cy+11)+'" class="pm-pl">'+esc(o.placa)+'</text>')+(s.key&&o.llave!=="con"?'<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>':'');
-      else if(a) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-ab">'+esc(normP(a.placa||a.nombre).slice(0,6))+'</text>';
-      else if(off) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-ab off">'+(off.mod==="noche"?"NOCHE":"DÍA")+'</text>';
+      if(o&&o.abo) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-pl">'+esc(abNm(o.abo,9))+'</text>';
+      else if(o) g+=(vert?'<text x="'+cx+'" y="'+(cy+8)+'" class="pm-pl">'+esc(o.placaN.slice(0,3))+'</text><text x="'+cx+'" y="'+(cy+22)+'" class="pm-pl">'+esc(o.placaN.slice(3))+'</text>':'<text x="'+cx+'" y="'+(cy+11)+'" class="pm-pl">'+esc(o.placa)+'</text>')+(s.key&&o.llave!=="con"?'<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>':'');
+      else if(a) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-ab">'+esc(abNm(a,9))+'</text>';
+      else if(off) g+='<text x="'+cx+'" y="'+(vert?cy+6:cy+9)+'" class="pm-ab">'+esc(abNm(off,9))+'</text><text x="'+cx+'" y="'+(vert?cy+18:cy+20)+'" class="pm-ab off">'+(off.mod==="noche"?"NOCHE":"DÍA")+'</text>';
       }
       g+='</g>'; });
     $("#plMap").innerHTML=g;

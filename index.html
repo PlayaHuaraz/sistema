@@ -397,6 +397,14 @@ nav a.navnew::after{content:" •";color:#d9a521}
 .expbtns{display:flex;gap:8px;flex-wrap:wrap}
 .bkrow{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
 .eqfx{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500;margin:0}.eqfx input{width:18px;height:18px;min-height:0}
+
+/* plano de abonados */
+.abmapw{margin:12px 0}.abmapw .mapwrap{margin-top:8px}
+.pm-sp.am{cursor:default}.pm-sp.am[data-amsp]{cursor:pointer}
+.pm-sp.amfree rect{opacity:.35}.pm-sp.amfree .pm-id{opacity:.45}
+.pm-sp.amon rect{fill:var(--accent)}.pm-sp.amon text{fill:var(--accent-ink)}
+.pm-sp.amoff rect{fill:var(--sp-abin,#5b6b7d);opacity:.55}.pm-sp.amoff text{fill:#fff;opacity:.8}
+.sw.amon{background:var(--accent)}.sw.amoff{background:var(--sp-abin,#5b6b7d);opacity:.55}.sw.amfree{background:var(--sp-aire);opacity:.45}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -422,7 +430,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     <a href="#sshh" data-v="sshh">SS.HH.</a>
     <a href="#abonados" data-v="abonados">Abonados</a>
     <a href="#ingresos" data-v="ingresos">Ingresos</a>
-    <a href="#tarifas" data-v="tarifas">⚙ Opciones</a>
+    <a href="#opciones" data-v="tarifas">⚙ Opciones</a>
   </nav>
 </header>
 
@@ -673,7 +681,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     </details>
       <div class="card">
         <div class="absearch"><input id="aQ" type="search" placeholder="🔎 Nombre, placa, celular…" autocomplete="off" aria-label="Buscar abonados"><select id="aQEsp" aria-label="Filtrar por espacio"><option value="">Todos los espacios</option></select></div>
-        <div id="aList"></div><div id="aRet"></div>
+        <details class="fold abmapw" id="aMapW" open><summary>Plano de abonados <small class="muted" id="aMapInfo"></small></summary><div class="mapwrap"><svg id="aMap" class="pmap" viewBox="20 10 1075 560" role="img" aria-label="Plano con los espacios de los abonados"></svg></div><div class="legend"><span><i class="sw amon"></i>Abonado (coincide con la búsqueda)</span><span><i class="sw amoff"></i>Abonado (no coincide)</span><span><i class="sw amfree"></i>Sin abonado</span></div></details><div id="aList"></div><div id="aRet"></div>
       </div>
     </div>
     <div id="aTabCal" hidden>
@@ -1259,6 +1267,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   let ingSub="dia";
   function show(v){
     if(v==="playa") v="ticketera";
+    if(v==="opciones") v="tarifas";
     if(v==="mes"||v==="dia"){ ingSub=v; v="ingresos"; }
     if(!VIEWS.includes(v)) v="ticketera";
     if(v==="tarifas"&&!isAdmin()) v="ticketera";
@@ -2236,6 +2245,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     const fe2=se.value;
     const base=abonados.filter(AFIL[abFilter][1]).filter(a=>!fe2||(fe2==="-"?!espKey(a.esp):espKey(a.esp)===fe2)); const l=base.filter(a=>abMatch(a,q)).sort((x,y)=>(x.nombre||"").localeCompare(y.nombre||"","es"));
     $("#aCount").textContent=abonados.length?"("+abonados.length+")":"";
+    renderAbMap(l,!!(q||abFilter!=="todos"||fe2));
     const chips='<div class="chips tight abfil">'+Object.entries(AFIL).map(([k,[lb,f]])=>'<button type="button" class="chip" data-abf="'+k+'" aria-pressed="'+(abFilter===k)+'">'+lb+' ('+abonados.filter(f).length+')</button>').join("")+'</div>';
     const info=(q||abFilter!=="todos"||fe2)?'<p class="note" style="margin:0 0 6px">'+l.length+(l.length===1?' abonado':' abonados')+(q?' encontrados':'')+' · '+money(l.reduce((s,x)=>s+num(x.monto),0))+' al mes</p>':'';
     $("#aList").innerHTML=chips+info+(l.length?'<div class="abhead"><span>Nombre</span><span>Placa</span><span>Esp.</span><span>Celular</span></div>'+l.map(abRow).join("")
@@ -2258,6 +2268,8 @@ nav a.navnew::after{content:" •";color:#d9a521}
   function renderAbonados(){ renderACal(); renderFijos(); renderRetirados(); applyATab(); renderAbList(); renderAbDay(); }
   document.querySelectorAll("[data-atab]").forEach(b=>b.addEventListener("click",()=>{ aTab=b.dataset.atab; lsSet("ph_atab",aTab==="cal"?"cal":null); applyATab(); }));
   $("#aQ").addEventListener("input",renderAbList); $("#aQEsp").addEventListener("change",renderAbList);
+  { const pick=e=>{ const g=e.target.closest("[data-amsp]"); if(!g) return; const se=$("#aQEsp"), k=g.dataset.amsp; se.value=se.value===k?"":k; renderAbList(); };
+    $("#aMap").addEventListener("click",pick); $("#aMap").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(e); } }); }
   $("#aDayList").addEventListener("toggle",e=>{ const r=e.target; if(!r.classList||!r.classList.contains("dayrow")) return; const key=r.dataset.abrow;
     if(r.open){ abOpen.add(key); if(!r.querySelector(".abrow-in")) renderAbDay(); } else abOpen.delete(key); },true);
   $("#aList").addEventListener("toggle",e=>{ const r=e.target; if(!r.classList||!r.classList.contains("abrow")) return; const id=r.dataset.abrow;
@@ -2417,6 +2429,27 @@ nav a.navnew::after{content:" •";color:#d9a521}
     return {ok:true,key:s.key,warn};
   }
 
+  function planoBase(){ return '<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
+      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="968" y="16" width="120" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
+      +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
+      +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
+      +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>'; }
+  // plano de la pestaña Abonados: muestra dónde está cada abonado y resalta los del filtro
+  function renderAbMap(list,filtered){ const svg=$("#aMap"); if(!svg) return; const fe=$("#aQEsp").value;
+    const by={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k) (by[k]=by[k]||[]).push(a); });
+    const hit=new Set(list.map(a=>espKey(a.esp)).filter(Boolean));
+    let g=planoBase();
+    SPACES.forEach(s=>{ const L=by[s.id]||[], has=L.length>0, on=has&&(!filtered||hit.has(s.id));
+      const cls="pm-sp am "+s.k+(has?(on?" amon":" amoff"):" amfree")+(fe===s.id?" sel":"");
+      const cx=s.x+s.w/2, cy=s.y+s.h/2, small=s.w<40, vert=s.h>s.w;
+      const nm=a=>String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,small?5:9);
+      const lab=has?(L.length>1?(small?L.length+" ab.":nm(L[0])+" +"+(L.length-1)):nm(L[0])):"";
+      g+='<g class="'+cls+'"'+(has?' data-amsp="'+s.id+'" tabindex="0" role="button"':'')+' aria-label="Espacio '+s.id+(has?': '+esc(L.map(a=>a.nombre).join(", ")):', sin abonado')+'"><title>'+(has?esc(L.map(a=>a.nombre+(a.placa?" · "+a.placa:"")+(a.mod?" ("+ABMOD[a.mod]+")":"")).join("\n")):"Espacio "+s.id+" · sin abonado")+'</title><rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="3"/>'
+        +'<text x="'+cx+'" y="'+(has?(small?s.y+16:(vert?cy-8:cy-5)):cy+4)+'" class="pm-id'+(small&&has?' sm':'')+'">'+s.id+'</text>'
+        +(lab?'<text x="'+cx+'" y="'+(small?s.y+33:(vert?cy+10:cy+12))+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>':'')+'</g>'; });
+    svg.innerHTML=g;
+    const n=filtered?hit.size:Object.keys(by).length; $("#aMapInfo").textContent=filtered?(n?n+(n===1?" espacio resaltado":" espacios resaltados")+" según la búsqueda":"Los abonados encontrados no tienen espacio fijo"):n+" espacios con abonado · toca uno para filtrar";
+  }
   let plSel=null, plMove=null;
   function renderPlano(){
     const occ=occMap(), abo=aboMap();
@@ -2435,7 +2468,8 @@ nav a.navnew::after{content:" •";color:#d9a521}
       +'<div class="tile"><div class="k">Motos libres</div><div class="v num">'+mL+'<small class="muted" style="font-size:16px"> / '+mT+'</small></div></div>'
       +'<div class="tile"><div class="k">B y 20 en uso</div><div class="v num">'+(bT-bL)+'<small class="muted" style="font-size:16px"> / '+bT+'</small></div>'+(sinEsp?'<div class="s">'+sinEsp+' sin espacio asignado</div>':'')+(extras.length?'<div class="s">'+extras.length+' en espacio extra</div>':'')+'</div>';
     // mapa
-    let g='<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
+    let g=planoBase();
+    const _unused='<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
       +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="968" y="16" width="120" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
@@ -2794,7 +2828,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     ["#prevD","#nextD","#dPick"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     { const f=$("#cFondo"); if(f&&f.parentElement) f.parentElement.hidden=!isAdmin(); } // solo el administrador cambia el monto del fondo
-    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"){ location.hash="ticketera"; show("ticketera"); } }
+    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"){ location.hash="ticketera"; show("ticketera"); } }
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
@@ -3025,12 +3059,12 @@ nav a.navnew::after{content:" •";color:#d9a521}
         :'<button class="btn small" type="button" data-eq="ok|'+e.id+'">Desbloquear</button>';
       const fx=e.estado==="ok"?'<label class="eqfx"><input type="checkbox" data-eqfx="'+e.id+'"'+(e.admFijo?' checked':'')+'><span>Sesión de administrador sin vencimiento <span class="muted">(solo sale al tocar «Salir»)</span></span></label>':'';
       return '<div class="eqr"><span class="eqn"><b>'+esc(e.nombre||"Equipo")+'</b>'+(self?' <span class="muted">(este equipo)</span>':'')+'<small class="muted">Último uso: '+tAgo(e.ultimo)+' · desde '+(e.creado?ddmm(new Date(e.creado)):"—")+'</small></span>'+st+fx+'<span class="eqb">'+btn+'<button class="btn small" type="button" data-eqren="'+e.id+'">Renombrar</button></span></div>'; }).join("");
-    const names=[...new Set(eqLog.map(r=>r[1]))].sort();
+    const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean).concat(eqLog.map(r=>r[1])))].sort((a,b)=>a.localeCompare(b,"es"));
     const L=eqLog.filter(r=>!eqFil||r[1]===eqFil);
     body.innerHTML='<p class="note" style="margin:0 0 8px">Cada celular o computadora que entra a la página aparece aquí. Los equipos nuevos quedan <strong>en espera</strong> hasta que los apruebes, aunque tengan la clave.</p>'
       +(rows||'<p class="muted">Todavía no hay equipos.</p>')
       +'<h3 class="eqh">Registro de cambios</h3><div class="eqlogbar"><select id="eqFil" aria-label="Filtrar por equipo"><option value="">Todos los equipos</option>'+names.map(n=>'<option'+(n===eqFil?' selected':'')+'>'+esc(n)+'</option>').join("")+'</select><button class="btn small" type="button" id="eqLoad">'+(eqLog.length?'Actualizar':'Ver registro')+'</button></div>'
-      +(eqLog.length?'<div class="eqlog">'+L.map(r=>{ const d=new Date(r[0]); return '<div><span class="num muted">'+ddmm(d)+' '+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; }).join("")+'</div>'+(eqLogOff>=0?'<button class="btn small" type="button" id="eqMore" style="margin-top:8px">Cargar más antiguos</button>':''):'');
+      +(eqLog.length&&eqFil&&!L.length?'<p class="muted" style="margin:8px 0 0">'+esc(eqFil)+' no tiene cambios en lo cargado'+(eqLogOff>=0?'. Toca «Cargar más antiguos» para buscar más atrás.':'.')+'</p>':'')+(eqLog.length?'<div class="eqlog">'+L.map(r=>{ const d=new Date(r[0]); return '<div><span class="num muted">'+ddmm(d)+' '+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; }).join("")+'</div>'+(eqLogOff>=0?'<button class="btn small" type="button" id="eqMore" style="margin-top:8px">Cargar más antiguos</button>':''):'');
   }
   async function loadLog(more){ if(!window.PH) return; const b=$("#eqLoad"); if(b){ b.disabled=true; b.textContent="Cargando…"; }
     try{ const off=more?eqLog.length:0; const rows=await window.PH.log(150,off); eqLog=more?eqLog.concat(rows):rows; eqLogOff=rows.length<150?-1:eqLog.length; }
@@ -3043,7 +3077,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
       if(window.PH&&id===window.PH.devId()) window.PH.renameSelf(nm.trim()); queue(()=>db.doc("equipos/"+id).update({nombre:nm.trim().slice(0,40)})); return; }
     if(e.target.closest("#eqLoad")) loadLog(false);
     if(e.target.closest("#eqMore")) loadLog(true); });
-  $("#eqBody").addEventListener("change",e=>{ if(e.target.id==="eqFil"){ eqFil=e.target.value; renderEquipos(); return; }
+  $("#eqBody").addEventListener("change",e=>{ if(e.target.id==="eqFil"){ eqFil=e.target.value; if(!eqLog.length) loadLog(false); else renderEquipos(); return; }
     const fx=e.target.closest("[data-eqfx]"); if(fx){ if(!isAdmin()||!needDb()){ fx.checked=!fx.checked; toast("Solo el administrador."); return; } const id=fx.dataset.eqfx, on=fx.checked;
       queue(()=>db.doc("equipos/"+id).update({admFijo:on}).then(()=>{ if(window.PH&&id===window.PH.devId()) lsSet("ph_admin_until",String(Date.now()+(on?3650*86400000:ADMIN_TTL))); toast(on?"Este equipo ya no saldrá solo del modo administrador":"La sesión de administrador vuelve a durar 12 horas"); })); } });
   (async()=>{ if(!window.PH) { renderEquipos(); return; } try{ const d=await window.claude.use("db"); d.collection("equipos").onSnapshot(sn=>{ equipos=sn.docs.map(x=>Object.assign({id:x.id},x.data())); renderEquipos(); },()=>{}); }catch(e){} renderEquipos(); })();

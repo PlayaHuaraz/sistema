@@ -410,6 +410,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
 .lgbar{display:grid;gap:8px}.lgf{display:flex;flex-wrap:wrap;gap:8px}.lgf>*{flex:1 1 150px;min-width:0;width:auto}.lgf #lgQ{flex:2 1 220px}
 .eqlog>.lgday{display:block;background:var(--bg);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 10px;position:sticky;top:0}
 .eqlog>div{grid-template-columns:52px 1fr}
+.lgday-pick{display:flex;gap:6px;align-items:center;flex:1 1 220px}.lgday-pick input{flex:1;min-width:0}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -865,11 +866,8 @@ nav a.navnew::after{content:" •";color:#d9a521}
       <h2>Registro de cambios <small>quién hizo qué y cuándo</small></h2>
       <div>
         <div class="lgbar">
-          <div class="chips tight" id="lgPer"><button type="button" class="chip" data-lgp="dia" aria-pressed="true">Día</button><button type="button" class="chip" data-lgp="mes" aria-pressed="false">Mes</button><button type="button" class="chip" data-lgp="anio" aria-pressed="false">Año</button><button type="button" class="chip" data-lgp="todo" aria-pressed="false">Todo</button></div>
           <div class="lgf">
-            <input id="lgD" type="date" aria-label="Día">
-            <input id="lgM" type="month" aria-label="Mes" hidden>
-            <select id="lgY" aria-label="Año" hidden></select>
+            <div class="lgday-pick"><button class="btn small" type="button" id="lgPrev" aria-label="Día anterior">‹</button><input id="lgD" type="date" aria-label="Día"><button class="btn small" type="button" id="lgNext" aria-label="Día siguiente">›</button></div>
             <select id="lgEq" aria-label="Equipo"><option value="">Todos los equipos</option></select>
             <input id="lgQ" type="search" placeholder="🔎 Placa, ticket, abonado, «PIN»…" autocomplete="off" aria-label="Buscar en el registro">
           </div>
@@ -3095,19 +3093,15 @@ nav a.navnew::after{content:" •";color:#d9a521}
     lgEqOpts();
   }
   // ================= REGISTRO DE CAMBIOS (con filtros) =================
-  let lgPer="dia", lgRows=[], lgCur=-1, lgLoaded=false, lgBusy=false, lgQT=null;
-  (()=>{ const t=new Date(); $("#lgD").value=iso(t); $("#lgM").value=iso(t).slice(0,7); const y=t.getFullYear(); let h=""; for(let x=y;x>=2026;x--) h+='<option>'+x+'</option>'; $("#lgY").innerHTML=h; })();
+  let lgRows=[], lgCur=-1, lgLoaded=false, lgBusy=false, lgQT=null;
+  $("#lgD").value=iso(new Date()); $("#lgD").max=iso(new Date());
   function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; const v=se.value; const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
     se.innerHTML='<option value="">Todos los equipos</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=names.includes(v)?v:""; if(v&&!se.value&&lgLoaded) loadLog(false); }
-  function lgRange(){ if(lgPer==="dia"){ const d=parse($("#lgD").value||iso(new Date())); const a=new Date(d.getFullYear(),d.getMonth(),d.getDate()); return [a.getTime(), new Date(a.getFullYear(),a.getMonth(),a.getDate()+1).getTime()-1]; }
-    if(lgPer==="mes"){ const [y,m]=($("#lgM").value||iso(new Date()).slice(0,7)).split("-").map(Number); return [new Date(y,m-1,1).getTime(), new Date(y,m,1).getTime()-1]; }
-    if(lgPer==="anio"){ const y=Number($("#lgY").value)||new Date().getFullYear(); return [new Date(y,0,1).getTime(), new Date(y+1,0,1).getTime()-1]; }
-    return [0,0]; }
-  function lgPerTxt(){ if(lgPer==="dia"){ const d=parse($("#lgD").value); return "el "+d.getDate()+" de "+MESES[d.getMonth()]+" de "+d.getFullYear(); }
-    if(lgPer==="mes"){ const [y,m]=$("#lgM").value.split("-").map(Number); return MESES[m-1]+" de "+y; } if(lgPer==="anio") return "el año "+$("#lgY").value; return "todo el historial"; }
+  function lgRange(){ const d=parse($("#lgD").value||iso(new Date())); const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()); return [s.getTime(), new Date(s.getFullYear(),s.getMonth(),s.getDate()+1).getTime()-1]; }
+  function lgPerTxt(){ const d=parse($("#lgD").value||iso(new Date())); return (iso(d)===iso(new Date())?"hoy, ":"el ")+DIAS[d.getDay()]+" "+d.getDate()+" de "+MESES[d.getMonth()]+" de "+d.getFullYear(); }
   function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
-    $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" en "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
-    let h="", lastD=""; lgRows.forEach(r=>{ const d=new Date(r[0]), k=iso(d); if(lgPer!=="dia"&&k!==lastD){ lastD=k; h+='<div class="lgday">'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+(lgPer==="todo"||lgPer==="anio"?' '+d.getFullYear():'')+'</div>'; }
+    $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
+    let h=""; lgRows.forEach(r=>{ const d=new Date(r[0]);
       h+='<div><span class="num muted">'+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; });
     box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
     $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
@@ -3122,10 +3116,9 @@ nav a.navnew::after{content:" •";color:#d9a521}
       lgRows=more?lgRows.concat(rows):rows; lgLoaded=true; }
     catch(e){ toast("No se pudo cargar el registro."); }
     lgBusy=false; renderLog(); }
-  $("#lgPer").addEventListener("click",e=>{ const b=e.target.closest("[data-lgp]"); if(!b) return; lgPer=b.dataset.lgp;
-    document.querySelectorAll("[data-lgp]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
-    $("#lgD").hidden=lgPer!=="dia"; $("#lgM").hidden=lgPer!=="mes"; $("#lgY").hidden=lgPer!=="anio"; loadLog(false); });
-  ["#lgD","#lgM","#lgY","#lgEq"].forEach(sel=>$(sel).addEventListener("change",()=>loadLog(false)));
+  const lgShift=n=>{ const d=parse($("#lgD").value||iso(new Date())); d.setDate(d.getDate()+n); if(iso(d)>iso(new Date())) return; $("#lgD").value=iso(d); loadLog(false); };
+  $("#lgPrev").addEventListener("click",()=>lgShift(-1)); $("#lgNext").addEventListener("click",()=>lgShift(1));
+  ["#lgD","#lgEq"].forEach(sel=>$(sel).addEventListener("change",()=>loadLog(false)));
   $("#lgQ").addEventListener("input",()=>{ clearTimeout(lgQT); lgQT=setTimeout(()=>loadLog(false),450); });
   $("#lgMore").addEventListener("click",()=>loadLog(true));
   if(!$("#v-registros").hidden) loadLog(false);

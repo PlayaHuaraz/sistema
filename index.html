@@ -411,6 +411,15 @@ nav a.navnew::after{content:" •";color:#d9a521}
 .eqlog>.lgday{display:block;background:var(--bg);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 10px;position:sticky;top:0}
 .eqlog>div{grid-template-columns:52px 1fr}
 .lgday-pick{display:flex;gap:6px;align-items:center;flex:1 1 220px}.lgday-pick input{flex:1;min-width:0}
+
+/* usuario y vista */
+.rb-user{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+button.rb-tag{cursor:pointer;background:transparent;font-family:inherit}
+@media (max-width:480px){.rb-user{display:none}.rolebar .rb-tag:not(.adm){display:inline-block}}
+.pwgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:end}
+/* Registros: botón discreto a la derecha */
+nav a.navside{margin-left:auto;align-self:center;font-size:13.5px;font-weight:600;padding:6px 12px;background:transparent;color:var(--muted);border-style:dashed}
+nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);border-style:solid;border-color:var(--accent)}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -436,8 +445,8 @@ nav a.navnew::after{content:" •";color:#d9a521}
     <a href="#sshh" data-v="sshh">SS.HH.</a>
     <a href="#abonados" data-v="abonados">Abonados</a>
     <a href="#ingresos" data-v="ingresos">Ingresos</a>
-    <a href="#registros" data-v="registros">Registros</a>
     <a href="#opciones" data-v="tarifas">⚙ Opciones</a>
+    <a href="#registros" data-v="registros" class="navside" title="Registro de cambios">🕘 Registros</a>
   </nav>
 </header>
 
@@ -868,7 +877,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
         <div class="lgbar">
           <div class="lgf">
             <div class="lgday-pick"><button class="btn small" type="button" id="lgPrev" aria-label="Día anterior">‹</button><input id="lgD" type="date" aria-label="Día"><button class="btn small" type="button" id="lgNext" aria-label="Día siguiente">›</button></div>
-            <select id="lgEq" aria-label="Equipo"><option value="">Todos los equipos</option></select>
+            <select id="lgEq" aria-label="Equipo"><option value="">Todos los usuarios</option></select>
             <input id="lgQ" type="search" placeholder="🔎 Placa, ticket, abonado, «PIN»…" autocomplete="off" aria-label="Buscar en el registro">
           </div>
         </div>
@@ -932,11 +941,18 @@ nav a.navnew::after{content:" •";color:#d9a521}
       <summary><h2>Equipos <span class="tbadge" id="eqBadge" hidden></span></h2></summary>
       <div class="fold-in"><div id="eqBody"></div></div>
     </details>
-    <details class="pinwrap">
+    <details class="pinwrap" id="pinWrap">
       <summary>Cambiar PIN de administrador</summary>
       <div class="card" style="margin-top:8px">
       <p class="note" style="margin-top:0">Con este PIN se desbloquean Ingresos y Opciones en cualquier celular. Los trabajadores solo ven el cierre del día.</p>
       <div class="exprow"><div><label for="pinNew">Nuevo PIN (4 a 8 números)</label><input id="pinNew" class="num" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><button class="btn primary" id="pinSave" type="button">Cambiar PIN</button></div>
+    </div>
+    </details>
+    <details class="pinwrap" id="pwWrap" hidden>
+      <summary>Cambiar contraseña</summary>
+      <div class="card" style="margin-top:8px">
+      <p class="note" style="margin-top:0">Elige el usuario y escribe su nueva contraseña. Si cambias la de otra persona, tendrá que volver a entrar con la nueva en todos sus equipos.</p>
+      <div class="pwgrid"><div><label for="pwUser">Usuario</label><select id="pwUser"></select></div><div><label for="pwNew">Nueva contraseña</label><input id="pwNew" type="password" autocomplete="new-password" maxlength="40"></div><div><label for="pwNew2">Repite la contraseña</label><input id="pwNew2" type="password" autocomplete="new-password" maxlength="40"></div><button class="btn primary" id="pwSave" type="button">Cambiar contraseña</button></div>
     </div>
     </details>
   </section>
@@ -951,16 +967,14 @@ nav a.navnew::after{content:" •";color:#d9a521}
 (function(){
   "use strict";
   const API = window.PH_API;
-  const LS_KEY = "ph_key", LS_Q = "ph_pending", LS_CACHE = "ph_cache_v1";
+  const LS_ST = "ph_st", LS_USER = "ph_user", LS_Q = "ph_pending", LS_CACHE = "ph_cache_v1";
   const POLL = 4000;
   const store = new Map();      // ruta -> datos (null = no existe)
   const known = new Set();      // rutas consultadas al servidor
   const docSubs = new Set(), colSubs = new Set();
-  let since = 0, key = localStorage.getItem(LS_KEY) || "", online = true, pending = [];
-  // identificación de este equipo
-  let devId = localStorage.getItem("ph_dev"); if (!devId){ devId = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 36); localStorage.setItem("ph_dev", devId); }
-  let devName = localStorage.getItem("ph_devname") || "";
-  let devBlocked = false;
+  let since = 0, st = localStorage.getItem(LS_ST) || "", online = true, pending = [];
+  let me = null; try { me = JSON.parse(localStorage.getItem(LS_USER) || "null"); } catch (e) {}
+  ["ph_key", "ph_dev", "ph_devname", "ph_at"].forEach(k => localStorage.removeItem(k)); // datos de la versión anterior
   try { pending = JSON.parse(localStorage.getItem(LS_Q) || "[]"); } catch (e) { pending = []; }
 
   const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
@@ -977,11 +991,10 @@ nav a.navnew::after{content:" •";color:#d9a521}
 
   // ---------- llamadas al servidor ----------
   async function call(a, body){
-    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, k: key, dev: devId, dn: devName, at: localStorage.getItem("ph_at") || "" }, body || {})) });
+    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st }, body || {})) });
     const j = await r.json();
     if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err;
-      if (j.err === "bad_key" && a !== "init" && a !== "ping" && !document.getElementById("phLogin")) askKey(true);
-      if ((j.err === "dev_pendiente" || j.err === "dev_bloqueado") && a !== "ping") showWait(j.err);
+      if (j.err === "no_session" && a !== "login" && !document.getElementById("phLogin")) askLogin(true);
       throw e; }
     return j;
   }
@@ -1024,7 +1037,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
           const den = (j.res || []).filter(r => r && r.denied);
           if (den.length){ for (const r of den){ known.delete(r.path); try { const g = await call("get", { path: r.path }); apply(r.path, g.doc ? g.doc.data : null); } catch (e) {} }
             window.dispatchEvent(new CustomEvent("ph-denied", { detail: den.map(r => r.path) })); } }
-        catch (e) { if (e.code === "bad_key") { askKey(true); return; } setOnline(false); await sleep(5000); }
+        catch (e) { if (e.code === "no_session") return; setOnline(false); await sleep(5000); }
       }
     } finally { sending = false; }
   }
@@ -1034,12 +1047,12 @@ nav a.navnew::after{content:" •";color:#d9a521}
   // ---------- lectura en vivo: cada pocos segundos se traen los cambios ----------
   async function poll(){
     for (;;){
-      if (document.visibilityState === "visible" && key && !document.getElementById("phWait")){
+      if (document.visibilityState === "visible" && st && !document.getElementById("phLogin")){
         try { let more = true;
           while (more){ const j = await call("changes", { since }); j.docs.forEach(d => { if (!hasPending(d.path)) apply(d.path, d.del ? null : d.data); }); since = j.now; more = j.more; }
           setOnline(true);
           if (!synced && !pending.length){ synced = true; docSubs.forEach(x => changed(x.path)); colSubs.forEach(x => changed(x.q.coll + "/__sync")); }
-        } catch (e) { if (e.code === "bad_key") { askKey(true); } else setOnline(false); }
+        } catch (e) { if (e.code !== "no_session") setOnline(false); }
       }
       await sleep(POLL);
     }
@@ -1087,52 +1100,37 @@ nav a.navnew::after{content:" •";color:#d9a521}
   // ---------- descargas (Excel, copias) ----------
   const downloads = { async save({ filename, data }){ const u = URL.createObjectURL(data); const a = document.createElement("a"); a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); } };
 
-  // ---------- clave de acceso ----------
+  // ---------- inicio de sesión: usuario y contraseña ----------
   let keyReady, keyResolve, keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); });
-  function askKey(bad, first){
+  function askLogin(expired){
     let ov = document.getElementById("phLogin");
     if (!ov){ ov = document.createElement("div"); ov.id = "phLogin";
-      ov.innerHTML = '<form>' + brand() + '<p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre del equipo (ej. Celular)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="new-password" name="ph-clave-" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
+      ov.innerHTML = '<form autocomplete="off">' + brand() + '<p id="phLoginMsg"></p><input id="phLoginUser" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="40" autocomplete="off" placeholder="Usuario"><input id="phLoginPw" type="password" autocomplete="new-password" placeholder="Contraseña"><button class="btn primary" type="submit">Entrar</button></form>';
       document.body.appendChild(ov);
-      ov.querySelector("form").addEventListener("submit", async e => { e.preventDefault(); const v = ov.querySelector("#phLoginKey").value.trim(); if (v.length < 4){ msg("La clave debe tener al menos 4 caracteres."); return; }
-        const nm = ov.querySelector("#phLoginName").value.trim(); if (!nm){ msg("Ponle un nombre a este equipo, por ejemplo «Celular playa»."); return; } devName = nm.slice(0, 40); localStorage.setItem("ph_devname", devName);
-        try { if (ov.dataset.first === "1"){ const r = await fetch(API, { method: "POST", body: JSON.stringify({ a: "init", nk: v }) }); const j = await r.json(); if (!j.ok) throw new Error(j.err); }
-          key = v;
-          try { await call("ping"); }
-          catch (er2){ if (er2.code === "dev_pendiente" || er2.code === "dev_bloqueado"){ localStorage.setItem(LS_KEY, v); ov.remove(); showWait(er2.code); return; } throw er2; }
-          localStorage.setItem(LS_KEY, v); ov.remove(); keyResolve(); }
-        catch (er){ key = ""; msg(er.code === "bad_key" ? "Clave incorrecta. Inténtalo otra vez." : "No hay conexión con el servidor. Revisa el internet."); } });
+      ov.querySelector("form").addEventListener("submit", async e => { e.preventDefault();
+        const u = ov.querySelector("#phLoginUser").value.trim().toLowerCase(), p = ov.querySelector("#phLoginPw").value;
+        if (!u || !p){ msg("Escribe tu usuario y tu contraseña."); return; }
+        const btn = ov.querySelector("button"); btn.disabled = true; btn.textContent = "Entrando…";
+        try { const j = await call("login", { u, p }); st = j.st; me = j.user; localStorage.setItem(LS_ST, st); localStorage.setItem(LS_USER, JSON.stringify(me));
+          location.reload(); return; }
+        catch (er){ msg(er.code === "login_bad" ? "Usuario o contraseña incorrectos." : er.code === "login_lock" ? "Demasiados intentos. Espera 15 minutos." : "No hay conexión con el servidor. Revisa el internet."); ov.querySelector("#phLoginPw").value = ""; }
+        finally { btn.disabled = false; btn.textContent = "Entrar"; } });
     }
     const msg = t => { ov.querySelector("#phLoginMsg").textContent = t; };
-    ov.dataset.first = first ? "1" : "";
-    const ni = ov.querySelector("#phLoginName"); ni.value = devName; ni.hidden = !!devName;
-    ov.querySelector("#phLoginKey").value = ""; setTimeout(() => { const k = ov.querySelector("#phLoginKey"); if (k && !k.dataset.typed) k.value = ""; }, 400); ov.querySelector("#phLoginKey").addEventListener("keydown", e => { e.target.dataset.typed = "1"; }, { once: true });
-    msg(first ? "Primera vez: crea la clave de acceso que usarán todos los celulares de la playa." : bad ? "La clave guardada ya no es válida. Escríbela de nuevo." : "Escribe la clave de acceso de la playa.");
-    if (bad){ key = ""; localStorage.removeItem(LS_KEY); if (keyDone){ keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); }); } }
-    setTimeout(() => ov.querySelector("#phLoginKey").focus(), 50);
+    msg(expired ? "Tu sesión se cerró. Vuelve a entrar." : "Ingresa con tu usuario y contraseña.");
+    ov.querySelector("#phLoginPw").value = "";
+    if (expired){ st = ""; localStorage.removeItem(LS_ST); }
+    setTimeout(() => { const pw = ov.querySelector("#phLoginPw"); if (pw && !pw.dataset.typed) pw.value = ""; }, 400); ov.querySelector("#phLoginPw").addEventListener("keydown", e => { e.target.dataset.typed = "1"; }, { once: true });
+    setTimeout(() => ov.querySelector(ov.querySelector("#phLoginUser").value ? "#phLoginPw" : "#phLoginUser").focus(), 50);
   }
 
   const brand = () => { const im = document.querySelector("img.logo"); return '<div class="phbrand">' + (im ? '<img src="' + im.src + '" alt="">' : '') + '<span class="phb1">PLAYA DE ESTACIONAMIENTO</span><span class="phb2">\u201cHUARAZ\u201d</span></div>'; };
-  let waitT = null;
-  function showWait(code){
-    let ov = document.getElementById("phWait");
-    if (!ov){ ov = document.createElement("div"); ov.id = "phWait"; ov.className = "phov"; document.body.appendChild(ov); }
-    devBlocked = code === "dev_bloqueado";
-    ov.innerHTML = '<div class="phbox">' + brand() + (devBlocked
-      ? '<p>Este equipo (<strong>' + esc(devName) + '</strong>) fue <strong>bloqueado</strong> por el administrador.</p><p class="muted">Si es un error, pídele que lo desbloquee en ⚙ Opciones → Equipos.</p>'
-      : '<p>Este equipo (<strong>' + esc(devName) + '</strong>) está <strong>esperando aprobación</strong> del administrador.</p><p class="muted">Pídele que lo apruebe en ⚙ Opciones → Equipos. Esta pantalla se abrirá sola cuando lo apruebe.</p>')
-      + '<button class="btn" type="button" id="phWaitRetry">Volver a intentar</button></div>';
-    ov.querySelector("#phWaitRetry").onclick = check;
-    clearInterval(waitT); waitT = setInterval(check, 8000);
-    async function check(){ try { await call("ping"); clearInterval(waitT); ov.remove(); devBlocked = false; keyResolve(); pump(); } catch (e) { if (e.code === "dev_bloqueado" || e.code === "dev_pendiente"){ if ((e.code === "dev_bloqueado") !== devBlocked) showWait(e.code); } } }
-  }
-  const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   async function start(){
     if (!API){ document.body.insertAdjacentHTML("afterbegin", '<div class="banner">Falta configurar el enlace del servidor (PH_API).</div>'); return; }
     loadCache();
-    if (key && !devName) askKey(false); // falta el nombre de este equipo
-    else if (key){ try { await call("ping"); keyResolve(); } catch (e) { if (e.code === "bad_key") askKey(true); else if (e.code === "need_init") askKey(false, true); else if (e.code === "dev_pendiente" || e.code === "dev_bloqueado") showWait(e.code); else { setOnline(false); keyResolve(); } } }
-    else { try { await call("ping"); } catch (e) { askKey(false, e.code === "need_init"); } }
+    if (!st) askLogin(false);
+    else { try { const j = await call("ping"); me = j.user; localStorage.setItem(LS_USER, JSON.stringify(me)); keyResolve(); }
+      catch (e) { if (e.code !== "no_session"){ setOnline(false); if (me) keyResolve(); else askLogin(false); } } }
     await keyReady;
     if (!since){ try { const j = await call("ping"); since = j.now - 60000; } catch (e) {} }
     pump(); poll();
@@ -1145,15 +1143,15 @@ nav a.navnew::after{content:" •";color:#d9a521}
     throw new Error("no disponible");
   } };
   window.__phPending = () => pending.length;
-  window.PH = { standalone: true, devId: () => devId, devName: () => devName,
+  window.PH = { standalone: true,
+    user: () => me,
+    ready: () => keyReady,
+    users: () => call("users").then(j => j.users),
+    setpw: async (u, np) => { const j = await call("setpw", { u, np }); if (j.st){ st = j.st; localStorage.setItem(LS_ST, st); } return j; },
+    logout: async () => { try { await call("logout"); } catch (e) {} st = ""; me = null; [LS_ST, LS_USER, LS_CACHE].forEach(k => localStorage.removeItem(k)); location.reload(); },
     log: (n, off) => call("log", { n: n || 150, off: off || 0 }).then(j => j.rows),
     logq: o => call("log", Object.assign({ v: 2, n: 150 }, o || {})),
-    renameSelf: nm => { devName = String(nm).slice(0, 40); localStorage.setItem("ph_devname", devName); },
-    admin: async pin => { const j = await call("admin", { pin }); localStorage.setItem("ph_at", j.at); return j; },
-    adminOff: async () => { try { await call("adminOff"); } catch (e) {} localStorage.removeItem("ph_at"); },
-    setPin: np => call("setpin", { np }),
-    bkInfo: () => call("bkinfo"), bkNow: () => call("bknow"),
-    isAdmServer: async () => { try { const j = await call("ping"); return { adm: !!j.adm, fijo: !!j.fijo }; } catch (e) { return null; } } };
+    bkInfo: () => call("bkinfo"), bkNow: () => call("bknow") };
 })();
 
 </script>
@@ -2845,9 +2843,17 @@ nav a.navnew::after{content:" •";color:#d9a521}
   const ADMIN_TTL=12*3600e3;
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} }
-  var ROL=(()=>{ const t=num(lsGet("ph_admin_until")); return t>Date.now()?"admin":"trab"; })(), roleAsk=false;
-  function isAdmin(){ return ROL==="admin"; }
+  // En la página de la playa se entra con usuario: los administradores empiezan en vista de administrador.
+  const PAGE=!!(window.PH&&window.PH.user);
+  function phUser(){ return PAGE?window.PH.user():null; }
+  function canAdmin(){ const u=phUser(); return !!(u&&u.rol==="admin"); }
+  var ROL=PAGE?(canAdmin()?"admin":"trab"):(()=>{ const t=num(lsGet("ph_admin_until")); return t>Date.now()?"admin":"trab"; })(), roleAsk=false;
+  function isAdmin(){ return ROL==="admin"&&(!PAGE||canAdmin()); }
   function renderRoleBar(){ const rb=$("#roleBar"); if(!rb) return;
+    if(PAGE){ const u=phUser()||{};
+      rb.innerHTML='<span class="rb-user" title="Usuario">👤 '+esc(u.u||"")+'</span>'
+        +(canAdmin()?'<button class="rb-tag'+(isAdmin()?' adm':'')+'" type="button" id="rbSw" title="Cambiar de vista">'+(isAdmin()?'Admin':'Trabajador')+' ⇄</button>':'<span class="rb-tag">Trabajador</span>')
+        +'<button class="btn small" type="button" id="rbLogout">Salir</button>'; return; }
     if(isAdmin()) rb.innerHTML='<span class="rb-tag adm">Admin</span><button class="btn small" type="button" id="rbOut">Salir</button>';
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
@@ -2860,6 +2866,8 @@ nav a.navnew::after{content:" •";color:#d9a521}
     if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"||v==="registros"){ location.hash="ticketera"; show("ticketera"); } }
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
+    if(e.target.closest("#rbSw")){ if(!canAdmin()) return; ROL=isAdmin()?"trab":"admin"; applyRole(); toast(isAdmin()?"Vista de administrador":"Vista de trabajador"); return; }
+    if(e.target.closest("#rbLogout")){ if(e.target.dataset.armed!=="1"){ const b=e.target.closest("#rbLogout"); b.dataset.armed="1"; b.textContent="¿Cerrar sesión?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Salir"; } },3000); return; } window.PH.logout(); return; }
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
     if(e.target.closest("#rbX")){ roleAsk=false; renderRoleBar(); return; }
     if(e.target.closest("#rbOut")){ ROL="trab"; lsSet("ph_admin_until",null); if(window.PH&&window.PH.adminOff) window.PH.adminOff(); applyRole(); toast("Modo trabajador"); return; }
@@ -2873,7 +2881,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   $("#pinSave").addEventListener("click",()=>{ if(!isAdmin()||!needDb()) return; const v=$("#pinNew").value.trim(); if(!/^\d{4,8}$/.test(v)){ toast("El PIN debe tener de 4 a 8 números."); return; }
     if(window.PH&&window.PH.setPin){ window.PH.setPin(v).then(()=>{ $("#pinNew").value=""; toast("PIN de administrador cambiado"); }).catch(e=>toast(e.code==="adm_req"?"Tu sesión de administrador venció: vuelve a entrar.":"No se pudo cambiar el PIN.")); return; } queue(()=>db.doc("config/general").update({pin:v}).then(()=>{ $("#pinNew").value=""; toast("PIN actualizado"); })); });
   applyRole();
-  setInterval(()=>{ if(isAdmin()&&num(lsGet("ph_admin_until"))<Date.now()){ ROL="trab"; applyRole(); } if(!isAdmin()&&selDay!==iso(new Date())) setDay(iso(new Date())); },60000);
+  setInterval(()=>{ if(!PAGE&&isAdmin()&&num(lsGet("ph_admin_until"))<Date.now()){ ROL="trab"; applyRole(); } if(!isAdmin()&&selDay!==iso(new Date())) setDay(iso(new Date())); },60000);
   function showIng(){
     if(!isAdmin()) ingSub="dia";
     ["dia","mes","anio"].forEach(k=>$("#ing-"+k).hidden = k!==ingSub);
@@ -3066,37 +3074,26 @@ nav a.navnew::after{content:" •";color:#d9a521}
   fillExpPer();
   window.__buildBook=buildBook;
   // el servidor rechazó algo por falta de permiso: la sesión de admin venció o no es admin
-  window.addEventListener("ph-denied",()=>{ toast(isAdmin()?"Tu sesión de administrador venció: vuelve a entrar con tu PIN.":"Eso solo lo puede hacer el administrador."); if(isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); } });
-  // al abrir, si dice admin pero el servidor no lo reconoce, vuelve a trabajador
-  if(window.PH&&window.PH.isAdmServer&&isAdmin()) window.PH.isAdmServer().then(r=>{ if(!r) return;
-    if(!r.adm&&isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); }
-    else if(r.adm&&r.fijo) lsSet("ph_admin_until",String(Date.now()+3650*86400000)); });
+  window.addEventListener("ph-denied",()=>{ if(PAGE){ toast("Eso solo lo puede hacer un administrador."); return; } toast(isAdmin()?"Tu sesión de administrador venció: vuelve a entrar con tu PIN.":"Eso solo lo puede hacer el administrador."); if(isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); } });
   // ================= EQUIPOS Y REGISTRO (solo en la página de la playa) =================
   let equipos=[];
   function tAgo(ms){ if(!ms) return "—"; const m=Math.round((Date.now()-ms)/60000); if(m<2) return "ahora"; if(m<60) return "hace "+m+" min"; const h=Math.round(m/60); if(h<24) return "hace "+h+" h"; const d=new Date(ms); return ddmm(d)+"/"+d.getFullYear(); }
-  function renderEquipos(){ const body=$("#eqBody"); if(!body) return;
-    if(!window.PH){ body.innerHTML='<p class="note" style="margin:0">Esta parte funciona en la página de la playa (playahuaraz.github.io). Aquí, en Claude, no hay equipos que administrar.</p>'; return; }
-    const me=window.PH.devId(), pend=equipos.filter(e=>e.estado==="pendiente");
-    const bd=$("#eqBadge"); if(bd){ bd.hidden=!pend.length; bd.textContent=pend.length?pend.length+" en espera":""; }
-    const nv=document.querySelector('nav a[data-v="tarifas"]'); if(nv) nv.classList.toggle("navnew",!!pend.length&&isAdmin());
-    const ord={pendiente:0,ok:1,bloqueado:2};
-    const rows=equipos.slice().sort((a,b)=>(ord[a.estado]-ord[b.estado])||(b.ultimo||0)-(a.ultimo||0)).map(e=>{
-      const st=e.estado==="ok"?'<span class="pill ok">Aprobado</span>':e.estado==="bloqueado"?'<span class="pill bad">Bloqueado</span>':'<span class="pill warn">En espera</span>';
-      const self=e.id===me;
-      const btn=e.estado==="pendiente"?'<button class="btn small primary" type="button" data-eq="ok|'+e.id+'">Aprobar</button><button class="btn small" type="button" data-eq="bloqueado|'+e.id+'">Rechazar</button>'
-        :e.estado==="ok"?(self?'':'<button class="btn small" type="button" data-eq="bloqueado|'+e.id+'">Bloquear</button>')
-        :'<button class="btn small" type="button" data-eq="ok|'+e.id+'">Desbloquear</button>';
-      const fx=e.estado==="ok"?'<label class="eqfx"><input type="checkbox" data-eqfx="'+e.id+'"'+(e.admFijo?' checked':'')+'><span>Sesión de administrador sin vencimiento <span class="muted">(solo sale al tocar «Salir»)</span></span></label>':'';
-      return '<div class="eqr"><span class="eqn"><b>'+esc(e.nombre||"Equipo")+'</b>'+(self?' <span class="muted">(este equipo)</span>':'')+'<small class="muted">Último uso: '+tAgo(e.ultimo)+' · desde '+(e.creado?ddmm(new Date(e.creado)):"—")+'</small></span>'+st+fx+'<span class="eqb">'+btn+'<button class="btn small" type="button" data-eqren="'+e.id+'">Renombrar</button></span></div>'; }).join("");
-    body.innerHTML='<p class="note" style="margin:0 0 8px">Cada celular o computadora que entra a la página aparece aquí. Los equipos nuevos quedan <strong>en espera</strong> hasta que los apruebes, aunque tengan la clave.</p>'
-      +(rows||'<p class="muted">Todavía no hay equipos.</p>');
-    lgEqOpts();
-  }
+  function renderEquipos(){ const c=$("#eqCard"); if(c) c.hidden=true; lgEqOpts(); }
   // ================= REGISTRO DE CAMBIOS (con filtros) =================
   let lgRows=[], lgCur=-1, lgLoaded=false, lgBusy=false, lgQT=null;
   $("#lgD").value=iso(new Date()); $("#lgD").max=iso(new Date());
-  function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; const v=se.value; const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
-    se.innerHTML='<option value="">Todos los equipos</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=names.includes(v)?v:""; if(v&&!se.value&&lgLoaded) loadLog(false); }
+  let lgUsers=null;
+  function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; if(!PAGE||!canAdmin()) return;
+    if(!lgUsers){ lgUsers=[]; window.PH.users().then(L=>{ lgUsers=L.map(x=>x.u).sort(); lgEqOpts(); pwUsers(L); }).catch(()=>{ lgUsers=null; }); }
+    const v=se.value; se.innerHTML='<option value="">Todos los usuarios</option>'+lgUsers.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=lgUsers.includes(v)?v:""; }
+  // cambiar contraseña (Opciones)
+  function pwUsers(L){ const se=$("#pwUser"); if(!se) return; const me=(phUser()||{}).u; se.innerHTML=L.map(x=>'<option value="'+esc(x.u)+'"'+(x.u===me?' selected':'')+'>'+esc(x.u)+(x.rol==="admin"?' (administrador)':' (trabajador)')+(x.u===me?' · tú':'')+'</option>').join(""); }
+  if($("#pwSave")) $("#pwSave").addEventListener("click",()=>{ if(!PAGE||!canAdmin()) return; const u=$("#pwUser").value, a=$("#pwNew").value, b=$("#pwNew2").value;
+    if(!u){ toast("Elige el usuario."); return; } if(a.length<4){ toast("La contraseña debe tener al menos 4 caracteres."); return; } if(a!==b){ toast("Las dos contraseñas no coinciden."); return; }
+    const btn=$("#pwSave"); btn.disabled=true;
+    window.PH.setpw(u,a).then(()=>{ $("#pwNew").value=""; $("#pwNew2").value=""; toast("Contraseña de "+u+" cambiada"+(u===(phUser()||{}).u?"":". Ese usuario tendrá que volver a entrar.")); })
+      .catch(e=>toast(e.code==="pw_corta"?"La contraseña es muy corta.":"No se pudo cambiar la contraseña.")).finally(()=>{ btn.disabled=false; }); });
+  if(PAGE){ const pw=$("#pinWrap"), np=$("#pwWrap"); if(pw) pw.hidden=true; if(np) np.hidden=false; }
   function lgRange(){ const d=parse($("#lgD").value||iso(new Date())); const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()); return [s.getTime(), new Date(s.getFullYear(),s.getMonth(),s.getDate()+1).getTime()-1]; }
   function lgPerTxt(){ const d=parse($("#lgD").value||iso(new Date())); return (iso(d)===iso(new Date())?"hoy, ":"el ")+DIAS[d.getDay()]+" "+d.getDate()+" de "+MESES[d.getMonth()]+" de "+d.getFullYear(); }
   function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
@@ -3105,7 +3102,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
       h+='<div><span class="num muted">'+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; });
     box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
     $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
-  async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; }
+  async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; } lgEqOpts();
     if(lgBusy) return; lgBusy=true; if(!more){ lgRows=[]; lgCur=-1; } renderLog();
     const [from,to]=lgRange(), eq=$("#lgEq").value, q=$("#lgQ").value.trim();
     try{ const j=await window.PH.logq({from,to,eq,q,cur:more?lgCur:0});
@@ -3122,15 +3119,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   $("#lgQ").addEventListener("input",()=>{ clearTimeout(lgQT); lgQT=setTimeout(()=>loadLog(false),450); });
   $("#lgMore").addEventListener("click",()=>loadLog(true));
   if(!$("#v-registros").hidden) loadLog(false);
-  $("#eqBody").addEventListener("click",e=>{ if(!isAdmin()){ toast("Solo el administrador."); return; }
-    const a=e.target.closest("[data-eq]"); if(a&&needDb()){ const [st,id]=a.dataset.eq.split("|"); const eq=equipos.find(x=>x.id===id);
-      queue(()=>db.doc("equipos/"+id).update({estado:st}).then(()=>toast((st==="ok"?"Aprobado: ":"Bloqueado: ")+(eq?eq.nombre:"")))); return; }
-    const r=e.target.closest("[data-eqren]"); if(r&&needDb()){ const id=r.dataset.eqren, eq=equipos.find(x=>x.id===id); const nm=prompt("Nombre del equipo:",eq?eq.nombre:""); if(!nm||!nm.trim()) return;
-      if(window.PH&&id===window.PH.devId()) window.PH.renameSelf(nm.trim()); queue(()=>db.doc("equipos/"+id).update({nombre:nm.trim().slice(0,40)})); return; }
-  });
-  $("#eqBody").addEventListener("change",e=>{     const fx=e.target.closest("[data-eqfx]"); if(fx){ if(!isAdmin()||!needDb()){ fx.checked=!fx.checked; toast("Solo el administrador."); return; } const id=fx.dataset.eqfx, on=fx.checked;
-      queue(()=>db.doc("equipos/"+id).update({admFijo:on}).then(()=>{ if(window.PH&&id===window.PH.devId()) lsSet("ph_admin_until",String(Date.now()+(on?3650*86400000:ADMIN_TTL))); toast(on?"Este equipo ya no saldrá solo del modo administrador":"La sesión de administrador vuelve a durar 12 horas"); })); } });
-  (async()=>{ if(!window.PH) { renderEquipos(); return; } try{ const d=await window.claude.use("db"); d.collection("equipos").onSnapshot(sn=>{ equipos=sn.docs.map(x=>Object.assign({id:x.id},x.data())); renderEquipos(); },()=>{}); }catch(e){} renderEquipos(); })();
+  renderEquipos();
   // recordatorio de cierre: desde las 22:00, si la caja de hoy no se cerró
   function cierreAviso(){ const d=new Date(), t=d.getHours()*60+d.getMinutes(), hoy=iso(d); const a=document.querySelector('nav a[data-v="ingresos"]'); if(!a) return;
     const hecho=selDay===hoy&&dayData&&dayData.cierre&&dayData.cierre.ef!=null&&dayData.cierre.ef!=="";

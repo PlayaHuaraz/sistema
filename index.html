@@ -397,7 +397,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
 .expbtns{display:flex;gap:8px;flex-wrap:wrap}
 .bkrow{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
 .eqfx{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500;margin:0}.eqfx input{width:18px;height:18px;min-height:0}
-#phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
+#phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
 <body>
@@ -1057,7 +1057,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   function askKey(bad, first){
     let ov = document.getElementById("phLogin");
     if (!ov){ ov = document.createElement("div"); ov.id = "phLogin";
-      ov.innerHTML = '<form><h2>Playa Huaraz</h2><p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre de este equipo (ej. Celular playa)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
+      ov.innerHTML = '<form>' + brand() + '<p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre del equipo (ej. Celular)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
       document.body.appendChild(ov);
       ov.querySelector("form").addEventListener("submit", async e => { e.preventDefault(); const v = ov.querySelector("#phLoginKey").value.trim(); if (v.length < 4){ msg("La clave debe tener al menos 4 caracteres."); return; }
         const nm = ov.querySelector("#phLoginName").value.trim(); if (!nm){ msg("Ponle un nombre a este equipo, por ejemplo «Celular playa»."); return; } devName = nm.slice(0, 40); localStorage.setItem("ph_devname", devName);
@@ -1077,12 +1077,13 @@ nav a.navnew::after{content:" •";color:#d9a521}
     setTimeout(() => ov.querySelector("#phLoginKey").focus(), 50);
   }
 
+  const brand = () => { const im = document.querySelector("img.logo"); return '<div class="phbrand">' + (im ? '<img src="' + im.src + '" alt="">' : '') + '<span class="phb1">PLAYA DE ESTACIONAMIENTO</span><span class="phb2">\u201cHUARAZ\u201d</span></div>'; };
   let waitT = null;
   function showWait(code){
     let ov = document.getElementById("phWait");
     if (!ov){ ov = document.createElement("div"); ov.id = "phWait"; ov.className = "phov"; document.body.appendChild(ov); }
     devBlocked = code === "dev_bloqueado";
-    ov.innerHTML = '<div class="phbox"><h2>Playa Huaraz</h2>' + (devBlocked
+    ov.innerHTML = '<div class="phbox">' + brand() + (devBlocked
       ? '<p>Este equipo (<strong>' + esc(devName) + '</strong>) fue <strong>bloqueado</strong> por el administrador.</p><p class="muted">Si es un error, pídele que lo desbloquee en ⚙ Opciones → Equipos.</p>'
       : '<p>Este equipo (<strong>' + esc(devName) + '</strong>) está <strong>esperando aprobación</strong> del administrador.</p><p class="muted">Pídele que lo apruebe en ⚙ Opciones → Equipos. Esta pantalla se abrirá sola cuando lo apruebe.</p>')
       + '<button class="btn" type="button" id="phWaitRetry">Volver a intentar</button></div>';

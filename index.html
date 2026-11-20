@@ -3061,7 +3061,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
         :'<button class="btn small" type="button" data-eq="ok|'+e.id+'">Desbloquear</button>';
       const fx=e.estado==="ok"?'<label class="eqfx"><input type="checkbox" data-eqfx="'+e.id+'"'+(e.admFijo?' checked':'')+'><span>Sesión de administrador sin vencimiento <span class="muted">(solo sale al tocar «Salir»)</span></span></label>':'';
       return '<div class="eqr"><span class="eqn"><b>'+esc(e.nombre||"Equipo")+'</b>'+(self?' <span class="muted">(este equipo)</span>':'')+'<small class="muted">Último uso: '+tAgo(e.ultimo)+' · desde '+(e.creado?ddmm(new Date(e.creado)):"—")+'</small></span>'+st+fx+'<span class="eqb">'+btn+'<button class="btn small" type="button" data-eqren="'+e.id+'">Renombrar</button></span></div>'; }).join("");
-    const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean).concat(eqLog.map(r=>r[1])))].sort((a,b)=>a.localeCompare(b,"es"));
+    const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")); if(eqFil&&!names.includes(eqFil)) eqFil="";
     const L=eqLog.filter(r=>!eqFil||r[1]===eqFil);
     body.innerHTML='<p class="note" style="margin:0 0 8px">Cada celular o computadora que entra a la página aparece aquí. Los equipos nuevos quedan <strong>en espera</strong> hasta que los apruebes, aunque tengan la clave.</p>'
       +(rows||'<p class="muted">Todavía no hay equipos.</p>')

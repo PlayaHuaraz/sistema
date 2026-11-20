@@ -1063,9 +1063,9 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
     return {
       id: idOf(path), path,
       async get(){ if (!known.has(path) && !hasPending(path)){ try { const j = await call("get", { path }); apply(path, j.doc ? j.doc.data : null); } catch (e) { if (!store.has(path)) throw e; } } return snapDoc(path); },
-      async set(data){ apply(path, clone(data)); queueOp({ t: "set", path, data: clone(data) }); },
+      async set(data, o){ apply(path, clone(data)); queueOp(Object.assign({ t: "set", path, data: clone(data) }, o && o.rs ? { rs: 1 } : {})); },
       async update(patch){ apply(path, merge(store.get(path), patch)); queueOp({ t: "update", path, data: clone(patch) }); },
-      async delete(){ apply(path, null); queueOp({ t: "delete", path }); },
+      async delete(o){ apply(path, null); queueOp(Object.assign({ t: "delete", path }, o && o.rs ? { rs: 1 } : {})); },
       async acquire(){ return { acquired: true }; },
       async claim(field, def){ // número correlativo atómico en el servidor
         const j = await call("claim", { path, field, def }); apply(path, j.doc.data); return j.n; },
@@ -3070,8 +3070,8 @@ nav a.navside[aria-current="page"]{background:var(--surface);color:var(--ink);bo
     const limpiar=confirm("¿Dejar el sistema EXACTAMENTE como en la copia?\n\nAceptar: se borra todo lo que no está en la copia (tickets, boletas y pagos de prueba).\nCancelar: solo se cargan los datos de la copia y lo demás se queda.");
     expBusy(true,"Restaurando copia…");
     try{ let borr=0;
-      if(limpiar) for(const col of ["config","abonados","dias","tickets"]){ const sn=await db.collection(col).get(); for(const d of sn.docs) if(!(data[col]||{})[d.id]){ await db.doc(col+"/"+d.id).delete(); borr++; } }
-      for(const col of ["config","abonados","dias","tickets"]) for(const [id,v] of Object.entries(data[col]||{})) if(v) await db.doc(col+"/"+id).set(v);
+      if(limpiar) for(const col of ["config","abonados","dias","tickets"]){ const sn=await db.collection(col).get(); for(const d of sn.docs) if(!(data[col]||{})[d.id]){ await (PAGE?db.doc(col+"/"+d.id).delete({rs:true}):db.doc(col+"/"+d.id).delete()); borr++; } }
+      for(const col of ["config","abonados","dias","tickets"]) for(const [id,v] of Object.entries(data[col]||{})) if(v) await (PAGE?db.doc(col+"/"+id).set(v,{rs:true}):db.doc(col+"/"+id).set(v));
       expBusy(false,"Copia restaurada: "+n("abonados")+" abonados y "+n("dias")+" días."+(limpiar?" Se borraron "+borr+" registros que no estaban en la copia.":"")); }
     catch(er){ expBusy(false,"No se pudo terminar de restaurar. Inténtalo otra vez."); }
   });

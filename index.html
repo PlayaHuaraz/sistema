@@ -371,6 +371,18 @@ nav a.navwarn::after{content:" ⏰"}
 .pmx{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
 .pmx label{display:inline-flex;gap:4px;align-items:center;font-weight:500;margin:0}.pmx input{width:84px;min-height:34px;padding:4px 8px}
 .pcv{display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:6px}.pcv strong{font-size:22px}
+
+.abhead.dh,.dayrow>summary{grid-template-columns:1.5fr 1fr .5fr auto}
+.dayrow>summary .pill{justify-self:end;font-size:12px}
+@media (max-width:480px){.abhead.dh,.dayrow>summary{grid-template-columns:1.25fr .95fr .45fr auto}}
+/* espaciado uniforme entre contenedores principales: 16px */
+.view > .subtabs{margin:0}
+#aTabLista,#aTabCal{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+#aTabLista[hidden],#aTabCal[hidden]{display:none}
+.view > .chips,.view > .tiles{margin:0}
+.view > .view{gap:16px}
+#expCard{margin-top:0}.view>.pinwrap{margin-top:-4px}
+main{padding-top:16px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -2157,11 +2169,19 @@ nav a.navwarn::after{content:" ⏰"}
     const tP=pg.reduce((s,x)=>s+num(x.paid.m||x.a.monto),0), tE=pe.reduce((s,x)=>s+num(x.a.monto),0);
     const ctx=x=>x.paid?'<span class="pill ok">Pagó '+(x.paid.f?ddmm(parse(x.paid.f)):'')+(x.paid.p?' · '+(x.paid.p==="mixto"?"Mixto":x.paid.p==="yape"?"Yape":"Efectivo"):'')+'</span>':(x.k===0?'<span class="pill '+abState(x.a).c+'">'+esc(abState(x.a).c==="ok"?"Falta pagar":abState(x.a).txt)+'</span>':'<span class="pill mut">Falta pagar (si renueva)</span>');
     $("#aDayList").innerHTML='<div class="abg sel"><strong>'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+'</strong><span class="muted num">'+pg.length+' pagaron · '+money(tP)+' &nbsp; | &nbsp; '+pe.length+' faltan · '+money(tE)+'</span><button class="btn small" type="button" data-abday="">Cerrar</button></div>'
-      +(R.length?R.map(x=>abCard(x.a,ctx(x),x.paid?{paid:x.paid,per:aSelDay}:(x.k>0?{later:true}:{due:true}))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
+      +(R.length?'<div class="abhead dh"><span>Nombre</span><span>Placa</span><span>Esp.</span><span>Estado</span></div>'+R.map(x=>abDayRow(x,ctx(x))).join(""):'<p class="muted" style="margin-top:10px">Ningún abonado paga este día.</p>');
   }
+  // fila plegable del día del calendario: resumen y, al abrirla, la ficha con el pago o la boleta
+  function abDayRow(x,ctxHtml){ const a=x.a, key="d:"+a.id, open=abOpen.has(key)||abEdit===a.id, opt=x.paid?{paid:x.paid,per:aSelDay}:(x.k>0?{later:true}:{due:true});
+    const st=x.paid?'<span class="pill ok">Pagó</span>':(x.k>0?'<span class="pill mut">Si renueva</span>':'<span class="pill '+(abState(a).c==="bad"?"bad":"warn")+'">Falta</span>');
+    return '<details class="abrow dayrow" data-abrow="'+key+'" data-ab="'+a.id+'"'+(open?' open':'')+'><summary><span class="nm">'+esc(a.nombre)+'</span><span class="pl num">'+esc(a.placa||"sin placa")+'</span><span class="esp num">'+(espKey(a.esp)?esc(a.esp):'<span class="muted">—</span>')+'</span>'+st+'</summary>'
+      +(open?'<div class="abrow-in">'+abCard(a,ctxHtml,opt)+'</div>':'')+'</details>'; }
+  let abDayCtx={};
   function renderAbonados(){ renderACal(); renderFijos(); renderRetirados(); applyATab(); renderAbList(); renderAbDay(); }
   document.querySelectorAll("[data-atab]").forEach(b=>b.addEventListener("click",()=>{ aTab=b.dataset.atab; lsSet("ph_atab",aTab==="cal"?"cal":null); applyATab(); }));
   $("#aQ").addEventListener("input",renderAbList); $("#aQEsp").addEventListener("change",renderAbList);
+  $("#aDayList").addEventListener("toggle",e=>{ const r=e.target; if(!r.classList||!r.classList.contains("dayrow")) return; const key=r.dataset.abrow;
+    if(r.open){ abOpen.add(key); if(!r.querySelector(".abrow-in")) renderAbDay(); } else abOpen.delete(key); },true);
   $("#aList").addEventListener("toggle",e=>{ const r=e.target; if(!r.classList||!r.classList.contains("abrow")) return; const id=r.dataset.abrow;
     if(r.open){ abOpen.add(id); if(!r.querySelector(".abrow-in")){ const a=abonados.find(x=>x.id===id); if(a) r.insertAdjacentHTML("beforeend",'<div class="abrow-in">'+abCard(a)+'</div>'); } } else { abOpen.delete(id); if(abEdit===id) abEdit=null; } },true);
   $("#aTipo").addEventListener("change",()=>{ const o=$("#aTipo").value==="otro"; $("#aOtroW").hidden=!o; if(o) $("#aOtro").focus(); });

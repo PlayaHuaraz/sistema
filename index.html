@@ -405,6 +405,11 @@ nav a.navnew::after{content:" •";color:#d9a521}
 .pm-sp.amon rect{fill:var(--accent)}.pm-sp.amon text{fill:var(--accent-ink)}
 .pm-sp.amoff rect{fill:var(--sp-abin,#5b6b7d);opacity:.55}.pm-sp.amoff text{fill:#fff;opacity:.8}
 .sw.amon{background:var(--accent)}.sw.amoff{background:var(--sp-abin,#5b6b7d);opacity:.55}.sw.amfree{background:var(--sp-aire);opacity:.45}
+
+/* registro de cambios con filtros */
+.lgbar{display:grid;gap:8px}.lgf{display:flex;flex-wrap:wrap;gap:8px}.lgf>*{flex:1 1 150px;min-width:0;width:auto}.lgf #lgQ{flex:2 1 220px}
+.eqlog>.lgday{display:block;background:var(--bg);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:6px 10px;position:sticky;top:0}
+.eqlog>div{grid-template-columns:52px 1fr}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -430,6 +435,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     <a href="#sshh" data-v="sshh">SS.HH.</a>
     <a href="#abonados" data-v="abonados">Abonados</a>
     <a href="#ingresos" data-v="ingresos">Ingresos</a>
+    <a href="#registros" data-v="registros">Registros</a>
     <a href="#opciones" data-v="tarifas">⚙ Opciones</a>
   </nav>
 </header>
@@ -854,6 +860,27 @@ nav a.navnew::after{content:" •";color:#d9a521}
   </section>
 
   <!-- TARIFAS -->
+  <section class="view" id="v-registros" hidden>
+    <div class="card" id="lgCard">
+      <h2>Registro de cambios <small>quién hizo qué y cuándo</small></h2>
+      <div>
+        <div class="lgbar">
+          <div class="chips tight" id="lgPer"><button type="button" class="chip" data-lgp="dia" aria-pressed="true">Día</button><button type="button" class="chip" data-lgp="mes" aria-pressed="false">Mes</button><button type="button" class="chip" data-lgp="anio" aria-pressed="false">Año</button><button type="button" class="chip" data-lgp="todo" aria-pressed="false">Todo</button></div>
+          <div class="lgf">
+            <input id="lgD" type="date" aria-label="Día">
+            <input id="lgM" type="month" aria-label="Mes" hidden>
+            <select id="lgY" aria-label="Año" hidden></select>
+            <select id="lgEq" aria-label="Equipo"><option value="">Todos los equipos</option></select>
+            <input id="lgQ" type="search" placeholder="🔎 Placa, ticket, abonado, «PIN»…" autocomplete="off" aria-label="Buscar en el registro">
+          </div>
+        </div>
+        <p class="note" id="lgInfo" style="margin:8px 0"></p>
+        <div id="lgList"></div>
+        <button class="btn small" type="button" id="lgMore" hidden style="margin-top:8px">Cargar más</button>
+      </div>
+    </div>
+  </section>
+
   <section class="view" id="v-tarifas" hidden>
     <div class="card">
       <h2>Reloj</h2>
@@ -904,7 +931,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
       </div>
     </details>
     <details class="card fold" id="eqCard">
-      <summary><h2>Equipos y registro de cambios <span class="tbadge" id="eqBadge" hidden></span></h2></summary>
+      <summary><h2>Equipos <span class="tbadge" id="eqBadge" hidden></span></h2></summary>
       <div class="fold-in"><div id="eqBody"></div></div>
     </details>
     <details class="pinwrap">
@@ -1122,6 +1149,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
   window.__phPending = () => pending.length;
   window.PH = { standalone: true, devId: () => devId, devName: () => devName,
     log: (n, off) => call("log", { n: n || 150, off: off || 0 }).then(j => j.rows),
+    logq: o => call("log", Object.assign({ v: 2, n: 150 }, o || {})),
     renameSelf: nm => { devName = String(nm).slice(0, 40); localStorage.setItem("ph_devname", devName); },
     admin: async pin => { const j = await call("admin", { pin }); localStorage.setItem("ph_at", j.at); return j; },
     adminOff: async () => { try { await call("adminOff"); } catch (e) {} localStorage.removeItem("ph_at"); },
@@ -1263,18 +1291,19 @@ nav a.navnew::after{content:" •";color:#d9a521}
   function needDb(){ if(!db){ toast("Abre la página con tu cuenta de Claude para guardar."); return false; } return true; }
 
   // ---------- navegación ----------
-  const VIEWS=["ticketera","planograma","boleta","sshh","abonados","ingresos","tarifas"];
+  const VIEWS=["ticketera","planograma","boleta","sshh","abonados","ingresos","registros","tarifas"];
   let ingSub="dia";
   function show(v){
     if(v==="playa") v="ticketera";
     if(v==="opciones") v="tarifas";
     if(v==="mes"||v==="dia"){ ingSub=v; v="ingresos"; }
     if(!VIEWS.includes(v)) v="ticketera";
-    if(v==="tarifas"&&!isAdmin()) v="ticketera";
+    if((v==="tarifas"||v==="registros")&&!isAdmin()) v="ticketera";
     document.querySelectorAll("nav a").forEach(a=>{ if(a.dataset.v===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
     VIEWS.forEach(x=>$("#v-"+x).hidden = x!==v);
     if(v==="ingresos") showIng();
     if(v==="boleta") loadBoleta();
+    if(v==="registros") try{ if(!lgLoaded) loadLog(false); }catch(e){}
   }
   window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
 
@@ -2825,12 +2854,12 @@ nav a.navnew::after{content:" •";color:#d9a521}
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
   function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
-    const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]');
-    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin();
+    const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]'), nr=document.querySelector('nav a[data-v="registros"]');
+    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     ["#prevD","#nextD","#dPick"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     { const f=$("#cFondo"); if(f&&f.parentElement) f.parentElement.hidden=!isAdmin(); } // solo el administrador cambia el monto del fondo
-    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"){ location.hash="ticketera"; show("ticketera"); } }
+    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"||v==="registros"){ location.hash="ticketera"; show("ticketera"); } }
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
@@ -3045,7 +3074,7 @@ nav a.navnew::after{content:" •";color:#d9a521}
     if(!r.adm&&isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); }
     else if(r.adm&&r.fijo) lsSet("ph_admin_until",String(Date.now()+3650*86400000)); });
   // ================= EQUIPOS Y REGISTRO (solo en la página de la playa) =================
-  let equipos=[], eqLog=[], eqLogOff=0, eqFil="";
+  let equipos=[];
   function tAgo(ms){ if(!ms) return "—"; const m=Math.round((Date.now()-ms)/60000); if(m<2) return "ahora"; if(m<60) return "hace "+m+" min"; const h=Math.round(m/60); if(h<24) return "hace "+h+" h"; const d=new Date(ms); return ddmm(d)+"/"+d.getFullYear(); }
   function renderEquipos(){ const body=$("#eqBody"); if(!body) return;
     if(!window.PH){ body.innerHTML='<p class="note" style="margin:0">Esta parte funciona en la página de la playa (playahuaraz.github.io). Aquí, en Claude, no hay equipos que administrar.</p>'; return; }
@@ -3061,26 +3090,52 @@ nav a.navnew::after{content:" •";color:#d9a521}
         :'<button class="btn small" type="button" data-eq="ok|'+e.id+'">Desbloquear</button>';
       const fx=e.estado==="ok"?'<label class="eqfx"><input type="checkbox" data-eqfx="'+e.id+'"'+(e.admFijo?' checked':'')+'><span>Sesión de administrador sin vencimiento <span class="muted">(solo sale al tocar «Salir»)</span></span></label>':'';
       return '<div class="eqr"><span class="eqn"><b>'+esc(e.nombre||"Equipo")+'</b>'+(self?' <span class="muted">(este equipo)</span>':'')+'<small class="muted">Último uso: '+tAgo(e.ultimo)+' · desde '+(e.creado?ddmm(new Date(e.creado)):"—")+'</small></span>'+st+fx+'<span class="eqb">'+btn+'<button class="btn small" type="button" data-eqren="'+e.id+'">Renombrar</button></span></div>'; }).join("");
-    const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")); if(eqFil&&!names.includes(eqFil)) eqFil="";
-    const L=eqLog.filter(r=>!eqFil||r[1]===eqFil);
     body.innerHTML='<p class="note" style="margin:0 0 8px">Cada celular o computadora que entra a la página aparece aquí. Los equipos nuevos quedan <strong>en espera</strong> hasta que los apruebes, aunque tengan la clave.</p>'
-      +(rows||'<p class="muted">Todavía no hay equipos.</p>')
-      +'<h3 class="eqh">Registro de cambios</h3><div class="eqlogbar"><select id="eqFil" aria-label="Filtrar por equipo"><option value="">Todos los equipos</option>'+names.map(n=>'<option'+(n===eqFil?' selected':'')+'>'+esc(n)+'</option>').join("")+'</select><button class="btn small" type="button" id="eqLoad">'+(eqLog.length?'Actualizar':'Ver registro')+'</button></div>'
-      +(eqLog.length&&eqFil&&!L.length?'<p class="muted" style="margin:8px 0 0">'+esc(eqFil)+' no tiene cambios en lo cargado'+(eqLogOff>=0?'. Toca «Cargar más antiguos» para buscar más atrás.':'.')+'</p>':'')+(eqLog.length?'<div class="eqlog">'+L.map(r=>{ const d=new Date(r[0]); return '<div><span class="num muted">'+ddmm(d)+' '+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; }).join("")+'</div>'+(eqLogOff>=0?'<button class="btn small" type="button" id="eqMore" style="margin-top:8px">Cargar más antiguos</button>':''):'');
+      +(rows||'<p class="muted">Todavía no hay equipos.</p>');
+    lgEqOpts();
   }
-  async function loadLog(more){ if(!window.PH) return; const b=$("#eqLoad"); if(b){ b.disabled=true; b.textContent="Cargando…"; }
-    try{ const off=more?eqLog.length:0; const rows=await window.PH.log(150,off); eqLog=more?eqLog.concat(rows):rows; eqLogOff=rows.length<150?-1:eqLog.length; }
+  // ================= REGISTRO DE CAMBIOS (con filtros) =================
+  let lgPer="dia", lgRows=[], lgCur=-1, lgLoaded=false, lgBusy=false, lgQT=null;
+  (()=>{ const t=new Date(); $("#lgD").value=iso(t); $("#lgM").value=iso(t).slice(0,7); const y=t.getFullYear(); let h=""; for(let x=y;x>=2026;x--) h+='<option>'+x+'</option>'; $("#lgY").innerHTML=h; })();
+  function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; const v=se.value; const names=[...new Set(equipos.map(e=>e.nombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+    se.innerHTML='<option value="">Todos los equipos</option>'+names.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=names.includes(v)?v:""; if(v&&!se.value&&lgLoaded) loadLog(false); }
+  function lgRange(){ if(lgPer==="dia"){ const d=parse($("#lgD").value||iso(new Date())); const a=new Date(d.getFullYear(),d.getMonth(),d.getDate()); return [a.getTime(), new Date(a.getFullYear(),a.getMonth(),a.getDate()+1).getTime()-1]; }
+    if(lgPer==="mes"){ const [y,m]=($("#lgM").value||iso(new Date()).slice(0,7)).split("-").map(Number); return [new Date(y,m-1,1).getTime(), new Date(y,m,1).getTime()-1]; }
+    if(lgPer==="anio"){ const y=Number($("#lgY").value)||new Date().getFullYear(); return [new Date(y,0,1).getTime(), new Date(y+1,0,1).getTime()-1]; }
+    return [0,0]; }
+  function lgPerTxt(){ if(lgPer==="dia"){ const d=parse($("#lgD").value); return "el "+d.getDate()+" de "+MESES[d.getMonth()]+" de "+d.getFullYear(); }
+    if(lgPer==="mes"){ const [y,m]=$("#lgM").value.split("-").map(Number); return MESES[m-1]+" de "+y; } if(lgPer==="anio") return "el año "+$("#lgY").value; return "todo el historial"; }
+  function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
+    $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" en "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
+    let h="", lastD=""; lgRows.forEach(r=>{ const d=new Date(r[0]), k=iso(d); if(lgPer!=="dia"&&k!==lastD){ lastD=k; h+='<div class="lgday">'+DIAS[d.getDay()].charAt(0).toUpperCase()+DIAS[d.getDay()].slice(1)+' '+d.getDate()+' de '+MESES[d.getMonth()]+(lgPer==="todo"||lgPer==="anio"?' '+d.getFullYear():'')+'</div>'; }
+      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; });
+    box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
+    $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
+  async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; }
+    if(lgBusy) return; lgBusy=true; if(!more){ lgRows=[]; lgCur=-1; } renderLog();
+    const [from,to]=lgRange(), eq=$("#lgEq").value, q=$("#lgQ").value.trim();
+    try{ const j=await window.PH.logq({from,to,eq,q,cur:more?lgCur:0});
+      let rows=j.rows||[];
+      if(j.cur===undefined){ // servidor anterior: se filtra aquí lo que llega
+        const nq=normQ(q); rows=rows.filter(r=>(!from||r[0]>=from)&&(!to||r[0]<=to)&&(!eq||r[1]===eq)&&(!nq||normQ(r[2]+" "+r[1]).includes(nq))); lgCur=-1; }
+      else lgCur=j.cur;
+      lgRows=more?lgRows.concat(rows):rows; lgLoaded=true; }
     catch(e){ toast("No se pudo cargar el registro."); }
-    renderEquipos(); }
+    lgBusy=false; renderLog(); }
+  $("#lgPer").addEventListener("click",e=>{ const b=e.target.closest("[data-lgp]"); if(!b) return; lgPer=b.dataset.lgp;
+    document.querySelectorAll("[data-lgp]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    $("#lgD").hidden=lgPer!=="dia"; $("#lgM").hidden=lgPer!=="mes"; $("#lgY").hidden=lgPer!=="anio"; loadLog(false); });
+  ["#lgD","#lgM","#lgY","#lgEq"].forEach(sel=>$(sel).addEventListener("change",()=>loadLog(false)));
+  $("#lgQ").addEventListener("input",()=>{ clearTimeout(lgQT); lgQT=setTimeout(()=>loadLog(false),450); });
+  $("#lgMore").addEventListener("click",()=>loadLog(true));
+  if(!$("#v-registros").hidden) loadLog(false);
   $("#eqBody").addEventListener("click",e=>{ if(!isAdmin()){ toast("Solo el administrador."); return; }
     const a=e.target.closest("[data-eq]"); if(a&&needDb()){ const [st,id]=a.dataset.eq.split("|"); const eq=equipos.find(x=>x.id===id);
       queue(()=>db.doc("equipos/"+id).update({estado:st}).then(()=>toast((st==="ok"?"Aprobado: ":"Bloqueado: ")+(eq?eq.nombre:"")))); return; }
     const r=e.target.closest("[data-eqren]"); if(r&&needDb()){ const id=r.dataset.eqren, eq=equipos.find(x=>x.id===id); const nm=prompt("Nombre del equipo:",eq?eq.nombre:""); if(!nm||!nm.trim()) return;
       if(window.PH&&id===window.PH.devId()) window.PH.renameSelf(nm.trim()); queue(()=>db.doc("equipos/"+id).update({nombre:nm.trim().slice(0,40)})); return; }
-    if(e.target.closest("#eqLoad")) loadLog(false);
-    if(e.target.closest("#eqMore")) loadLog(true); });
-  $("#eqBody").addEventListener("change",e=>{ if(e.target.id==="eqFil"){ eqFil=e.target.value; if(!eqLog.length) loadLog(false); else renderEquipos(); return; }
-    const fx=e.target.closest("[data-eqfx]"); if(fx){ if(!isAdmin()||!needDb()){ fx.checked=!fx.checked; toast("Solo el administrador."); return; } const id=fx.dataset.eqfx, on=fx.checked;
+  });
+  $("#eqBody").addEventListener("change",e=>{     const fx=e.target.closest("[data-eqfx]"); if(fx){ if(!isAdmin()||!needDb()){ fx.checked=!fx.checked; toast("Solo el administrador."); return; } const id=fx.dataset.eqfx, on=fx.checked;
       queue(()=>db.doc("equipos/"+id).update({admFijo:on}).then(()=>{ if(window.PH&&id===window.PH.devId()) lsSet("ph_admin_until",String(Date.now()+(on?3650*86400000:ADMIN_TTL))); toast(on?"Este equipo ya no saldrá solo del modo administrador":"La sesión de administrador vuelve a durar 12 horas"); })); } });
   (async()=>{ if(!window.PH) { renderEquipos(); return; } try{ const d=await window.claude.use("db"); d.collection("equipos").onSnapshot(sn=>{ equipos=sn.docs.map(x=>Object.assign({id:x.id},x.data())); renderEquipos(); },()=>{}); }catch(e){} renderEquipos(); })();
   // recordatorio de cierre: desde las 22:00, si la caja de hoy no se cerró

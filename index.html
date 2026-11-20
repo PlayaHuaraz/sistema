@@ -383,6 +383,20 @@ nav a.navwarn::after{content:" ⏰"}
 .view > .view{gap:16px}
 #expCard{margin-top:0}.view>.pinwrap{margin-top:-4px}
 main{padding-top:16px}
+
+.eqr{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.eqr .eqn{display:flex;flex-direction:column;min-width:0}.eqr .eqn small{font-size:12px}
+.eqr .eqb{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.eqh{font-family:var(--display);font-size:17px;margin:16px 0 8px}
+.eqlogbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}.eqlogbar select{width:auto;flex:1;min-width:0}
+.eqlog{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.eqlog>div{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:7px 10px;border-top:1px solid var(--line);font-size:13.5px}.eqlog>div:first-child{border-top:0}
+nav a.navnew::after{content:" •";color:#d9a521}
+.phov{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.85);display:flex;align-items:center;justify-content:center;padding:20px}
+.phbox{background:#fff;color:#1b1b1b;border-radius:14px;padding:24px;max-width:360px;width:100%;display:flex;flex-direction:column;gap:10px;text-align:center}.phbox h2{margin:0}.phbox p{margin:0;font-size:15px}
+.expbtns{display:flex;gap:8px;flex-wrap:wrap}
+.bkrow{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.eqfx{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500;margin:0}.eqfx input{width:18px;height:18px;min-height:0}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -825,7 +839,6 @@ main{padding-top:16px}
         <div><label for="expPer">Periodo</label><select id="expPer"></select></div>
         <button class="btn primary" id="expXls" type="button">Descargar Excel</button>
         <button class="btn" id="expJson" type="button">Copia completa</button>
-        <label class="btn filebtn" id="impBtn">Restaurar copia<input type="file" accept="application/json,.json" id="impJson"></label>
       </div>
       <p class="note" id="expMsg" aria-live="polite"></p>
       <p class="note">El Excel trae 4 hojas: resumen por día, pagos, tickets y abonados. La copia completa (.json) guarda todo el sistema para poder restaurarlo si hiciera falta.</p>
@@ -872,6 +885,20 @@ main{padding-top:16px}
       <p class="note">Sigue la numeración del talonario de papel. Cámbiala solo si empiezan otro talonario.</p>
     </div>
     </details>
+    <details class="card fold" id="bkCard">
+      <summary><h2>Copias de seguridad</h2></summary>
+      <div class="fold-in">
+        <p class="note" style="margin:0 0 10px">La <strong>copia completa</strong> guarda todo el sistema en un archivo: abonados, días, tickets dentro y configuración. Con <strong>Restaurar copia</strong> vuelves a cargar uno de esos archivos.</p>
+        <div class="expbtns"><button class="btn" id="bkJson" type="button">Descargar copia completa</button>
+        <label class="btn filebtn" id="impBtn">Restaurar copia<input type="file" accept="application/json,.json" id="impJson"></label></div>
+        <p class="note" id="bkMsg" aria-live="polite"></p>
+        <div class="bkauto" id="bkAuto"></div>
+      </div>
+    </details>
+    <details class="card fold" id="eqCard">
+      <summary><h2>Equipos y registro de cambios <span class="tbadge" id="eqBadge" hidden></span></h2></summary>
+      <div class="fold-in"><div id="eqBody"></div></div>
+    </details>
     <details class="pinwrap">
       <summary>Cambiar PIN de administrador</summary>
       <div class="card" style="margin-top:8px">
@@ -897,6 +924,10 @@ main{padding-top:16px}
   const known = new Set();      // rutas consultadas al servidor
   const docSubs = new Set(), colSubs = new Set();
   let since = 0, key = localStorage.getItem(LS_KEY) || "", online = true, pending = [];
+  // identificación de este equipo
+  let devId = localStorage.getItem("ph_dev"); if (!devId){ devId = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 36); localStorage.setItem("ph_dev", devId); }
+  let devName = localStorage.getItem("ph_devname") || "";
+  let devBlocked = false;
   try { pending = JSON.parse(localStorage.getItem(LS_Q) || "[]"); } catch (e) { pending = []; }
 
   const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
@@ -913,9 +944,12 @@ main{padding-top:16px}
 
   // ---------- llamadas al servidor ----------
   async function call(a, body){
-    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, k: key }, body || {})) });
+    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, k: key, dev: devId, dn: devName, at: localStorage.getItem("ph_at") || "" }, body || {})) });
     const j = await r.json();
-    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; if (j.err === "bad_key" && a !== "init" && a !== "ping" && !document.getElementById("phLogin")) askKey(true); throw e; }
+    if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err;
+      if (j.err === "bad_key" && a !== "init" && a !== "ping" && !document.getElementById("phLogin")) askKey(true);
+      if ((j.err === "dev_pendiente" || j.err === "dev_bloqueado") && a !== "ping") showWait(j.err);
+      throw e; }
     return j;
   }
   function setOnline(v){ if (online === v) return; online = v; const b = document.getElementById("bConn"), t = document.getElementById("bConnTxt");
@@ -951,7 +985,11 @@ main{padding-top:16px}
     try {
       while (pending.length){
         const ops = pending.slice(0, 20);
-        try { await call("write", { ops }); pending.splice(0, ops.length); savePending(); setOnline(true); }
+        try { const j = await call("write", { ops }); pending.splice(0, ops.length); savePending(); setOnline(true);
+          // lo que el servidor rechazó (falta permiso de administrador): se vuelve a traer el dato real
+          const den = (j.res || []).filter(r => r && r.denied);
+          if (den.length){ for (const r of den){ known.delete(r.path); try { const g = await call("get", { path: r.path }); apply(r.path, g.doc ? g.doc.data : null); } catch (e) {} }
+            window.dispatchEvent(new CustomEvent("ph-denied", { detail: den.map(r => r.path) })); } }
         catch (e) { if (e.code === "bad_key") { askKey(true); return; } setOnline(false); await sleep(5000); }
       }
     } finally { sending = false; }
@@ -962,7 +1000,7 @@ main{padding-top:16px}
   // ---------- lectura en vivo: cada pocos segundos se traen los cambios ----------
   async function poll(){
     for (;;){
-      if (document.visibilityState === "visible" && key){
+      if (document.visibilityState === "visible" && key && !document.getElementById("phWait")){
         try { let more = true;
           while (more){ const j = await call("changes", { since }); j.docs.forEach(d => { if (!hasPending(d.path)) apply(d.path, d.del ? null : d.data); }); since = j.now; more = j.more; }
           setOnline(true);
@@ -1019,24 +1057,45 @@ main{padding-top:16px}
   function askKey(bad, first){
     let ov = document.getElementById("phLogin");
     if (!ov){ ov = document.createElement("div"); ov.id = "phLogin";
-      ov.innerHTML = '<form><h2>Playa Huaraz</h2><p id="phLoginMsg"></p><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
+      ov.innerHTML = '<form><h2>Playa Huaraz</h2><p id="phLoginMsg"></p><input id="phLoginName" type="text" maxlength="40" autocomplete="off" placeholder="Nombre de este equipo (ej. Celular playa)"><input id="phLoginKey" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Clave de acceso"><button class="btn primary" type="submit">Entrar</button></form>';
       document.body.appendChild(ov);
       ov.querySelector("form").addEventListener("submit", async e => { e.preventDefault(); const v = ov.querySelector("#phLoginKey").value.trim(); if (v.length < 4){ msg("La clave debe tener al menos 4 caracteres."); return; }
+        const nm = ov.querySelector("#phLoginName").value.trim(); if (!nm){ msg("Ponle un nombre a este equipo, por ejemplo «Celular playa»."); return; } devName = nm.slice(0, 40); localStorage.setItem("ph_devname", devName);
         try { if (ov.dataset.first === "1"){ const r = await fetch(API, { method: "POST", body: JSON.stringify({ a: "init", nk: v }) }); const j = await r.json(); if (!j.ok) throw new Error(j.err); }
-          key = v; await call("ping"); localStorage.setItem(LS_KEY, v); ov.remove(); keyResolve(); }
+          key = v;
+          try { await call("ping"); }
+          catch (er2){ if (er2.code === "dev_pendiente" || er2.code === "dev_bloqueado"){ localStorage.setItem(LS_KEY, v); ov.remove(); showWait(er2.code); return; } throw er2; }
+          localStorage.setItem(LS_KEY, v); ov.remove(); keyResolve(); }
         catch (er){ key = ""; msg(er.code === "bad_key" ? "Clave incorrecta. Inténtalo otra vez." : "No hay conexión con el servidor. Revisa el internet."); } });
     }
     const msg = t => { ov.querySelector("#phLoginMsg").textContent = t; };
     ov.dataset.first = first ? "1" : "";
+    const ni = ov.querySelector("#phLoginName"); ni.value = devName; ni.hidden = !!devName;
+    if (key && !bad) ov.querySelector("#phLoginKey").value = key;
     msg(first ? "Primera vez: crea la clave de acceso que usarán todos los celulares de la playa." : bad ? "La clave guardada ya no es válida. Escríbela de nuevo." : "Escribe la clave de acceso de la playa.");
     if (bad){ key = ""; localStorage.removeItem(LS_KEY); if (keyDone){ keyDone = false; keyReady = new Promise(r => keyResolve = () => { keyDone = true; r(); }); } }
     setTimeout(() => ov.querySelector("#phLoginKey").focus(), 50);
   }
 
+  let waitT = null;
+  function showWait(code){
+    let ov = document.getElementById("phWait");
+    if (!ov){ ov = document.createElement("div"); ov.id = "phWait"; ov.className = "phov"; document.body.appendChild(ov); }
+    devBlocked = code === "dev_bloqueado";
+    ov.innerHTML = '<div class="phbox"><h2>Playa Huaraz</h2>' + (devBlocked
+      ? '<p>Este equipo (<strong>' + esc(devName) + '</strong>) fue <strong>bloqueado</strong> por el administrador.</p><p class="muted">Si es un error, pídele que lo desbloquee en ⚙ Opciones → Equipos.</p>'
+      : '<p>Este equipo (<strong>' + esc(devName) + '</strong>) está <strong>esperando aprobación</strong> del administrador.</p><p class="muted">Pídele que lo apruebe en ⚙ Opciones → Equipos. Esta pantalla se abrirá sola cuando lo apruebe.</p>')
+      + '<button class="btn" type="button" id="phWaitRetry">Volver a intentar</button></div>';
+    ov.querySelector("#phWaitRetry").onclick = check;
+    clearInterval(waitT); waitT = setInterval(check, 8000);
+    async function check(){ try { await call("ping"); clearInterval(waitT); ov.remove(); devBlocked = false; keyResolve(); pump(); } catch (e) { if (e.code === "dev_bloqueado" || e.code === "dev_pendiente"){ if ((e.code === "dev_bloqueado") !== devBlocked) showWait(e.code); } } }
+  }
+  const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   async function start(){
     if (!API){ document.body.insertAdjacentHTML("afterbegin", '<div class="banner">Falta configurar el enlace del servidor (PH_API).</div>'); return; }
     loadCache();
-    if (key){ try { await call("ping"); keyResolve(); } catch (e) { if (e.code === "bad_key") askKey(true); else if (e.code === "need_init") askKey(false, true); else { setOnline(false); keyResolve(); } } }
+    if (key && !devName) askKey(false); // falta el nombre de este equipo
+    else if (key){ try { await call("ping"); keyResolve(); } catch (e) { if (e.code === "bad_key") askKey(true); else if (e.code === "need_init") askKey(false, true); else if (e.code === "dev_pendiente" || e.code === "dev_bloqueado") showWait(e.code); else { setOnline(false); keyResolve(); } } }
     else { try { await call("ping"); } catch (e) { askKey(false, e.code === "need_init"); } }
     await keyReady;
     if (!since){ try { const j = await call("ping"); since = j.now - 60000; } catch (e) {} }
@@ -1050,6 +1109,14 @@ main{padding-top:16px}
     throw new Error("no disponible");
   } };
   window.__phPending = () => pending.length;
+  window.PH = { standalone: true, devId: () => devId, devName: () => devName,
+    log: (n, off) => call("log", { n: n || 150, off: off || 0 }).then(j => j.rows),
+    renameSelf: nm => { devName = String(nm).slice(0, 40); localStorage.setItem("ph_devname", devName); },
+    admin: async pin => { const j = await call("admin", { pin }); localStorage.setItem("ph_at", j.at); return j; },
+    adminOff: async () => { try { await call("adminOff"); } catch (e) {} localStorage.removeItem("ph_at"); },
+    setPin: np => call("setpin", { np }),
+    bkInfo: () => call("bkinfo"), bkNow: () => call("bknow"),
+    isAdmServer: async () => { try { const j = await call("ping"); return { adm: !!j.adm, fijo: !!j.fijo }; } catch (e) { return null; } } };
 })();
 
 </script>
@@ -2721,11 +2788,16 @@ main{padding-top:16px}
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
     if(e.target.closest("#rbX")){ roleAsk=false; renderRoleBar(); return; }
-    if(e.target.closest("#rbOut")){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); toast("Modo trabajador"); return; }
+    if(e.target.closest("#rbOut")){ ROL="trab"; lsSet("ph_admin_until",null); if(window.PH&&window.PH.adminOff) window.PH.adminOff(); applyRole(); toast("Modo trabajador"); return; }
     if(e.target.closest("#rbGo")) tryPin(); });
   $("#roleBar").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="rbPin") tryPin(); });
-  function tryPin(){ const v=($("#rbPin").value||"").trim(); if(v&&v===String(cfg.pin||"1995")){ ROL="admin"; roleAsk=false; lsSet("ph_admin_until",String(Date.now()+ADMIN_TTL)); applyRole(); toast("Modo administrador"); } else { toast("PIN incorrecto"); $("#rbPin").value=""; $("#rbPin").focus(); } }
-  $("#pinSave").addEventListener("click",()=>{ if(!isAdmin()||!needDb()) return; const v=$("#pinNew").value.trim(); if(!/^\d{4,8}$/.test(v)){ toast("El PIN debe tener de 4 a 8 números."); return; } queue(()=>db.doc("config/general").update({pin:v}).then(()=>{ $("#pinNew").value=""; toast("PIN actualizado"); })); });
+  function tryPin(){ const v=($("#rbPin").value||"").trim();
+    if(window.PH&&window.PH.admin){ if(!v) return; // en la página: el servidor revisa el PIN
+      window.PH.admin(v).then(r=>{ ROL="admin"; roleAsk=false; lsSet("ph_admin_until",String(r.exp||Date.now()+ADMIN_TTL)); applyRole(); toast("Modo administrador"); })
+        .catch(e=>{ toast(e.code==="pin_lock"?"Demasiados intentos. Espera 15 minutos.":e.code==="pin_bad"?"PIN incorrecto":"Sin conexión: no se pudo comprobar el PIN."); const i=$("#rbPin"); if(i){ i.value=""; i.focus(); } }); return; }
+    if(v&&v===String(cfg.pin||"1995")){ ROL="admin"; roleAsk=false; lsSet("ph_admin_until",String(Date.now()+ADMIN_TTL)); applyRole(); toast("Modo administrador"); } else { toast("PIN incorrecto"); $("#rbPin").value=""; $("#rbPin").focus(); } }
+  $("#pinSave").addEventListener("click",()=>{ if(!isAdmin()||!needDb()) return; const v=$("#pinNew").value.trim(); if(!/^\d{4,8}$/.test(v)){ toast("El PIN debe tener de 4 a 8 números."); return; }
+    if(window.PH&&window.PH.setPin){ window.PH.setPin(v).then(()=>{ $("#pinNew").value=""; toast("PIN de administrador cambiado"); }).catch(e=>toast(e.code==="adm_req"?"Tu sesión de administrador venció: vuelve a entrar.":"No se pudo cambiar el PIN.")); return; } queue(()=>db.doc("config/general").update({pin:v}).then(()=>{ $("#pinNew").value=""; toast("PIN actualizado"); })); });
   applyRole();
   setInterval(()=>{ if(isAdmin()&&num(lsGet("ph_admin_until"))<Date.now()){ ROL="trab"; applyRole(); } if(!isAdmin()&&selDay!==iso(new Date())) setDay(iso(new Date())); },60000);
   function showIng(){
@@ -2847,7 +2919,24 @@ main{padding-top:16px}
   }
   async function getDias(desde,hasta){ const s=await db.collection("dias").where("fecha",">=",desde).where("fecha","<=",hasta).get(); return s.docs.map(d=>{ const v=d.data(); if(v&&!v.fecha) v.fecha=d.id; return v; }).filter(Boolean); }
   async function saveFile(name,blob){ if(!dl){ toast("Abre la página con tu cuenta de Claude para descargar."); return; } try{ await dl.save({filename:name,data:blob}); toast("Descargado: "+name); }catch(err){ if(err&&err.code!=="declined") toast("No se pudo descargar el archivo."); } }
-  function expBusy(on,txt){ ["#expXls","#expJson"].forEach(x=>{ const b=$(x); if(b) b.disabled=on; }); $("#expMsg").textContent=txt||""; }
+  function expBusy(on,txt){ ["#expXls","#expJson","#bkJson"].forEach(x=>{ const b=$(x); if(b) b.disabled=on; }); $("#expMsg").textContent=txt||""; const bm=$("#bkMsg"); if(bm) bm.textContent=txt||""; }
+  $("#bkJson").addEventListener("click",()=>$("#expJson").click());
+  // respaldo automático en el Drive de la playa (solo en la página de la playa)
+  let bkI=null, bkBusy=false;
+  function renderBk(){ const box=$("#bkAuto"); if(!box) return;
+    if(!window.PH||!window.PH.bkInfo){ box.innerHTML='<p class="note" style="margin:8px 0 0">El respaldo automático de cada noche funciona en la página de la playa.</p>'; return; }
+    if(!bkI){ box.innerHTML='<p class="note" style="margin:8px 0 0">Cargando estado del respaldo automático…</p>'; return; }
+    const L=bkI.last, d=L&&L.t?new Date(L.t):null;
+    box.innerHTML='<h3 class="eqh">Respaldo automático</h3>'
+      +'<div class="bkrow"><span>Estado</span>'+(bkI.activo?'<span class="pill ok">Activo · todas las noches 23:30</span>':'<span class="pill warn">No activado</span>')+'</div>'
+      +'<div class="bkrow"><span>Último respaldo</span>'+(L?(L.ok?'<strong>'+ddmm(d)+'/'+d.getFullYear()+' '+hhmm(d)+'</strong> <span class="muted">· '+esc(L.name)+' · '+(L.kb||0)+' KB</span>':'<span class="pill bad">Falló el '+ddmm(d)+' '+hhmm(d)+'</span>'):'<span class="muted">Todavía no hay</span>')+'</div>'
+      +(bkI.activo?'':'<p class="note" style="margin:6px 0">Para activarlo: en Apps Script, elige la función <strong>activarRespaldo</strong> y toca ▶ Ejecutar (una sola vez).</p>')
+      +'<div class="expbtns" style="margin-top:8px"><button class="btn small" type="button" id="bkNow"'+(bkBusy?' disabled':'')+'>'+(bkBusy?'Respaldando…':'Respaldar ahora')+'</button>'+(bkI.folder?'<a class="btn small" href="'+esc(bkI.folder)+'" target="_blank" rel="noopener">Abrir carpeta en Drive</a>':'')+'</div>'; }
+  async function loadBk(){ if(!window.PH||!window.PH.bkInfo||!isAdmin()) { renderBk(); return; } try{ bkI=await window.PH.bkInfo(); }catch(e){ bkI={activo:false,last:null,folder:""}; } renderBk(); }
+  $("#bkCard").addEventListener("toggle",()=>{ if($("#bkCard").open) loadBk(); });
+  $("#bkAuto").addEventListener("click",async e=>{ if(!e.target.closest("#bkNow")||bkBusy) return; if(!isAdmin()){ toast("Solo el administrador."); return; }
+    bkBusy=true; renderBk(); try{ bkI=await window.PH.bkNow(); toast("Respaldo guardado en el Drive de la playa"); }catch(er){ toast("No se pudo hacer el respaldo"+(er.code==="adm_req"?": vuelve a entrar como administrador.":".")); } bkBusy=false; renderBk(); });
+  renderBk();
   $("#expXls").addEventListener("click",async()=>{
     if(!needDb()) return; const v=$("#expPer").value; if(!v) return; const [k,p]=v.split(":");
     const desde=k==="m"?p+"-01":p+"-01-01", hasta=k==="m"?p+"-31":p+"-12-31";
@@ -2886,6 +2975,51 @@ main{padding-top:16px}
   });
   fillExpPer();
   window.__buildBook=buildBook;
+  // el servidor rechazó algo por falta de permiso: la sesión de admin venció o no es admin
+  window.addEventListener("ph-denied",()=>{ toast(isAdmin()?"Tu sesión de administrador venció: vuelve a entrar con tu PIN.":"Eso solo lo puede hacer el administrador."); if(isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); } });
+  // al abrir, si dice admin pero el servidor no lo reconoce, vuelve a trabajador
+  if(window.PH&&window.PH.isAdmServer&&isAdmin()) window.PH.isAdmServer().then(r=>{ if(!r) return;
+    if(!r.adm&&isAdmin()){ ROL="trab"; lsSet("ph_admin_until",null); applyRole(); }
+    else if(r.adm&&r.fijo) lsSet("ph_admin_until",String(Date.now()+3650*86400000)); });
+  // ================= EQUIPOS Y REGISTRO (solo en la página de la playa) =================
+  let equipos=[], eqLog=[], eqLogOff=0, eqFil="";
+  function tAgo(ms){ if(!ms) return "—"; const m=Math.round((Date.now()-ms)/60000); if(m<2) return "ahora"; if(m<60) return "hace "+m+" min"; const h=Math.round(m/60); if(h<24) return "hace "+h+" h"; const d=new Date(ms); return ddmm(d)+"/"+d.getFullYear(); }
+  function renderEquipos(){ const body=$("#eqBody"); if(!body) return;
+    if(!window.PH){ body.innerHTML='<p class="note" style="margin:0">Esta parte funciona en la página de la playa (playahuaraz.github.io). Aquí, en Claude, no hay equipos que administrar.</p>'; return; }
+    const me=window.PH.devId(), pend=equipos.filter(e=>e.estado==="pendiente");
+    const bd=$("#eqBadge"); if(bd){ bd.hidden=!pend.length; bd.textContent=pend.length?pend.length+" en espera":""; }
+    const nv=document.querySelector('nav a[data-v="tarifas"]'); if(nv) nv.classList.toggle("navnew",!!pend.length&&isAdmin());
+    const ord={pendiente:0,ok:1,bloqueado:2};
+    const rows=equipos.slice().sort((a,b)=>(ord[a.estado]-ord[b.estado])||(b.ultimo||0)-(a.ultimo||0)).map(e=>{
+      const st=e.estado==="ok"?'<span class="pill ok">Aprobado</span>':e.estado==="bloqueado"?'<span class="pill bad">Bloqueado</span>':'<span class="pill warn">En espera</span>';
+      const self=e.id===me;
+      const btn=e.estado==="pendiente"?'<button class="btn small primary" type="button" data-eq="ok|'+e.id+'">Aprobar</button><button class="btn small" type="button" data-eq="bloqueado|'+e.id+'">Rechazar</button>'
+        :e.estado==="ok"?(self?'':'<button class="btn small" type="button" data-eq="bloqueado|'+e.id+'">Bloquear</button>')
+        :'<button class="btn small" type="button" data-eq="ok|'+e.id+'">Desbloquear</button>';
+      const fx=e.estado==="ok"?'<label class="eqfx"><input type="checkbox" data-eqfx="'+e.id+'"'+(e.admFijo?' checked':'')+'><span>Sesión de administrador sin vencimiento <span class="muted">(solo sale al tocar «Salir»)</span></span></label>':'';
+      return '<div class="eqr"><span class="eqn"><b>'+esc(e.nombre||"Equipo")+'</b>'+(self?' <span class="muted">(este equipo)</span>':'')+'<small class="muted">Último uso: '+tAgo(e.ultimo)+' · desde '+(e.creado?ddmm(new Date(e.creado)):"—")+'</small></span>'+st+fx+'<span class="eqb">'+btn+'<button class="btn small" type="button" data-eqren="'+e.id+'">Renombrar</button></span></div>'; }).join("");
+    const names=[...new Set(eqLog.map(r=>r[1]))].sort();
+    const L=eqLog.filter(r=>!eqFil||r[1]===eqFil);
+    body.innerHTML='<p class="note" style="margin:0 0 8px">Cada celular o computadora que entra a la página aparece aquí. Los equipos nuevos quedan <strong>en espera</strong> hasta que los apruebes, aunque tengan la clave.</p>'
+      +(rows||'<p class="muted">Todavía no hay equipos.</p>')
+      +'<h3 class="eqh">Registro de cambios</h3><div class="eqlogbar"><select id="eqFil" aria-label="Filtrar por equipo"><option value="">Todos los equipos</option>'+names.map(n=>'<option'+(n===eqFil?' selected':'')+'>'+esc(n)+'</option>').join("")+'</select><button class="btn small" type="button" id="eqLoad">'+(eqLog.length?'Actualizar':'Ver registro')+'</button></div>'
+      +(eqLog.length?'<div class="eqlog">'+L.map(r=>{ const d=new Date(r[0]); return '<div><span class="num muted">'+ddmm(d)+' '+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; }).join("")+'</div>'+(eqLogOff>=0?'<button class="btn small" type="button" id="eqMore" style="margin-top:8px">Cargar más antiguos</button>':''):'');
+  }
+  async function loadLog(more){ if(!window.PH) return; const b=$("#eqLoad"); if(b){ b.disabled=true; b.textContent="Cargando…"; }
+    try{ const off=more?eqLog.length:0; const rows=await window.PH.log(150,off); eqLog=more?eqLog.concat(rows):rows; eqLogOff=rows.length<150?-1:eqLog.length; }
+    catch(e){ toast("No se pudo cargar el registro."); }
+    renderEquipos(); }
+  $("#eqBody").addEventListener("click",e=>{ if(!isAdmin()){ toast("Solo el administrador."); return; }
+    const a=e.target.closest("[data-eq]"); if(a&&needDb()){ const [st,id]=a.dataset.eq.split("|"); const eq=equipos.find(x=>x.id===id);
+      queue(()=>db.doc("equipos/"+id).update({estado:st}).then(()=>toast((st==="ok"?"Aprobado: ":"Bloqueado: ")+(eq?eq.nombre:"")))); return; }
+    const r=e.target.closest("[data-eqren]"); if(r&&needDb()){ const id=r.dataset.eqren, eq=equipos.find(x=>x.id===id); const nm=prompt("Nombre del equipo:",eq?eq.nombre:""); if(!nm||!nm.trim()) return;
+      if(window.PH&&id===window.PH.devId()) window.PH.renameSelf(nm.trim()); queue(()=>db.doc("equipos/"+id).update({nombre:nm.trim().slice(0,40)})); return; }
+    if(e.target.closest("#eqLoad")) loadLog(false);
+    if(e.target.closest("#eqMore")) loadLog(true); });
+  $("#eqBody").addEventListener("change",e=>{ if(e.target.id==="eqFil"){ eqFil=e.target.value; renderEquipos(); return; }
+    const fx=e.target.closest("[data-eqfx]"); if(fx){ if(!isAdmin()||!needDb()){ fx.checked=!fx.checked; toast("Solo el administrador."); return; } const id=fx.dataset.eqfx, on=fx.checked;
+      queue(()=>db.doc("equipos/"+id).update({admFijo:on}).then(()=>{ if(window.PH&&id===window.PH.devId()) lsSet("ph_admin_until",String(Date.now()+(on?3650*86400000:ADMIN_TTL))); toast(on?"Este equipo ya no saldrá solo del modo administrador":"La sesión de administrador vuelve a durar 12 horas"); })); } });
+  (async()=>{ if(!window.PH) { renderEquipos(); return; } try{ const d=await window.claude.use("db"); d.collection("equipos").onSnapshot(sn=>{ equipos=sn.docs.map(x=>Object.assign({id:x.id},x.data())); renderEquipos(); },()=>{}); }catch(e){} renderEquipos(); })();
   // recordatorio de cierre: desde las 22:00, si la caja de hoy no se cerró
   function cierreAviso(){ const d=new Date(), t=d.getHours()*60+d.getMinutes(), hoy=iso(d); const a=document.querySelector('nav a[data-v="ingresos"]'); if(!a) return;
     const hecho=selDay===hoy&&dayData&&dayData.cierre&&dayData.cierre.ef!=null&&dayData.cierre.ef!=="";

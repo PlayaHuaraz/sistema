@@ -530,11 +530,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 .abst.ok{background:var(--acc-soft);color:var(--acc-txt)} .abst.warn{background:var(--mark-soft);color:var(--ink)} .abst.bad{background:var(--bad);color:#fff}
 #aMap .pm-bg{fill:var(--lot)} #aMap .pm-blk{fill:var(--surface);stroke:var(--line)}
 #aMap .pm-sp rect{fill:var(--free);stroke:var(--free-line);stroke-width:1.5;stroke-dasharray:5 4;opacity:1}
-#aMap .pm-sp.amon rect{fill:var(--accent);stroke:var(--accent);stroke-dasharray:none}
-#aMap .pm-sp.amoff rect{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:none;opacity:1}
-#aMap .pm-sp .pm-id{fill:var(--muted)}
-#aMap .pm-sp.amon text{fill:var(--accent-ink)} #aMap .pm-sp.amoff text{fill:var(--acc-txt);opacity:1}
-.sw.amon{background:var(--accent)} .sw.amoff{background:var(--acc-soft);border:1.5px solid var(--accent);opacity:1} .sw.amfree{background:var(--free);border:1.5px dashed var(--free-line);opacity:1}
+#aMap .pm-sp.amon rect.sp{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:none}
+#aMap .pm-sp.amoff rect.sp{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:none;opacity:.4}
+#aMap .pm-sp.amoff>g,#aMap .pm-sp.amoff text{opacity:.4}
+#aMap .pm-sp .pm-id{fill:var(--muted);font-size:12px} #aMap .pm-id.sm{font-size:10px}
+#aMap .pm-sp.amon .pm-id,#aMap .pm-sp.amoff .pm-id{fill:var(--acc-txt)}
+#aMap .pm-lab{font-size:10px;font-weight:700;text-anchor:middle;fill:var(--acc-txt);letter-spacing:.02em} #aMap .pm-lab.sm{font-size:9px} #aMap .pm-lab.xs{font-size:7px}
+#aMap .pm-sp .cb{fill:var(--accent);stroke:var(--accent);stroke-width:1.5;stroke-dasharray:none} #aMap .pm-sp .cg{fill:rgba(255,255,255,.55);stroke:none} #aMap .pm-sp .ce{fill:var(--accent);stroke:none}
+#aMap .pm-key{stroke:var(--muted)}
+.sw.amon{background:var(--acc-soft);border:1.5px solid var(--accent)} .sw.amoff{background:var(--acc-soft);border:1.5px solid var(--accent);opacity:.4} .sw.amfree{background:var(--free);border:1.5px dashed var(--free-line);opacity:1}
 .opt2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px}.opt2>.card{margin:0}
 .lgu{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--muted);margin-right:6px}.lgu.adm{background:var(--acc-soft);color:var(--acc-txt)}
 #lgList .eqlog>div{padding:10px 12px}
@@ -1424,7 +1428,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(v==="opciones") v="tarifas";
     if(v==="mes"||v==="dia"){ ingSub=v; v="ingresos"; }
     if(!VIEWS.includes(v)) v="ticketera";
-    if((v==="tarifas"||v==="registros")&&!isAdmin()) v="ticketera";
+    if((v==="tarifas"||v==="registros"||v==="planograma")&&!isAdmin()) v="ticketera";
     document.querySelectorAll("nav a").forEach(a=>{ if(a.dataset.v===v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
     VIEWS.forEach(x=>$("#v-"+x).hidden = x!==v);
     if(v==="ingresos") showIng();
@@ -2512,8 +2516,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // k: techo | aire | moto · key: obligatorio dejar llave · B: espacio de reserva (cuando se llenan los 36)
   const SPACES=(()=>{ const L=[];
     const add=(id,x,y,w,h,k,o)=>L.push(Object.assign({id,x,y,w,h,k,B:/B$/.test(id),key:/B$/.test(id)||id==="20"},o||{}));
-    ["35","36","1","2","3","4","5","6","7","8"].forEach((id,i)=>add(id,211+i*60,36,50,90,"techo"));
-    [["9",810],["10",850],["11",888],["12",928]].forEach(([id,x])=>{ add(id,x,36,30,42,"moto"); add(id+"B",x,84,30,42,"moto",{B:false,key:false}); });
+    ["35","36","1","2","3","4","5","6","7","8","9"].forEach((id,i)=>add(id,211+i*60,36,50,90,"techo"));
+    [["9B",881],["10",929],["11",979],["12",1029]].forEach(([id,x])=>add(id,x,36,38,36,"moto",{B:false,key:false}));
+    [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
     ["35B","36B","1B","2B","3B","4B","5B","6B","7B","8B"].forEach((id,i)=>add(id,211+i*60,134,50,90,"aire"));
     ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
@@ -2597,23 +2602,34 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   function abNm(a,n){ return String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,n); }
   function planoBase(){ return '<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
-      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="968" y="16" width="120" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
+      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
       +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>'; }
   // plano de la pestaña Abonados: muestra dónde está cada abonado y resalta los del filtro
+  const CARV='<path class="cb" d="M13 2h8a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10h-8A10 10 0 0 1 3 52V12A10 10 0 0 1 13 2z"/><path class="cg" d="M7 17 Q17 11 27 17 L26 26 L8 26 Z"/><path class="cg" d="M8 46 L26 46 L27 53 Q17 57 7 53 Z"/><rect class="ce" x="0" y="19" width="4" height="6" rx="2"/><rect class="ce" x="30" y="19" width="4" height="6" rx="2"/>';
+  const CARH='<path class="cb" d="M12 3h40a10 10 0 0 1 10 10v8a10 10 0 0 1-10 10H12A10 10 0 0 1 2 21v-8A10 10 0 0 1 12 3z"/><path class="cg" d="M47 7 Q53 17 47 27 L38 26 L38 8 Z"/><path class="cg" d="M18 8 L18 26 L11 27 Q7 17 11 7 Z"/><rect class="ce" x="39" y="0" width="6" height="4" rx="2"/><rect class="ce" x="39" y="30" width="6" height="4" rx="2"/>';
+  const MOTO='<rect class="ce" x="5" y="1" width="6" height="8" rx="3"/><rect class="cb" x="3" y="8" width="10" height="18" rx="5"/><rect class="ce" x="0" y="10" width="16" height="2.5" rx="1.2"/><rect class="ce" x="5" y="25" width="6" height="8" rx="3"/>';
+  const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
   function renderAbMap(list,filtered){ const svg=$("#aMap"); if(!svg) return; const fe=$("#aQEsp").value;
     const by={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k) (by[k]=by[k]||[]).push(a); });
     const hit=new Set(list.map(a=>espKey(a.esp)).filter(Boolean));
     let g=planoBase();
     SPACES.forEach(s=>{ const L=by[s.id]||[], has=L.length>0, on=has&&(!filtered||hit.has(s.id));
-      const cls="pm-sp am "+s.k+(has?(on?" amon":" amoff"):" amfree")+(fe===s.id?" sel":"");
+      const cls="pm-sp am "+s.k+(has?(on?" amon abin":" amoff"):" amfree")+(fe===s.id?" sel":"");
       const cx=s.x+s.w/2, cy=s.y+s.h/2, small=s.w<40, vert=s.h>s.w;
       const nm=a=>String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,small?5:9);
       const lab=has?(L.length>1?(small?L.length+" ab.":nm(L[0])+" +"+(L.length-1)):nm(L[0])):"";
-      g+='<g class="'+cls+'"'+(has?' data-amsp="'+s.id+'" tabindex="0" role="button"':'')+' aria-label="Espacio '+s.id+(has?': '+esc(L.map(a=>a.nombre).join(", ")):', sin abonado')+'"><title>'+(has?esc(L.map(a=>a.nombre+(a.placa?" · "+a.placa:"")+(a.mod?" ("+ABMOD[a.mod]+")":"")).join("\n")):"Espacio "+s.id+" · sin abonado")+'</title><rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="3"/>'
-        +'<text x="'+cx+'" y="'+(has?(small?s.y+16:(vert?cy-8:cy-5)):cy+4)+'" class="pm-id'+(small&&has?' sm':'')+'">'+s.id+'</text>'
-        +(lab?'<text x="'+cx+'" y="'+(small?s.y+33:(vert?cy+10:cy+12))+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>':'')+'</g>'; });
+      g+='<g class="'+cls+'"'+(has?' data-amsp="'+s.id+'" tabindex="0" role="button"':'')+' aria-label="Espacio '+s.id+(has?': '+esc(L.map(a=>a.nombre).join(", ")):', sin abonado')+'"><title>'+(has?esc(L.map(a=>a.nombre+(a.placa?" · "+a.placa:"")).join("\n")):'Espacio '+s.id+' · sin abonado')+'</title><rect class="sp" x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="6"/>';
+      if(has){
+        if(small) g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-3.6)+' '+(s.y+12.5)+') scale(.45)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+33)+'" class="pm-lab xs">'+esc(lab)+'</text>';
+        else if(vert) g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g><text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>';
+        else g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text><g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g><text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>';
+      } else {
+        g+='<text x="'+cx+'" y="'+(s.key&&!small?cy-6:cy+5)+'" class="pm-id'+(small?' sm':'')+'">'+s.id+'</text>';
+        if(s.key&&!small) g+='<g transform="translate('+(cx-6)+' '+(cy+2)+') scale(.5)">'+KEY+'</g>';
+      }
+      g+='</g>'; });
     svg.innerHTML=g;
     const n=filtered?hit.size:Object.keys(by).length; $("#aMapInfo").textContent=filtered?(n?n+(n===1?" espacio resaltado":" espacios resaltados")+" según la búsqueda":"Los abonados encontrados no tienen espacio fijo"):n+" espacios con abonado · toca uno para filtrar";
   }
@@ -2637,29 +2653,25 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     // mapa
     let g=planoBase();
     const _unused='<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
-      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="968" y="16" width="120" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
+      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
       +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>';
     const inZ=s=> plZona==="todos" || (plZona==="llave"? s.key : plZona==="aire"? (s.k==="aire"&&!s.B) : s.k===plZona);
-    const CARV='<path class="cb" d="M13 2h8a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10h-8A10 10 0 0 1 3 52V12A10 10 0 0 1 13 2z"/><path class="cg" d="M7 17 Q17 11 27 17 L26 26 L8 26 Z"/><path class="cg" d="M8 46 L26 46 L27 53 Q17 57 7 53 Z"/><rect class="ce" x="0" y="19" width="4" height="6" rx="2"/><rect class="ce" x="30" y="19" width="4" height="6" rx="2"/>';
-    const CARH='<path class="cb" d="M12 3h40a10 10 0 0 1 10 10v8a10 10 0 0 1-10 10H12A10 10 0 0 1 2 21v-8A10 10 0 0 1 12 3z"/><path class="cg" d="M47 7 Q53 17 47 27 L38 26 L38 8 Z"/><path class="cg" d="M18 8 L18 26 L11 27 Q7 17 11 7 Z"/><rect class="ce" x="39" y="0" width="6" height="4" rx="2"/><rect class="ce" x="39" y="30" width="6" height="4" rx="2"/>';
-    const MOTO='<rect class="ce" x="5" y="1" width="6" height="8" rx="3"/><rect class="cb" x="3" y="8" width="10" height="18" rx="5"/><rect class="ce" x="0" y="10" width="16" height="2.5" rx="1.2"/><rect class="ce" x="5" y="25" width="6" height="8" rx="3"/>';
-    const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
     SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null;
       const cls="pm-sp "+s.k+(o?" occ":" free")+(o&&o.abo?" abin":"")+(lockB?" lock":"")+(a&&!o?" abo":"")+(off?" aboff":"")+(plSel===s.id?" sel":"")+(plMove&&!o&&s.id!==plMove?" target":"")+(inZ(s)?"":" dim");
       const cx=s.x+s.w/2, cy=s.y+s.h/2, vert=s.h>s.w, small=s.w<40;
       const lab=o?(o.abo?abNm(o.abo,small?5:9):(small?normP(o.placaN||o.placa).slice(-4):o.placa)):a?abNm(a,small?5:9):off?abNm(off,small?5:9):"";
       g+='<g class="'+cls+'" data-sp="'+s.id+'" tabindex="0" role="button" aria-label="Espacio '+s.id+(o?(o.abo?', abonado '+(o.abo.nombre||""):', ocupado por '+o.placa):', libre')+'"><rect class="sp" x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="6"/>';
       if(o){
-        if(small){ g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-4.4)+' '+(s.y+13)+') scale(.55)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+40)+'" class="pm-lab xs">'+esc(lab)+'</text>'; }
+        if(small){ g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-3.6)+' '+(s.y+12.5)+') scale(.45)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+33)+'" class="pm-lab xs">'+esc(lab)+'</text>'; }
         else if(vert){ g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g><text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>'; }
         else { g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text><g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g><text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>'; }
         if(s.key&&!o.abo&&o.llave!=="con") g+='<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>';
       } else {
         const hasL=!!lab;
-        g+='<text x="'+cx+'" y="'+(hasL?(small?s.y+17:cy-4):(lockB&&!small?cy-6:cy+5))+'" class="pm-id'+(small?' sm':'')+'">'+s.id+'</text>';
-        if(lockB&&!small&&!hasL) g+='<g transform="translate('+(cx-6)+' '+(cy+2)+') scale(.5)">'+KEY+'</g>';
+        g+='<text x="'+cx+'" y="'+(hasL?(small?s.y+17:cy-4):(s.key&&!small?cy-6:cy+5))+'" class="pm-id'+(small?' sm':'')+'">'+s.id+'</text>';
+        if(s.key&&!small&&!hasL) g+='<g transform="translate('+(cx-6)+' '+(cy+2)+') scale(.5)">'+KEY+'</g>';
         if(off) g+='<text x="'+cx+'" y="'+(small?s.y+30:cy+10)+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>'+(small?'':'<text x="'+cx+'" y="'+(cy+22)+'" class="pm-ab off">'+(off.mod==="noche"?"NOCHE":"DÍA")+'</text>');
         else if(a) g+='<text x="'+cx+'" y="'+(small?s.y+30:cy+12)+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>';
       }
@@ -3012,12 +3024,12 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
   function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
-    const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]'), nr=document.querySelector('nav a[data-v="registros"]');
-    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin();
+    const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]'), nr=document.querySelector('nav a[data-v="registros"]'), np=document.querySelector('nav a[data-v="planograma"]');
+    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin(); if(np) np.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     ["#prevD","#nextD","#dPick"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     { const f=$("#cFondo"); if(f&&f.parentElement) f.parentElement.hidden=!isAdmin(); } // solo el administrador cambia el monto del fondo
-    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"||v==="registros"){ location.hash="ticketera"; show("ticketera"); } }
+    if(!isAdmin()){ if(ingSub!=="dia"){ ingSub="dia"; } if(selDay!==iso(new Date())) setDay(iso(new Date())); const v=(location.hash||"").slice(1); if(v==="tarifas"||v==="opciones"||v==="registros"||v==="planograma"){ location.hash="ticketera"; show("ticketera"); } }
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbSw")){ if(!canAdmin()) return; ROL=isAdmin()?"trab":"admin"; applyRole(); toast(isAdmin()?"Vista de administrador":"Vista de trabajador"); return; }

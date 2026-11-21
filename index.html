@@ -2560,7 +2560,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function espSort(a,b){ return String(a).localeCompare(String(b),"es",{numeric:true}); }
   function occMap(){ const m={}; active.forEach(t=>{ const k=espKey(t.esp); if(k) m[k]=t; });
     // abonados con espacio fijo: cuentan como ocupados en su horario hasta que se marque su salida
-    abonados.forEach(ab=>{ const k=espKey(ab.esp); if(k&&aboPresente(ab)&&!m[k]) m[k]={abo:ab,placa:ab.placa||ab.nombre,placaN:normP(ab.placa||ab.nombre),num:null,llave:"con",hi:"",tipo:ab.tipo}; });
+    abonados.forEach(ab=>{ const k=espKey(ab.esp); if(k&&aboPresente(ab)&&!m[k]) m[k]={abo:ab,placa:ab.placa||ab.nombre,placaN:normP(ab.placa||ab.nombre),num:null,llave:vTipo(ab)==="carretilla"?"no":"con",hi:"",tipo:ab.tipo}; });
     return m; }
   function aboPresTog(id,fuera){ if(!needDb()) return; const ab=abonados.find(x=>x.id===id); if(!ab) return;
     queue(()=>db.doc("abonados/"+id).update({fuera:!!fuera,movAt:Date.now()}).then(()=>toast((ab.placa||ab.nombre)+(fuera?" salió · espacio "+ab.esp+" libre":" volvió · espacio "+ab.esp+" ocupado")))); }
@@ -2674,7 +2674,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     // tabla
     const l=active.slice().sort((a,b)=>espSort(a.esp||"~",b.esp||"~"));
     const nAb=Object.values(occ).filter(x=>x.abo).length, nT=l.length+nAb; $("#plCount").textContent=nT? nT+(nT===1?" vehículo":" vehículos")+(nAb?" ("+nAb+" abonados)":""):"";
-    const abR=Object.values(occ).filter(x=>x.abo).sort((x,y)=>espSort(x.abo.esp,y.abo.esp)).map(x=>'<tr><td><strong>'+esc(x.abo.esp)+'</strong></td><td>'+esc(x.abo.placa||"—")+'</td><td>'+esc(abVeh(x.abo)||"—")+'</td><td><span class="modo abn">Abonado</span>'+(x.abo.mod?' <span class="muted">'+ABMOD[x.abo.mod]+'</span>':'')+'</td><td>—</td><td>—</td><td>'+(x.abo.cel?telHtml(x.abo.cel):"—")+'</td></tr>').join("");
+    const abR=Object.values(occ).filter(x=>x.abo).sort((x,y)=>espSort(x.abo.esp,y.abo.esp)).map(x=>'<tr><td><strong>'+esc(x.abo.esp)+'</strong></td><td>'+esc(x.abo.placa||"—")+'</td><td>'+esc(abVeh(x.abo)||"—")+'</td><td><span class="modo abn">Abonado</span>'+(x.abo.mod?' <span class="muted">'+ABMOD[x.abo.mod]+'</span>':'')+'</td><td>—</td><td>'+(vTipo(x.abo)==="carretilla"?'No deja · módulo':'—')+'</td><td>'+(x.abo.cel?telHtml(x.abo.cel):"—")+'</td></tr>').join("");
     $("#plRows").innerHTML=(l.length||abR)?  l.map(t=>'<tr><td><strong>'+esc(t.esp||"Sin espacio")+'</strong></td><td>'+esc(t.placa)+'</td><td>'+esc(vehL(t.tipo))+'</td><td><span class="modo '+t.modo+'">'+MODOL[t.modo]+'</span></td><td class="num">'+esc(t.hi)+'</td><td>'+(t.llave==="con"?"Dejó llave":(espKey(t.esp)&&SPID[espKey(t.esp)].key?'<span class="pill bad">Falta llave</span>':"—"))+'</td><td>'+(t.tel?esc(t.tel):"—")+'</td></tr>').join("")
 +abR : '<tr><td colspan="7" class="muted">No hay vehículos en la playa.</td></tr>';
     // resumen
@@ -2725,10 +2725,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(plMove){ const t=active.find(x=>x.num===plMove); d.innerHTML='<div class="paidbox" style="border-color:var(--accent)"><span>Moviendo <strong>'+esc(t?t.placa:"")+'</strong>: toca un espacio libre en el plano.</span><button class="btn small" type="button" id="plMoveX">Cancelar</button></div>'; return; }
     if(!plSel){ d.innerHTML='<h2 style="margin-top:0">Espacio</h2><p class="note">Toca cualquier espacio del plano para ver su detalle: quién está, desde qué hora, cuánto lleva y qué se puede hacer (cobrar, mover, marcar salida).</p>'; return; }
     const s=SPID[plSel], o=occMap()[plSel], a=aboMap()[plSel];
-    let h='<div class="pre" style="margin-top:12px"><div class="ptitle"><span class="pl">Espacio '+s.id+'</span><span class="muted">'+espLabel(s)+(s.key?' · <strong>llave obligatoria</strong>':'')+'</span></div>';
+    let h='<div class="pre" style="margin-top:12px"><div class="ptitle"><span class="pl">Espacio '+s.id+'</span><span class="muted">'+(o&&o.abo&&vTipo(o.abo)==="carretilla"?(s.B?'reserva B · ':'')+'módulo de venta, no deja llave':espLabel(s)+(s.key?' · <strong>llave obligatoria</strong>':''))+'</span></div>';
     aboEn(plSel).filter(x=>s.k!=="moto"||true).forEach(x=>{ const now=aboEnHorario(x); h+='<div><span>Abonado'+(x.mod?' · '+ABMOD[x.mod].toLowerCase():'')+'</span><strong>'+esc(x.nombre)+(x.placa?' · '+esc(x.placa):'')+'</strong></div>'+(x.mod==="dia"||x.mod==="noche"?'<div><span>Horario</span><strong>'+horarioTxt(x)+(now?' · <span style="color:var(--accent)">reservado ahora</span>':' · <span style="color:var(--ok)">libre ahora</span>')+'</strong></div>':''); });
     if(o&&o.abo){ const x=o.abo, st=abState(x);
       h+='<div><span>Ocupado por</span><strong>'+esc(x.placa||"sin placa")+(abVeh(x)?' · '+esc(abVeh(x)):'')+'</strong></div>'
+        +(vTipo(x)==="carretilla"?'<div><span>Llave</span><strong>No deja · es módulo de venta</strong></div>':'')
         +'<div><span>Pago</span><strong><span class="pill '+st.c+'">'+esc(st.txt)+'</span></strong></div>'+(x.cel?'<div><span>Celular</span><strong>'+telHtml(x.cel)+'</strong></div>':'')+'</div>'
         +'<p class="note">Los abonados con espacio fijo se muestran ocupados hasta que se marque su salida.</p>'
         +'<div class="formfoot"><button class="btn primary" type="button" data-about="'+x.id+'">Salió · liberar espacio</button></div>';

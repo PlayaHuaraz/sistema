@@ -2692,7 +2692,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
       +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>';
-    const inZ=s=> plZona==="todos" || (plZona==="llave"? s.key : plZona==="aire"? (s.k==="aire"&&!s.B) : s.k===plZona);
+    const modSp=id=>{ const x=occ[id]; return !!(x&&x.abo&&vTipo(x.abo)==="carretilla"); }; // módulo de venta: no deja llave
+    const inZ=s=> plZona==="todos" || (plZona==="llave"? (s.key&&!modSp(s.id)) : plZona==="aire"? (s.k==="aire"&&!s.B) : s.k===plZona);
     SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null;
       const cls="pm-sp "+s.k+(o?" occ":" free")+(o&&o.abo?" abin":"")+(lockB?" lock":"")+(a&&!o?" abo":"")+(off?" aboff":"")+(plSel===s.id?" sel":"")+(plMove&&!o&&s.id!==plMove?" target":"")+(inZ(s)?"":" dim");
       const cx=s.x+s.w/2, cy=s.y+s.h/2, vert=s.h>s.w, small=s.w<40;
@@ -2715,7 +2716,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     $("#plMap").innerHTML=g;
     { const norm=SPACES.filter(s=>!s.B), oc=norm.filter(s=>occ[s.id]).length, pct=norm.length?Math.round(oc*100/norm.length):0, on=Math.round(pct*40/100);
       $("#plOcc").innerHTML='<div class="occ-h"><h2>Ocupación ahora</h2><span class="occ-n num">'+oc+'<small> / '+norm.length+' · '+pct+' %</small></span></div><div class="occ-bar" aria-hidden="true">'+Array.from({length:40},(_,i)=>'<i'+(i<on?' class="on"':'')+'></i>').join("")+'</div><p class="note" style="margin:0">'+active.filter(t=>espKey(t.esp)).length+' con ticket · '+Object.values(occ).filter(x=>x.abo).length+' abonados presentes · sin contar los espacios B con llave.</p>';
-      const Z=[["todos","Todos",SPACES.length],["techo","Con techo",SPACES.filter(s=>s.k==="techo").length],["aire","Sin techo",SPACES.filter(s=>s.k==="aire"&&!s.B).length],["moto","Motos",SPACES.filter(s=>s.k==="moto").length],["llave","Con llave (B)",SPACES.filter(s=>s.key).length]];
+      const Z=[["todos","Todos",SPACES.length],["techo","Con techo",SPACES.filter(s=>s.k==="techo").length],["aire","Sin techo",SPACES.filter(s=>s.k==="aire"&&!s.B).length],["moto","Motos",SPACES.filter(s=>s.k==="moto").length],["llave","Con llave (B)",SPACES.filter(s=>s.key&&!modSp(s.id)).length]];
       $("#plZonas").innerHTML=Z.map(z=>'<button type="button" class="chip" data-plz="'+z[0]+'" aria-pressed="'+(plZona===z[0])+'">'+z[1]+' <small>'+z[2]+'</small></button>').join(""); }
     $("#plExtra").innerHTML= extras.length ? '<h3>Espacio extra (fuera del plano) · '+extras.length+'</h3><div class="chips">'+extras.map(t=>'<button type="button" class="chip" data-xtra="'+t.num+'">'+esc(t.placa)+' · '+esc(vehL(t.tipo))+' · '+esc(t.hi)+(t.llave==="con"?' · llave':'')+'</button>').join("")+'</div>' : '';
     renderPlDet();

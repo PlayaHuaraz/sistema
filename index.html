@@ -1569,22 +1569,24 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const center=(t,f,dy)=>{ c.font=f; c.textAlign="center"; c.fillText(t,W/2,y); y+=dy; c.textAlign="left"; };
     // franja de tarifa: el precio en grande
     const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
+    center("TICKET N° "+tk.num,"700 26px 'Barlow Condensed'",36);
     // recuadro con borde (sin relleno negro: imprime más rápido y más nítido en térmica)
     c.fillRect(P,y,cw,4); c.fillRect(P,y+62,cw,4); c.fillRect(P,y,4,66); c.fillRect(W-P-4,y,4,66);
     c.font="700 58px 'Barlow Condensed'"; const pw=c.measureText(money(tk.tarifa)).width; c.textAlign="right"; c.fillText(money(tk.tarifa),W-P-12,y+3); c.textAlign="left";
     const lw2=cw-pw-40;
-    c.font="700 26px 'Barlow Condensed'"; c.fillText(modoTxt,P+12,y+(tk.abx?8:19),lw2);
+    c.font="700 24px Barlow";
+    if(!tk.abx&&tk.modo==="hora"){ c.fillText("HORA",P+12,y+7,lw2); c.fillText("O FRACCIÓN",P+12,y+34,lw2); }
+    else c.fillText(modoTxt,P+12,y+(tk.abx?8:20),lw2);
     if(tk.abx){ c.font="600 15px Barlow"; c.fillText("por hora fuera de su plan",P+12,y+38,lw2); }
     y+=78;
-    center("TICKET N° "+tk.num,"700 26px 'Barlow Condensed'",34);
     // placa grande y centrada, para leerla de un vistazo
     c.fillRect(P,y,cw,2); y+=10;
-    center("PLACA","700 14px Barlow",18);
-    { c.font="700 64px 'Barlow Condensed'"; c.textAlign="center"; const pt=String(tk.placa||"").toUpperCase(); c.fillText(pt,W/2,y,cw); c.textAlign="left"; y+=70; }
+    { c.font="700 30px 'Barlow Condensed'"; c.fillText("PLACA",P,y+18); c.font="700 44px 'Barlow Condensed'"; c.textAlign="right"; const pt=String(tk.placa||"").toUpperCase(); c.fillText(pt,W-P,y+6,cw-90); c.textAlign="left"; y+=58; }
     c.fillRect(P,y,cw,2); y+=12;
     const ent=new Date(tk.ent);
     const row=(k,v,big)=>{ c.font="400 15px Barlow"; c.fillText(k,P,y+(big?8:2)); c.font=big?"700 30px 'Barlow Condensed'":"600 17px Barlow"; const lines=wrap(c,v,cw-110); lines.forEach((ln,i)=>c.fillText(ln,P+110,y+i*(big?32:21))); y+=Math.max(big?36:24,lines.length*(big?32:21)+4); };
-    row("Ingreso",ddmm(ent)+"/"+ent.getFullYear()+"  "+tk.hi);
+    { c.font="700 30px 'Barlow Condensed'"; c.fillText("INGRESO",P,y+8); c.font="700 44px 'Barlow Condensed'"; c.textAlign="right"; c.fillText(tk.hi,W-P,y); c.textAlign="left"; y+=52; c.fillRect(P,y-4,cw,2); y+=8; }
+    row("Fecha",ddmm(ent)+"/"+ent.getFullYear());
     row("Vehículo",vehL(tk.tipo));
     if(tk.esp) row("Espacio",tk.esp);
     const adel=(tk.adel||[]).reduce((s,a)=>s+num(a.m),0);
@@ -1704,18 +1706,22 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     T("Jr. Huaraz 747, Breña - Lima",{a:"c"});
     T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
     D.push({t:"rule",c:"="});
+    T("TICKET N° "+tk.num,{a:"c",b:1});
+    D.push({t:"rule",c:"-"});
     const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
-    T(modoTxt,{a:"c",b:1,z:1}); T(money(tk.tarifa),{a:"c",b:1,z:2});
+    { const L=tk.abx?["ABONADO","TIEMPO EXTRA"]:({hora:["HORA","O FRACCIÓN"],noche:["NOCHE"],dia:["TARIFA","DEL DÍA"]})[tk.modo]||[modoTxt];
+      const mv=money(tk.tarifa); if(noTildes(L[0]).length+1+mv.length<=COLS/2) D.push({t:"lr",k:L[0],v:mv,b:1,z:2}); else D.push({t:"lr2",k:L[0],v:mv});
+      if(L[1]) T(L[1],{b:1}); }
     if(tk.abx) T("por hora fuera de su plan ("+horarioTxt({mod:tk.abx.mod})+")",{a:"c"});
     D.push({t:"rule",c:"="});
-    T("TICKET N° "+tk.num,{a:"c",b:1});
-    D.push({t:"rule",c:"-"}); T("PLACA",{a:"c"}); T(String(tk.placa||"").toUpperCase(),{a:"c",b:1,z:2}); D.push({t:"rule",c:"-"});
-    D.push({t:"kv",k:"Ingreso",v:ddmm(ent)+"/"+ent.getFullYear()+" "+tk.hi});
-    D.push({t:"kv",k:"Vehículo",v:vehL(tk.tipo)});
-    if(tk.esp) D.push({t:"kv",k:"Espacio",v:tk.esp});
+    D.push({t:"lr",k:"PLACA",v:String(tk.placa||"").toUpperCase(),b:1,z:2}); D.push({t:"rule",c:"-"});
+    D.push({t:"lr",k:"INGRESO",v:tk.hi,b:1,z:2});
+    D.push({t:"kv",w:14,k:"Fecha",v:ddmm(ent)+"/"+ent.getFullYear()});
+    D.push({t:"kv",w:14,k:"Vehículo",v:vehL(tk.tipo)});
+    if(tk.esp) D.push({t:"kv",w:14,k:"Espacio",v:tk.esp});
     const adel=(tk.adel||[]).reduce((s,a)=>s+num(a.m),0);
-    if(adel) D.push({t:"kv",k:"Adelanto",v:money(adel)+" ("+adelTxt(tk.adel)+")"});
-    if(tk.modo!=="hora") D.push({t:"kv",k:"Válido hasta",v:tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()});
+    if(adel) D.push({t:"kv",w:14,k:"Adelanto",v:money(adel)+" ("+adelTxt(tk.adel)+")"});
+    if(tk.modo!=="hora") D.push({t:"kv",w:14,k:"Válido hasta",v:tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()});
     D.push({t:"feed",n:1}); D.push({t:"bar",s:String(tk.num)});
     D.push({t:"feed",n:1});
     T("Conserve su ticket, es indispensable para retirar su vehículo.",{a:"c",b:1});
@@ -1757,6 +1763,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       if(e.t==="logo"){ const L=await getLogoBits(); if(L){ P(0x1B,0x61,1, 0x1D,0x76,0x30,0, L.bw&255,L.bw>>8, L.h&255,L.h>>8); for(const b of L.bytes) o.push(b); P(0x0A); } continue; }
       if(e.t==="rule"){ P(0x1B,0x61,0, encTxt(e.c.repeat(COLS)), 0x0A); continue; }
       if(e.t==="feed"){ P(0x1B,0x64,e.n||1); continue; }
+      if(e.t==="lr2"){ const k=noTildes(e.k), v=noTildes(e.v), pad=Math.max(1,COLS-k.length-v.length*2);
+        P(0x1B,0x61,0, 0x1B,0x45,1, 0x1D,0x21,0x00, encTxt(k+" ".repeat(pad)), 0x1D,0x21,0x11, encTxt(v), 0x0A, 0x1B,0x45,0, 0x1D,0x21,0); continue; }
       if(e.t==="bar"){ const d=encTxt("{B"+e.s); P(0x1B,0x61,1, 0x1D,0x68,72, 0x1D,0x77,3, 0x1D,0x48,0, 0x1D,0x6B,73,d.length, d, 0x0A); continue; }
       const al=e.a==="c"?1:e.a==="r"?2:0;
       P(0x1B,0x61,al, 0x1B,0x45,e.b?1:0, 0x1D,0x21, e.z===2?0x11:e.z===1?0x01:0x00);
@@ -1778,6 +1786,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       if(e.t==="rule"){ line(e.c.repeat(COLS),{}); continue; }
       if(e.t==="feed"){ y+=CH*(e.n||1); continue; }
       if(e.t==="bar"){ drawCode128(c,e.s,W/2,y,W,72); y+=74; continue; }
+      if(e.t==="lr2"){ const k=noTildes(e.k), v=noTildes(e.v); const y0=y; y+=CH; line(k,{b:1}); y=y0; const x0=W-[...v].length*CW*2;
+        c.font="700 20px 'DejaVu Sans Mono','Courier New',monospace"; [...v].forEach((ch,i)=>{ c.save(); c.translate(x0+i*CW*2,y+4); c.scale(2*CW/12.04,2); c.fillText(ch,0,0); c.restore(); }); y+=CH*2; continue; }
       docLines(e).forEach(l=>line(l,e));
     }
     y+=16; const out=document.createElement("canvas"); out.width=W; out.height=y; const ox=out.getContext("2d"); ox.drawImage(cv,0,0); return out;

@@ -2544,7 +2544,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     [["9B",881],["10",929],["11",979],["12",1029]].forEach(([id,x])=>add(id,x,36,38,36,"moto",{B:false,key:false}));
     [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
     add("6B",580,134,90,50,"aire"); add("7B",691,134,50,90,"aire"); add("8B",751,134,50,90,"aire");
-    add("35B",105,134,93,48,"aire",{chico:true}); add("36B",230,134,93,48,"aire",{key:false,keyOpc:true});
+    add("35B",105,134,93,48,"aire",{chico:true,key:false,keyOpc:true}); add("36B",230,134,93,48,"aire",{key:false,keyOpc:true});
     ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
     add("34C",-14,332,37,38,"moto",{B:false,key:false}); add("34D",30,332,39,38,"moto",{B:false,key:false}); add("34B",-14,379,83,72,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
@@ -2581,7 +2581,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function aboMapFor(mod){ const m={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k&&SPID[k].k!=="moto"&&aboSolapa(a.mod,mod)) m[k]=a; }); return m; }
   function horarioTxt(a){ return a.mod==="dia"?"de 6:30 a. m. a "+(cfg.diaFin||"20:00"):a.mod==="noche"?"de "+(cfg.diaFin||"20:00")+" a "+(cfg.nocheFin||"08:00"):"las 24 horas"; }
   function regularLlenos(){ const occ=occMap(), abo=aboMap(); return !SPACES.some(s=>!s.B&&s.k!=="moto"&&!occ[s.id]&&!abo[s.id]); }
-  function espLabel(s){ return s.k==="moto"?"motos":s.chico?"reserva B, con llave · moto, mototaxi o auto pequeño":s.B?(s.key?"reserva B, con llave":"reserva B, llave opcional"):s.k==="techo"?"con techo":"sin techo"; }
+  function espLabel(s){ return s.k==="moto"?"motos":s.chico?"reserva B, llave opcional · moto, mototaxi o auto pequeño":s.B?(s.key?"reserva B, con llave":"reserva B, llave opcional"):s.k==="techo"?"con techo":"sin techo"; }
   function suggestEsp(tipo){
     const occ=occMap(), abo=aboMap(), free=s=>!occ[s.id]&&!abo[s.id];
     const order=tipo==="moto" ? SPACES.filter(s=>s.k==="moto") : [];
@@ -2797,7 +2797,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(edNum && ae!=="edEsp"){ const t=active.find(x=>x.num===edNum); if(t) fillEspSelect($("#edEsp"),$("#edEsp").dataset.dirty?$("#edEsp").value:t.esp); }
   }
   let inEspTouched=false;
-  function inEspNote(){ const k=espKey($("#inEsp").value), n=$("#inEspNote"); const s=k&&SPID[k]; if(s&&s.key){ n.innerHTML='<strong>Este espacio exige dejar llave.</strong> Pídela al cliente.'+(s.chico?' Solo para moto, mototaxi o auto pequeño.':''); n.classList.remove("hide"); } else if(s&&s.keyOpc){ n.innerHTML='Aquí la llave es <strong>opcional</strong>: los del 35 y 36 casi nunca salen.'; n.classList.remove("hide"); } else if(s&&s.k==="moto"&&inTipo!=="moto"){ n.textContent="Espacio solo para motos."; n.classList.remove("hide"); } else n.classList.add("hide"); }
+  function inEspNote(){ const k=espKey($("#inEsp").value), n=$("#inEspNote"); const s=k&&SPID[k]; if(s&&s.key){ n.innerHTML='<strong>Este espacio exige dejar llave.</strong> Pídela al cliente.'; n.classList.remove("hide"); } else if(s&&s.keyOpc){ n.innerHTML='Aquí la llave es <strong>opcional</strong>: los del 35 y 36 casi nunca salen.'+(s.chico?' Solo para moto, mototaxi o auto pequeño.':''); n.classList.remove("hide"); } else if(s&&s.k==="moto"&&inTipo!=="moto"){ n.textContent="Espacio solo para motos."; n.classList.remove("hide"); } else n.classList.add("hide"); }
   $("#inEsp").addEventListener("change",()=>{ inEspTouched=true; inEspNote(); });
   $("#edEsp").addEventListener("change",()=>{ $("#edEsp").dataset.dirty="1"; });
 

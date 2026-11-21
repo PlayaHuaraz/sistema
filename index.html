@@ -464,6 +464,80 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   .card{padding:16px;border-radius:18px}
   main{padding:6px 10px 48px}
 }
+
+/* ===== Planograma v2 ===== */
+:root{--free:#f6f8fa;--free-line:#c3ccd6;--car:#ffffff;--car-line:#8a96a3;--glass:#26313d;--tk-soft:#e8eef5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--free:#1b2733;--free-line:#3a4a5c;--car:#e9edf2;--car-line:#6b7886;--glass:#1c2530;--tk-soft:#1f2c3a}}
+:root[data-theme="dark"]{--free:#1b2733;--free-line:#3a4a5c;--car:#e9edf2;--car-line:#6b7886;--glass:#1c2530;--tk-soft:#1f2c3a}
+.plocc{display:flex;flex-direction:column;gap:12px}
+.occ-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.occ-h h2{margin:0}
+.occ-n{font-family:var(--display);font-weight:700;font-size:32px}.occ-n small{font-size:18px;color:var(--muted)}
+.occ-bar{display:flex;gap:4px}.occ-bar i{flex:1;height:30px;border-radius:4px;background:var(--line)}.occ-bar i.on{background:var(--accent)}
+.plgrid{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.plmapc{flex:999 1 720px;min-width:0}
+.plside{flex:1 1 300px;position:sticky;top:12px}
+.plside .pldet:empty{display:block}
+.plside .pre{margin-top:0!important}
+#plZonas{margin:4px 0 12px}
+.mapwrap{border-radius:16px;background:var(--lot);padding:10px}
+#plMap .pm-bg{fill:var(--lot)} #plMap .pm-blk{fill:var(--surface);stroke:var(--line)}
+#plMap .pm-sp rect.sp{fill:var(--free);stroke:var(--free-line);stroke-width:1.5;stroke-dasharray:5 4;opacity:1}
+#plMap .pm-sp.occ rect.sp{fill:var(--tk-soft);stroke:var(--car-line);stroke-dasharray:none}
+#plMap .pm-sp.abin rect.sp{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:none}
+#plMap .pm-sp.lock rect.sp{fill:var(--lot);stroke:var(--line);stroke-dasharray:none}
+#plMap .pm-sp.abo rect.sp,#plMap .pm-sp.aboff rect.sp{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:4 3;opacity:.75}
+#plMap .pm-sp.target rect.sp{stroke:var(--ok);stroke-width:2.5;stroke-dasharray:4 3}
+#plMap .pm-sp.sel rect.sp,#plMap .pm-sp:hover rect.sp,#plMap .pm-sp:focus-visible rect.sp{stroke:var(--mark);stroke-width:3;stroke-dasharray:none}
+#plMap .pm-sp.dim{opacity:.22}
+#plMap .pm-id{fill:var(--muted);font-size:12px} #plMap .pm-id.sm{font-size:10px}
+#plMap .pm-sp.occ .pm-id{fill:var(--ink)} #plMap .pm-sp.abin .pm-id{fill:var(--acc-txt)}
+#plMap .pm-sp.lock .pm-id{opacity:.7}
+#plMap .pm-lab{font-size:10px;font-weight:700;text-anchor:middle;fill:var(--ink);letter-spacing:.02em}
+#plMap .pm-lab.sm{font-size:9px} #plMap .pm-lab.xs{font-size:7px}
+#plMap .pm-sp.abin .pm-lab{fill:var(--acc-txt)}
+#plMap .pm-ab{fill:var(--acc-txt)}
+#plMap .cb{fill:var(--car);stroke:var(--car-line);stroke-width:1.5} #plMap .cg{fill:var(--glass)} #plMap .ce{fill:var(--car-line)}
+#plMap .abin .cb{fill:var(--accent);stroke:var(--accent)} #plMap .abin .cg{fill:rgba(255,255,255,.55)} #plMap .abin .ce{fill:var(--accent)}
+#plMap .pm-key{stroke:var(--muted)}
+.sw2{display:inline-block;width:18px;height:18px;border-radius:5px;flex:none}
+.sw2.abin{background:var(--acc-soft);border:1.5px solid var(--accent)} .sw2.occ{background:var(--tk-soft);border:1.5px solid var(--car-line)}
+.sw2.free{background:var(--free);border:1.5px dashed var(--free-line)} .sw2.abo{background:var(--acc-soft);border:1.5px dashed var(--accent)} .sw2.lock{background:var(--lot);border:1px solid var(--line)}
+@media (max-width:640px){.plside{position:static}}
+#plRows td{white-space:nowrap}
+
+/* ===== Ticketera / Boletas / listas v2 ===== */
+.vrow{border-radius:14px;padding:12px 14px;min-height:58px;gap:12px}
+.vrow:hover,.vrow:focus-visible{border-color:var(--accent);background:var(--acc-soft)}
+.vrow .amt{font-size:22px}
+#pcBox .pre{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.pc-h{color:var(--acc-txt)}
+.pre .pc-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0}
+.pre .pc-tiles>div{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.pc-tiles span{font-size:13px;color:var(--muted)} .pc-tiles b{font-size:19px}
+.pre .tot{border-top:2px solid var(--line)}
+.pre .tot strong{font-size:38px}
+.pcv{background:var(--mark-soft);border-radius:14px;padding:10px 14px!important;justify-content:center!important}
+.pcv strong{font-family:var(--display);font-size:30px!important}
+#pcPay{min-height:54px;font-size:17px}
+.subtabs{border-radius:999px;padding:6px;background:var(--chip);border:0}
+.subtabs button{border-radius:999px!important;min-height:44px}
+.abrow,.dayrow{border-radius:14px}
+.tiles .tile{box-shadow:none}
+.eqlog{border-radius:14px}
+.banner,.banner-warn{border-radius:14px}
+@media (max-width:640px){.pre .pc-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.pc-tiles b{font-size:16px}}
+.abst{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.abst.ok{background:var(--acc-soft);color:var(--acc-txt)} .abst.warn{background:var(--mark-soft);color:var(--ink)} .abst.bad{background:var(--bad);color:#fff}
+#aMap .pm-bg{fill:var(--lot)} #aMap .pm-blk{fill:var(--surface);stroke:var(--line)}
+#aMap .pm-sp rect{fill:var(--free);stroke:var(--free-line);stroke-width:1.5;stroke-dasharray:5 4;opacity:1}
+#aMap .pm-sp.amon rect{fill:var(--accent);stroke:var(--accent);stroke-dasharray:none}
+#aMap .pm-sp.amoff rect{fill:var(--acc-soft);stroke:var(--accent);stroke-dasharray:none;opacity:1}
+#aMap .pm-sp .pm-id{fill:var(--muted)}
+#aMap .pm-sp.amon text{fill:var(--accent-ink)} #aMap .pm-sp.amoff text{fill:var(--acc-txt);opacity:1}
+.sw.amon{background:var(--accent)} .sw.amoff{background:var(--acc-soft);border:1.5px solid var(--accent);opacity:1} .sw.amfree{background:var(--free);border:1.5px dashed var(--free-line);opacity:1}
+.opt2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px}.opt2>.card{margin:0}
+.lgu{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--muted);margin-right:6px}.lgu.adm{background:var(--acc-soft);color:var(--acc-txt)}
+#lgList .eqlog>div{padding:10px 12px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -614,22 +688,24 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   <!-- PLANOGRAMA -->
   <section class="view" id="v-planograma" hidden>
+    <div class="card plocc" id="plOcc"></div>
     <div class="tiles" id="plTiles"></div>
-    <div class="card">
+    <div class="plgrid">
+    <div class="card plmapc">
       <h2>Planograma <small>toca un espacio · en el celular desliza a los lados</small></h2>
-      <div class="mapwrap"><svg id="plMap" class="pmap" viewBox="20 10 1075 560" role="img" aria-label="Plano de la playa"></svg></div>
+      <div class="chips" id="plZonas" role="group" aria-label="Zonas"></div>
+      <div class="mapwrap"><svg id="plMap" class="pmap" viewBox="10 10 1085 560" role="img" aria-label="Plano de la playa"></svg></div>
       <div class="legend">
-        <span><i class="sw techo"></i>Con techo</span>
-        <span><i class="sw aire"></i>Sin techo</span>
-        <span><i class="sw moto"></i>Motos</span>
-        <span><i class="sw occ"></i>Ocupado (ticket)</span>
-        <span><i class="sw abin"></i>Ocupado por abonado</span>
-        <span><i class="sw abo"></i>Fijo de abonado · salió</span>
+        <span><i class="sw2 abin"></i>Abonado</span>
+        <span><i class="sw2 occ"></i>Con ticket</span>
+        <span><i class="sw2 free"></i>Libre</span>
+        <span><i class="sw2 abo"></i>Fijo de abonado · salió o fuera de horario</span>
+        <span><i class="sw2 lock"></i>B: solo cuando se llenan los demás, con llave · 20: con llave</span>
         <span>Espacio extra: fuera del plano, se lista debajo</span>
-        <span><strong>B</strong>: solo cuando se llenan los demás, con llave · <strong>20</strong>: con llave</span>
       </div>
       <div id="plExtra" class="plextra"></div>
-      <div id="plDet" class="pldet"></div>
+    </div>
+    <aside class="card plside" aria-label="Espacio seleccionado"><div id="plDet" class="pldet"></div></aside>
     </div>
     <div class="card">
       <h2>Espacios ocupados ahora <small id="plCount"></small></h2>
@@ -932,6 +1008,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   </section>
 
   <section class="view" id="v-tarifas" hidden>
+    <div class="opt2">
     <div class="card">
       <h2>Reloj</h2>
       <p class="note" style="margin-top:0">Formato de la hora que se muestra arriba en todos los equipos.</p>
@@ -948,6 +1025,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <button type="button" class="chip" data-th="light" role="radio">☀️ Claro</button>
         <button type="button" class="chip" data-th="dark" role="radio">🌙 Oscuro</button>
       </div>
+    </div>
     </div>
     <details class="card tarif fold">
       <summary><h2>Tarifas por vehículo (S/)</h2></summary>
@@ -1812,8 +1890,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(!tk){ $("#pcBox").innerHTML=""; return; }
     const bol=$("#pcBol")?$("#pcBol").value:"";
     const c=calc(tk,Date.now()); const tar=(cfg.tar||{})[tk.tipo]||{};
-    let rows='<div><span>Entrada</span><strong class="num">'+ddmm(new Date(tk.ent))+' · '+esc(tk.hi)+'</strong></div>'
-      +'<div><span>Tiempo</span><strong class="num">'+dur(c.mins)+'</strong></div>';
+    let rows='';
     if(tk.modo==="hora") rows+='<div><span>'+c.h+(c.h===1?' hora':' horas')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.base)+'</strong></div>';
     else rows+='<div><span>Tarifa '+MODOL[tk.modo].toLowerCase()+' (hasta '+hhmm(new Date(c.end))+')</span><strong class="num">'+money(c.base)+'</strong></div>';
     if(c.eh) rows+='<div><span>'+c.eh+(c.eh===1?' hora extra':' horas extra')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.extra)+'</strong></div>';
@@ -1824,6 +1901,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +'<div class="pc-h">Pre-cuenta</div>'
       +'<div class="ptitle"><span class="pl">'+esc(tk.placa)+'</span><span><span class="modo '+tk.modo+'">'+MODOL[tk.modo]+'</span> <span class="muted num">N° '+tk.num+'</span></span></div>'
       +'<div class="muted" style="display:block">'+esc(vehL(tk.tipo))+(vDesc(tk)?' · '+esc(vDesc(tk)):'')+(tk.esp?' · '+esc(tk.esp):'')+' · '+(tk.llave==="con"?'<strong>dejó llave</strong>':'sin llave')+(tk.obs?'<br>Obs.: '+esc(tk.obs):'')+(tk.tel?'<br>Teléfono: '+telHtml(tk.tel):'')+'</div>'
+      +'<div class="pc-tiles"><div><span>Ingreso</span><b class="num">'+(tk.fecha!==iso(new Date())?ddmm(new Date(tk.ent))+' · ':'')+esc(tk.hi)+'</b></div><div><span>Salida</span><b class="num">'+hhmm(new Date())+'</b></div><div><span>Tiempo</span><b class="num">'+dur(c.mins)+'</b></div></div>'
       +rows+'</div>'
       +'<div class="fields grp"><div><label>'+(c.adel?'El saldo lo paga con':'Paga con')+'</label><div class="chips tight" id="pcMedio"><button type="button" class="chip" data-m="efectivo" aria-pressed="'+(outMedio==="efectivo")+'">Efectivo</button><button type="button" class="chip" data-m="yape" aria-pressed="'+(outMedio==="yape")+'">Yape</button><button type="button" class="chip" data-m="mixto" aria-pressed="'+(outMedio==="mixto")+'">Mixto</button></div></div>'
       +'</div>'
@@ -2311,7 +2389,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const hay=normQ([a.nombre,a.placa,(a.placa||"").replace(/-/g,""),a.cel,(a.cel||"").replace(/\D/g,""),mc.marca,mc.color,a.dir,a.obs,a.esp?"espacio "+a.esp:"",ABMOD[a.mod],abVeh(a)].join(" "));
     return normQ(q).split(/\s+/).filter(Boolean).every(w=>hay.includes(w)||hay.includes(w.replace(/[^a-z0-9]/g,""))); }
   function abRow(a){ const open=abOpen.has(a.id)||abEdit===a.id; const st=abState(a);
-    return '<details class="abrow" data-abrow="'+a.id+'"'+(open?' open':'')+'><summary><span class="nm">'+esc(a.nombre)+'</span><span class="pl num">'+esc(a.placa||"sin placa")+'</span><span class="esp num">'+(espKey(a.esp)?esc(a.esp):'<span class="muted">—</span>')+'</span><span class="cel num">'+(a.cel?esc(a.cel):'<span class="muted">sin celular</span>')+'</span>'+(st.c==="bad"?'<i class="dot bad" title="'+esc(st.txt)+'"></i>':'')+'</summary>'+(open?'<div class="abrow-in">'+abCard(a)+'</div>':'')+'</details>'; }
+    return '<details class="abrow" data-abrow="'+a.id+'"'+(open?' open':'')+'><summary><span class="nm">'+esc(a.nombre)+(a.retiro?'':' <span class="abst '+st.c+'">'+(st.c==="ok"?"Al día":esc(st.txt))+'</span>')+'</span><span class="pl num">'+esc(a.placa||"sin placa")+'</span><span class="esp num">'+(espKey(a.esp)?esc(a.esp):'<span class="muted">—</span>')+'</span><span class="cel num">'+(a.cel?esc(a.cel):'<span class="muted">sin celular</span>')+'</span>'+(st.c==="bad"?'<i class="dot bad" title="'+esc(st.txt)+'"></i>':'')+'</summary>'+(open?'<div class="abrow-in">'+abCard(a)+'</div>':'')+'</details>'; }
   function applyATab(){ $("#aTabLista").hidden=aTab!=="lista"; $("#aTabCal").hidden=aTab!=="cal";
     document.querySelectorAll("[data-atab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.atab===aTab))); }
   function renderAbList(){
@@ -2528,7 +2606,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     svg.innerHTML=g;
     const n=filtered?hit.size:Object.keys(by).length; $("#aMapInfo").textContent=filtered?(n?n+(n===1?" espacio resaltado":" espacios resaltados")+" según la búsqueda":"Los abonados encontrados no tienen espacio fijo"):n+" espacios con abonado · toca uno para filtrar";
   }
-  let plSel=null, plMove=null;
+  let plSel=null, plMove=null, plZona="todos";
   function renderPlano(){
     const occ=occMap(), abo=aboMap();
     // tabla
@@ -2552,29 +2630,41 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
       +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>';
-    SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null; const cls="pm-sp "+s.k+(o?" occ":"")+(o&&o.abo?" abin":"")+(lockB?" lock":"")+(a&&!o?" abo":"")+(off?" aboff":"")+(plSel===s.id?" sel":"")+(plMove&&!o&&s.id!==plMove?" target":"");
-      const cx=s.x+s.w/2, cy=s.y+s.h/2; const vert=s.h>s.w, small=s.w<40;
-      g+='<g class="'+cls+'" data-sp="'+s.id+'" tabindex="0" role="button" aria-label="Espacio '+s.id+(o?', ocupado por '+o.placa:', libre')+'"><rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="3"/>';
-      if(small){
-        g+='<text x="'+cx+'" y="'+(o||a||off?s.y+16:cy+4)+'" class="pm-id'+(o||a||off?' sm':'')+'">'+s.id+'</text>';
-        const sh=x=>abNm(x,5); const lab=o?(o.abo?sh(o.abo):normP(o.placaN||o.placa).slice(-4)):a?sh(a):off?abNm(off,5):"";
-        if(lab) g+='<text x="'+cx+'" y="'+(s.y+33)+'" class="'+(o?'pm-pl sm':'pm-ab sm'+(off?' off':''))+'">'+esc(lab)+'</text>';
+    const inZ=s=> plZona==="todos" || (plZona==="llave"? s.key : plZona==="aire"? (s.k==="aire"&&!s.B) : s.k===plZona);
+    const CARV='<path class="cb" d="M13 2h8a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10h-8A10 10 0 0 1 3 52V12A10 10 0 0 1 13 2z"/><path class="cg" d="M7 17 Q17 11 27 17 L26 26 L8 26 Z"/><path class="cg" d="M8 46 L26 46 L27 53 Q17 57 7 53 Z"/><rect class="ce" x="0" y="19" width="4" height="6" rx="2"/><rect class="ce" x="30" y="19" width="4" height="6" rx="2"/>';
+    const CARH='<path class="cb" d="M12 3h40a10 10 0 0 1 10 10v8a10 10 0 0 1-10 10H12A10 10 0 0 1 2 21v-8A10 10 0 0 1 12 3z"/><path class="cg" d="M47 7 Q53 17 47 27 L38 26 L38 8 Z"/><path class="cg" d="M18 8 L18 26 L11 27 Q7 17 11 7 Z"/><rect class="ce" x="39" y="0" width="6" height="4" rx="2"/><rect class="ce" x="39" y="30" width="6" height="4" rx="2"/>';
+    const MOTO='<rect class="ce" x="5" y="1" width="6" height="8" rx="3"/><rect class="cb" x="3" y="8" width="10" height="18" rx="5"/><rect class="ce" x="0" y="10" width="16" height="2.5" rx="1.2"/><rect class="ce" x="5" y="25" width="6" height="8" rx="3"/>';
+    const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
+    SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null;
+      const cls="pm-sp "+s.k+(o?" occ":" free")+(o&&o.abo?" abin":"")+(lockB?" lock":"")+(a&&!o?" abo":"")+(off?" aboff":"")+(plSel===s.id?" sel":"")+(plMove&&!o&&s.id!==plMove?" target":"")+(inZ(s)?"":" dim");
+      const cx=s.x+s.w/2, cy=s.y+s.h/2, vert=s.h>s.w, small=s.w<40;
+      const lab=o?(o.abo?abNm(o.abo,small?5:9):(small?normP(o.placaN||o.placa).slice(-4):o.placa)):a?abNm(a,small?5:9):off?abNm(off,small?5:9):"";
+      g+='<g class="'+cls+'" data-sp="'+s.id+'" tabindex="0" role="button" aria-label="Espacio '+s.id+(o?(o.abo?', abonado '+(o.abo.nombre||""):', ocupado por '+o.placa):', libre')+'"><rect class="sp" x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="6"/>';
+      if(o){
+        if(small){ g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-4.4)+' '+(s.y+13)+') scale(.55)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+40)+'" class="pm-lab xs">'+esc(lab)+'</text>'; }
+        else if(vert){ g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g><text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>'; }
+        else { g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text><g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g><text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>'; }
+        if(s.key&&!o.abo&&o.llave!=="con") g+='<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>';
       } else {
-      g+='<text x="'+cx+'" y="'+(o||a||off?(vert?cy-14:cy-7):cy+5)+'" class="pm-id">'+s.id+'</text>';
-      if(o&&o.abo) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-pl">'+esc(abNm(o.abo,9))+'</text>';
-      else if(o) g+=(vert?'<text x="'+cx+'" y="'+(cy+8)+'" class="pm-pl">'+esc(o.placaN.slice(0,3))+'</text><text x="'+cx+'" y="'+(cy+22)+'" class="pm-pl">'+esc(o.placaN.slice(3))+'</text>':'<text x="'+cx+'" y="'+(cy+11)+'" class="pm-pl">'+esc(o.placa)+'</text>')+(s.key&&o.llave!=="con"?'<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>':'');
-      else if(a) g+='<text x="'+cx+'" y="'+(vert?cy+8:cy+11)+'" class="pm-ab">'+esc(abNm(a,9))+'</text>';
-      else if(off) g+='<text x="'+cx+'" y="'+(vert?cy+6:cy+9)+'" class="pm-ab">'+esc(abNm(off,9))+'</text><text x="'+cx+'" y="'+(vert?cy+18:cy+20)+'" class="pm-ab off">'+(off.mod==="noche"?"NOCHE":"DÍA")+'</text>';
+        const hasL=!!lab;
+        g+='<text x="'+cx+'" y="'+(hasL?(small?s.y+17:cy-4):(lockB&&!small?cy-6:cy+5))+'" class="pm-id'+(small?' sm':'')+'">'+s.id+'</text>';
+        if(lockB&&!small&&!hasL) g+='<g transform="translate('+(cx-6)+' '+(cy+2)+') scale(.5)">'+KEY+'</g>';
+        if(off) g+='<text x="'+cx+'" y="'+(small?s.y+30:cy+10)+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>'+(small?'':'<text x="'+cx+'" y="'+(cy+22)+'" class="pm-ab off">'+(off.mod==="noche"?"NOCHE":"DÍA")+'</text>');
+        else if(a) g+='<text x="'+cx+'" y="'+(small?s.y+30:cy+12)+'" class="pm-ab'+(small?' sm':'')+'">'+esc(lab)+'</text>';
       }
       g+='</g>'; });
     $("#plMap").innerHTML=g;
+    { const norm=SPACES.filter(s=>!s.B), oc=norm.filter(s=>occ[s.id]).length, pct=norm.length?Math.round(oc*100/norm.length):0, on=Math.round(pct*40/100);
+      $("#plOcc").innerHTML='<div class="occ-h"><h2>Ocupación ahora</h2><span class="occ-n num">'+oc+'<small> / '+norm.length+' · '+pct+' %</small></span></div><div class="occ-bar" aria-hidden="true">'+Array.from({length:40},(_,i)=>'<i'+(i<on?' class="on"':'')+'></i>').join("")+'</div><p class="note" style="margin:0">'+active.filter(t=>espKey(t.esp)).length+' con ticket · '+Object.values(occ).filter(x=>x.abo).length+' abonados presentes · sin contar los espacios B con llave.</p>';
+      const Z=[["todos","Todos",SPACES.length],["techo","Con techo",SPACES.filter(s=>s.k==="techo").length],["aire","Sin techo",SPACES.filter(s=>s.k==="aire"&&!s.B).length],["moto","Motos",SPACES.filter(s=>s.k==="moto").length],["llave","Con llave (B)",SPACES.filter(s=>s.key).length]];
+      $("#plZonas").innerHTML=Z.map(z=>'<button type="button" class="chip" data-plz="'+z[0]+'" aria-pressed="'+(plZona===z[0])+'">'+z[1]+' <small>'+z[2]+'</small></button>').join(""); }
     $("#plExtra").innerHTML= extras.length ? '<h3>Espacio extra (fuera del plano) · '+extras.length+'</h3><div class="chips">'+extras.map(t=>'<button type="button" class="chip" data-xtra="'+t.num+'">'+esc(t.placa)+' · '+esc(vehL(t.tipo))+' · '+esc(t.hi)+(t.llave==="con"?' · llave':'')+'</button>').join("")+'</div>' : '';
     renderPlDet();
   }
   function renderPlDet(){
     const d=$("#plDet");
     if(plMove){ const t=active.find(x=>x.num===plMove); d.innerHTML='<div class="paidbox" style="border-color:var(--accent)"><span>Moviendo <strong>'+esc(t?t.placa:"")+'</strong>: toca un espacio libre en el plano.</span><button class="btn small" type="button" id="plMoveX">Cancelar</button></div>'; return; }
-    if(!plSel){ d.innerHTML=''; return; }
+    if(!plSel){ d.innerHTML='<h2 style="margin-top:0">Espacio</h2><p class="note">Toca cualquier espacio del plano para ver su detalle: quién está, desde qué hora, cuánto lleva y qué se puede hacer (cobrar, mover, marcar salida).</p>'; return; }
     const s=SPID[plSel], o=occMap()[plSel], a=aboMap()[plSel];
     let h='<div class="pre" style="margin-top:12px"><div class="ptitle"><span class="pl">Espacio '+s.id+'</span><span class="muted">'+espLabel(s)+(s.key?' · <strong>llave obligatoria</strong>':'')+'</span></div>';
     aboEn(plSel).filter(x=>s.k!=="moto"||true).forEach(x=>{ const now=aboEnHorario(x); h+='<div><span>Abonado'+(x.mod?' · '+ABMOD[x.mod].toLowerCase():'')+'</span><strong>'+esc(x.nombre)+(x.placa?' · '+esc(x.placa):'')+'</strong></div>'+(x.mod==="dia"||x.mod==="noche"?'<div><span>Horario</span><strong>'+horarioTxt(x)+(now?' · <span style="color:var(--accent)">reservado ahora</span>':' · <span style="color:var(--ok)">libre ahora</span>')+'</strong></div>':''); });
@@ -2613,8 +2703,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   $("#plMap").addEventListener("click",e=>{
     const g=e.target.closest("[data-sp]"); if(!g) return; const id=g.dataset.sp;
     if(plMove){ if(occMap()[id]){ toast("Ese espacio está ocupado."); return; } const n=plMove; plMove=null; plSel=id; setEsp(n,id); renderPlano(); return; }
-    plSel=plSel===id?null:id; renderPlano();
+    plSel=plSel===id?null:id; renderPlano(); if(plSel&&window.innerWidth<900) $("#plDet").scrollIntoView({behavior:"smooth",block:"nearest"});
   });
+  $("#plZonas").addEventListener("click",e=>{ const b=e.target.closest("[data-plz]"); if(!b) return; plZona=b.dataset.plz; renderPlano(); });
   $("#plMap").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ const g=e.target.closest("[data-sp]"); if(g){ e.preventDefault(); g.dispatchEvent(new MouseEvent("click",{bubbles:true})); } } });
   $("#plExtra").addEventListener("click",e=>{ const b=e.target.closest("[data-xtra]"); if(!b) return; const t=active.find(x=>x.num===num(b.dataset.xtra)); if(!t) return; plSel=null; plMove=null;
     const c=calc(t,Date.now());
@@ -3155,7 +3246,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
     $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
     let h=""; lgRows.forEach(r=>{ const d=new Date(r[0]);
-      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><b>'+esc(r[1])+'</b> · '+esc(r[2])+'</span></div>'; });
+      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><span class="lgu'+(r[1]==="playahuaraz"?'':' adm')+'">'+esc(r[1])+'</span> '+esc(r[2])+'</span></div>'; });
     box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
     $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
   async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; } lgEqOpts();

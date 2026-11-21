@@ -542,6 +542,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 .opt2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px}.opt2>.card{margin:0}
 .lgu{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--muted);margin-right:6px}.lgu.adm{background:var(--acc-soft);color:var(--acc-txt)}
 #lgList .eqlog>div{padding:10px 12px}
+#inAbo,#inCli{margin-top:12px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -592,6 +593,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         </div>
         <p class="note hide" id="inWarn"></p>
         <div class="abonote hide" id="inAbo"></div>
+        <div class="abonote ok hide" id="inCli"></div>
 
         <div class="grp"><label>Vehículo</label><div class="chips tight" id="inTipo" role="group" aria-label="Vehículo"></div></div>
         <div class="grp"><label>Tarifa</label><div class="chips tight" id="inModo" role="group" aria-label="Tarifa"></div></div>
@@ -1449,8 +1451,27 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(!inEspTouched && document.activeElement!==$("#inEsp")){ fillEspSelect($("#inEsp"),suggestEsp(inTipo)); } inEspNote();
     checkDup();
   }
+  // ---- clientes recurrentes: lo que se anotó de una placa se recuerda para la próxima vez ----
+  let clientes={}, cliAuto=null;
+  function cliNote(n){ const c=n.length>=5?clientes[n]:null, el=$("#inCli");
+    if(cliAuto&&cliAuto.n!==n){ // otra placa: se borra solo lo que puso el sistema y nadie cambió
+      [["#inMarca","marca"],["#inColor","color"],["#inObs","obs"]].forEach(([q,k])=>{ if($(q).value===cliAuto[k]) $(q).value=""; });
+      const back=cliAuto.tipo&&inTipo===cliAuto.tipo&&cliAuto.prevTipo?cliAuto.prevTipo:null; cliAuto=null; if(back){ inTipo=back; renderEntrada(); } }
+    if(!c||abonadosAll.find(a=>normP(a.placa)===n&&!a.retiro)||active.find(t=>t.placaN===n)){ el.classList.add("hide"); el.innerHTML=""; return; }
+    if(!cliAuto){ cliAuto={n,prevTipo:inTipo};
+      [["#inMarca","marca"],["#inColor","color"],["#inObs","obs"]].forEach(([q,k])=>{ if(!$(q).value.trim()&&c[k]){ $(q).value=c[k]; cliAuto[k]=c[k]; } });
+      if(c.tipo&&c.tipo!==inTipo&&rate(c.tipo,inModo)!=null){ inTipo=c.tipo; cliAuto.tipo=c.tipo; renderEntrada(); } }
+    const ult=c.ult?new Date(c.ult):null;
+    el.innerHTML='<strong>Cliente recurrente</strong>'+(c.visitas>1?' · vino '+c.visitas+' veces':'')+(ult?' · última vez '+ult.toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"2-digit"})+' '+hhmm(ult):'')
+      +'<br>'+[vehL(c.tipo||"auto"),c.marca,c.color,c.tel?'📞 '+esc(c.tel):''].filter(Boolean).map(x=>x.startsWith('📞')?x:esc(x)).join(' · ')+'<br><span class="muted">Se llenaron sus datos guardados; revísalos y cambia lo que haga falta.</span>';
+    el.classList.remove("hide"); }
+  function cliSave(placaN,d){ if(!placaN||placaN.length<5) return; const c=clientes[placaN]||{}, o=Object.assign({},c,{placa:fmtP(placaN)});
+    ["tipo","marca","color","obs","tel"].forEach(k=>{ if(d[k]!=null&&String(d[k]).trim()!=="") o[k]=String(d[k]).trim(); });
+    if(d.visita){ o.visitas=(Number(c.visitas)||0)+1; o.ult=Date.now(); }
+    const ch=["placa","tipo","marca","color","obs","tel","visitas","ult"].some(k=>o[k]!==c[k]); if(!ch) return;
+    clientes[placaN]=o; db.doc("clientes/"+placaN).set(o).catch(()=>{}); }
   function checkDup(){
-    const n=normP($("#inPlaca").value); const w=$("#inWarn");
+    const n=normP($("#inPlaca").value); const w=$("#inWarn"); cliNote(n);
     const d = n.length>=5 && active.find(t=>t.placaN===n);
     if(d){ w.textContent="Esta placa ya está en la playa con el ticket N° "+d.num+" (entró a las "+d.hi+")."; w.classList.remove("hide"); }
     else w.classList.add("hide");
@@ -1531,13 +1552,14 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         const n=await claimNumber(); const d=new Date();
         const ax=(abxPend&&normP(abxPend.a.placa)===placaN)?abxPend:null; abxPend=null; const entT=ax&&ax.desde?ax.desde:d.getTime(), de=new Date(entT);
         const tk={num:n, placa:fmtP(placaN), placaN, tipo:inTipo, modo:inModo, tarifa:rate(inTipo,inModo), ent:entT, fecha:iso(de), hi:hhmm(de),
-          esp:espV, llave:llaveIni, obs:$("#inObs").value.trim(), marca:$("#inMarca").value.trim(), color:$("#inColor").value.trim(), tel:"",
+          esp:espV, llave:llaveIni, obs:$("#inObs").value.trim(), marca:$("#inMarca").value.trim(), color:$("#inColor").value.trim(), tel:(clientes[placaN]&&clientes[placaN].tel)||"",
           adel: [adelEf>0?{m:adelEf,p:"efectivo",h:hhmm(d)}:null, adelYa>0?{m:adelYa,p:"yape",h:hhmm(d)}:null].filter(Boolean), estado:"dentro"};
         if(ax) tk.abx={id:ax.a.id,nombre:ax.a.nombre,mod:ax.a.mod};
         await db.doc("tickets/"+n).set(tk);
+        if(!ax) cliSave(placaN,{tipo:tk.tipo,marca:tk.marca,color:tk.color,obs:tk.obs,visita:true});
         if(adel>0){ const mv={}; tk.adel.forEach(a=>{ mv[rid()]={t:MODOL[tk.modo],m:a.m,p:a.p,h:tk.hi,tk:n,placa:tk.placa,n:"Adelanto"}; }); await writeDay(tk.fecha,{movs:mv}); }
         armAuto(); await showTicket(tk); active=active.filter(x=>x.num!==tk.num).concat([tk]); openEd(tk.num);
-        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; renderEntrada();
+        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; cliAuto=null; $("#inCli").classList.add("hide"); renderEntrada();
         inEspTouched=false; refreshEspSelects();
         toast("Ticket N° "+n+" generado"+(ve.key?" · espacio "+espV+": pide la llave":"")+(ve.warn&&ve.warn.length?" · ojo: "+ve.warn.join(", "):""));
       } finally { b.disabled=false; b.textContent="Generar ticket"; }
@@ -2042,7 +2064,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const v=checkEsp(p.esp,t.tipo,n); if(!v.ok){ toast(v.msg); return; }
     if(v.key && p.llave!=="con"){ toast("El espacio "+p.esp+" exige dejar llave. Marca «Dejó llave»."); return; }
     delete $("#edEsp").dataset.dirty;
-    queue(()=>db.doc("tickets/"+n).update(p).then(()=>toast("Datos guardados · ticket N° "+n)));
+    queue(()=>db.doc("tickets/"+n).update(p).then(()=>{ toast("Datos guardados · ticket N° "+n); if(!t.abx) cliSave(t.placaN,{tipo:t.tipo,marca:p.marca,color:p.color,obs:p.obs,tel:p.tel}); }));
   });
   setInterval(()=>{ if(!$("#v-ticketera").hidden || !$("#v-boleta").hidden){ renderInside(); if(selTk && !(document.activeElement&&["pcEf","pcYa","pcRec"].includes(document.activeElement.id))) renderPre(); } },30000);
 
@@ -2520,6 +2542,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     [["9B",881],["10",929],["11",979],["12",1029]].forEach(([id,x])=>add(id,x,36,38,36,"moto",{B:false,key:false}));
     [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
     ["35B","36B","1B","2B","3B","4B","5B","6B","7B","8B"].forEach((id,i)=>add(id,211+i*60,134,50,90,"aire"));
+    add("35C",105,134,92,46,"aire",{B:true,key:true});
     ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
     add("34B",20,362,50,90,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
@@ -3333,6 +3356,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);
+    db.collection("clientes").onSnapshot(s=>{ const m={}; s.docs.forEach(d=>{ const v=d.data(); if(v) m[d.id]=v; }); clientes=m; },()=>{});
     db.collection("abonados").onSnapshot(s=>{ abonadosAll=s.docs.map(d=>Object.assign({id:d.id},d.data())); abonados=abonadosAll.filter(a=>!a.retiro); if(s.metadata&&s.metadata.fromCache===false) abLoaded=true; abFix(); checkDup(); renderAbonados(); renderMes(); renderPlano(); refreshEspSelects(); renderInside(); },subErr);
     subMonth(); subDay(); subBano();
     // tiempo real: cada minuto se recalcula el planograma (cambio de turno de abonados de día/noche)

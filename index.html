@@ -1299,7 +1299,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     tar:{auto:{hora:6,noche:10,dia:25},camioneta:{hora:6,noche:10,dia:25},moto:{hora:3,noche:6,dia:10},camion:{hora:6,noche:12,dia:35}},
     tol:5, nocheFin:"08:00", diaFin:"20:00", bano:1, abonado:200
   };
-  const VEH = [["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["camion","Camión"]];
+  const VEH = [["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["mototaxi","Mototaxi"],["camion","Camión"]];
+  const VEHTAR = VEH.filter(([k])=>k!=="mototaxi"); // la mototaxi paga la tarifa de auto
+  const TIPOL = {mototaxi:"Mototaxi",carretilla:"Módulo de venta"};
   const MODOS = [["hora","Hora o fracción"],["noche","Noche"],["dia","Día"]];
   const MODOL = {hora:"Hora",noche:"Noche",dia:"Día"};
   const OTROS = ["Baño","Abonado","Otro"];
@@ -1341,9 +1343,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   const sleep = ms => new Promise(r=>setTimeout(r,ms));
   function normP(s){ return String(s||"").toUpperCase().replace(/[^A-Z0-9Ñ]/g,""); }
   function fmtP(n){ n=normP(n); return n.length===6 ? n.slice(0,3)+"-"+n.slice(3) : n; }
-  function vehL(k){ const v=VEH.find(x=>x[0]===k); return v?v[1]:k; }
+  function vehL(k){ const v=VEH.find(x=>x[0]===k); return v?v[1]:(TIPOL[k]||k); }
   function dur(mins){ mins=Math.max(0,Math.round(mins)); const h=Math.floor(mins/60), m=mins%60; return (h? h+" h ":"")+m+" min"; }
-  function rate(tipo,modo){ const r=(cfg.tar||{})[tipo]||{}; const v=r[modo]; return (v===null||v===undefined||v==="")?null:num(v); }
+  function rate(tipo,modo){ if(tipo==="mototaxi") tipo="auto"; const r=(cfg.tar||{})[tipo]||{}; const v=r[modo]; return (v===null||v===undefined||v==="")?null:num(v); }
 
   // ---------- cálculo de cobro (función pura) ----------
   function horas(m, min1, tol){ if(m<=tol) return min1?1:0; return Math.ceil((m-tol)/60); }
@@ -2330,7 +2332,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   $("#nextA").addEventListener("click",()=>{ aCur.m++; if(aCur.m>11){aCur.m=0;aCur.y++;} renderACal(); });
   window.__abTest=(l)=>{ abonadosAll=l; abonados=l.filter(a=>!a.retiro); renderAbonados(); renderPlano(); };
   window.__test={setActive:(l)=>{ active=l; renderInside(); }, pick:(n)=>{ selTk=n; renderPre(); }, setDay:(d)=>{ dayData=d; renderDia(); }, setMonth:(o)=>{ monthDocs=o; renderMes(); }, year:(d)=>renderYear(d), setBAb:(l)=>{ bAb=l; renderBList(); }};
-  const ABTIPOS=[["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["camion","Camión"],["otro","Otro vehículo"]];
+  const ABTIPOS=[["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["mototaxi","Mototaxi"],["camion","Camión"],["carretilla","Módulo de venta / carretilla"],["otro","Otro vehículo"]];
   function abVeh(a){ if(!a||!a.tipo) return ""; return a.tipo==="otro"?(a.tipoOtro?a.tipoOtro.charAt(0).toUpperCase()+a.tipoOtro.slice(1):"Otro vehículo"):vehL(a.tipo); }
   function abMotoOk(tipo){ return !tipo||tipo==="moto"||tipo==="otro"; }
   function aboEspOpts(a){ let h='<option value="">Ninguno</option>'; SPACES.slice().sort((x,y)=>espSort(x.id,y.id)).forEach(s=>{ const mine=espKey(a.esp)===s.id; const otros=aboEn(s.id).filter(x=>x.id!==a.id);
@@ -2513,14 +2515,14 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // =========================================================
   function renderTarifas(){
     const ae=document.activeElement&&document.activeElement.id||"";
-    if(!ae.startsWith("tar-")) $("#tarBody").innerHTML=VEH.map(([k,l])=>'<tr><td><strong>'+l+'</strong></td>'+MODOS.map(([m])=>{ const v=((cfg.tar||{})[k]||{})[m]; return '<td><input id="tar-'+k+'-'+m+'" class="num" type="number" min="0" step="0.5" value="'+(v==null?"":v)+'" placeholder="—" aria-label="'+l+' '+MODOL[m]+'"></td>'; }).join("")+'</tr>').join("");
+    if(!ae.startsWith("tar-")) $("#tarBody").innerHTML=VEHTAR.map(([k,l])=>'<tr><td><strong>'+l+'</strong></td>'+MODOS.map(([m])=>{ const v=((cfg.tar||{})[k]||{})[m]; return '<td><input id="tar-'+k+'-'+m+'" class="num" type="number" min="0" step="0.5" value="'+(v==null?"":v)+'" placeholder="—" aria-label="'+l+' '+MODOL[m]+'"></td>'; }).join("")+'</tr>').join("");
     if(ae!=="tTol") $("#tTol").value=cfg.tol; if(ae!=="tNocheFin") $("#tNocheFin").value=cfg.nocheFin; if(ae!=="tDiaFin") $("#tDiaFin").value=cfg.diaFin;
     if(ae!=="tBano") $("#tBano").value=cfg.bano; if(ae!=="tAbon") $("#tAbon").value=cfg.abonado;
     if(ae!=="tNext") $("#tNext").value=nextNum??"";
   }
   $("#saveTar").addEventListener("click",()=>{
     if(!needDb()) return; const tar={};
-    VEH.forEach(([k])=>{ tar[k]={}; MODOS.forEach(([m])=>{ tar[k][m]=nOrNull($("#tar-"+k+"-"+m).value); }); });
+    VEHTAR.forEach(([k])=>{ tar[k]={}; MODOS.forEach(([m])=>{ tar[k][m]=nOrNull($("#tar-"+k+"-"+m).value); }); });
     const c={tar,tol:num($("#tTol").value),nocheFin:$("#tNocheFin").value||"08:00",diaFin:$("#tDiaFin").value||"20:00",bano:num($("#tBano").value),abonado:num($("#tAbon").value)};
     queue(()=>db.doc("config/general").set(c).then(()=>toast("Tarifas guardadas")));
   });
@@ -2541,13 +2543,14 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     ["35","36","1","2","3","4","5","6","7","8","9"].forEach((id,i)=>add(id,211+i*60,36,50,90,"techo"));
     [["9B",881],["10",929],["11",979],["12",1029]].forEach(([id,x])=>add(id,x,36,38,36,"moto",{B:false,key:false}));
     [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
-    ["35B","36B","1B","2B","3B","4B","5B","6B","7B","8B"].forEach((id,i)=>add(id,211+i*60,134,50,90,"aire"));
+    add("6B",580,134,90,50,"aire"); add("7B",691,134,50,90,"aire"); add("8B",751,134,50,90,"aire");
     add("35C",105,134,92,46,"aire",{B:true,key:true});
     ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
     add("34B",20,362,50,90,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
-    ["32B","31B","30B","29B","28B","27B","26B","25B","24B","23B","22B"].forEach((id,i)=>add(id,199+i*59.8,362,50,90,"aire"));
-    ["32","31","30","29","28","27","26","25","24","23","22"].forEach((id,i)=>add(id,199+i*59.8,464,50,90,"aire"));
+    ["32B","31B","30B","29B","28B","27B","26B","25B","24B","23B"].forEach((id,i)=>add(id,199+i*59.8,362,50,90,"aire"));
+    ["32","31","30","29","28","27","26","25","24","23"].forEach((id,i)=>add(id,199+i*59.8,464,50,90,"aire"));
+    add("22",797,464,50,90,"techo");
     add("21",857,464,50,90,"techo"); add("20",917,464,50,90,"techo");
     return L; })();
   const SPID=Object.fromEntries(SPACES.map(s=>[s.id,s]));
@@ -2633,6 +2636,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   const CARV='<path class="cb" d="M13 2h8a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10h-8A10 10 0 0 1 3 52V12A10 10 0 0 1 13 2z"/><path class="cg" d="M7 17 Q17 11 27 17 L26 26 L8 26 Z"/><path class="cg" d="M8 46 L26 46 L27 53 Q17 57 7 53 Z"/><rect class="ce" x="0" y="19" width="4" height="6" rx="2"/><rect class="ce" x="30" y="19" width="4" height="6" rx="2"/>';
   const CARH='<path class="cb" d="M12 3h40a10 10 0 0 1 10 10v8a10 10 0 0 1-10 10H12A10 10 0 0 1 2 21v-8A10 10 0 0 1 12 3z"/><path class="cg" d="M47 7 Q53 17 47 27 L38 26 L38 8 Z"/><path class="cg" d="M18 8 L18 26 L11 27 Q7 17 11 7 Z"/><rect class="ce" x="39" y="0" width="6" height="4" rx="2"/><rect class="ce" x="39" y="30" width="6" height="4" rx="2"/>';
   const MOTO='<rect class="ce" x="5" y="1" width="6" height="8" rx="3"/><rect class="cb" x="3" y="8" width="10" height="18" rx="5"/><rect class="ce" x="0" y="10" width="16" height="2.5" rx="1.2"/><rect class="ce" x="5" y="25" width="6" height="8" rx="3"/>';
+  const MTAXI='<rect class="ce" x="14" y="0" width="6" height="8" rx="3"/><path class="cb" d="M11 6h12a3 3 0 0 1 3 3v10H8V9a3 3 0 0 1 3-3z"/><rect class="ce" x="5" y="12" width="24" height="2.6" rx="1.3"/><rect class="ce" x="0" y="40" width="5" height="13" rx="2.5"/><rect class="ce" x="29" y="40" width="5" height="13" rx="2.5"/><path class="cb" d="M8 18h18a5 5 0 0 1 5 5v33a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V23a5 5 0 0 1 5-5z"/><path class="cg" d="M7 23q10-4 20 0l-1 7H8z"/><rect class="cg" x="7" y="54" width="20" height="3" rx="1.5"/>';
+  const CART='<rect class="ce" x="0" y="34" width="5" height="14" rx="2.5"/><rect class="ce" x="29" y="34" width="5" height="14" rx="2.5"/><rect class="cb" x="4" y="14" width="26" height="38" rx="3"/><path class="ce" d="M1 4h32v12H1z"/><path class="cg" d="M5.6 4h4.6v12H5.6zM14.8 4h4.6v12h-4.6zM24 4h4.6v12H24z"/><rect class="cg" x="8" y="22" width="18" height="24" rx="2"/><rect class="ce" x="8" y="52" width="3" height="9" rx="1.5"/><rect class="ce" x="23" y="52" width="3" height="9" rx="1.5"/><rect class="ce" x="6" y="59" width="22" height="3" rx="1.5"/>';
+  function vIcon(tipo,vert,cx,s){ const ic=tipo==="mototaxi"?MTAXI:tipo==="carretilla"?CART:null;
+    if(!ic) return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g>':'<g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g>';
+    return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+ic+'</g>':'<g transform="translate('+(cx-23.25)+' '+(s.y+8+25.5)+') rotate(-90) scale(.75)">'+ic+'</g>'; }
   const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
   function renderAbMap(list,filtered){ const svg=$("#aMap"); if(!svg) return; const fe=$("#aQEsp").value;
     const by={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k) (by[k]=by[k]||[]).push(a); });
@@ -2642,12 +2650,13 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       const cls="pm-sp am "+s.k+(has?(on?" amon abin":" amoff"):" amfree")+(fe===s.id?" sel":"");
       const cx=s.x+s.w/2, cy=s.y+s.h/2, small=s.w<40, vert=s.h>s.w;
       const nm=a=>String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,small?5:9);
+      const VT=has?L[0].tipo:"";
       const lab=has?(L.length>1?(small?L.length+" ab.":nm(L[0])+" +"+(L.length-1)):nm(L[0])):"";
       g+='<g class="'+cls+'"'+(has?' data-amsp="'+s.id+'" tabindex="0" role="button"':'')+' aria-label="Espacio '+s.id+(has?': '+esc(L.map(a=>a.nombre).join(", ")):', sin abonado')+'"><title>'+(has?esc(L.map(a=>a.nombre+(a.placa?" · "+a.placa:"")).join("\n")):'Espacio '+s.id+' · sin abonado')+'</title><rect class="sp" x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="6"/>';
       if(has){
         if(small) g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-3.6)+' '+(s.y+12.5)+') scale(.45)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+33)+'" class="pm-lab xs">'+esc(lab)+'</text>';
-        else if(vert) g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g><text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>';
-        else g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text><g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g><text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>';
+        else if(vert) g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text>'+vIcon(VT,true,cx,s)+'<text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>';
+        else g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text>'+vIcon(VT,false,cx,s)+'<text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>';
       } else {
         g+='<text x="'+cx+'" y="'+(s.key&&!small?cy-6:cy+5)+'" class="pm-id'+(small?' sm':'')+'">'+s.id+'</text>';
         if(s.key&&!small) g+='<g transform="translate('+(cx-6)+' '+(cy+2)+') scale(.5)">'+KEY+'</g>';
@@ -2684,12 +2693,13 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null;
       const cls="pm-sp "+s.k+(o?" occ":" free")+(o&&o.abo?" abin":"")+(lockB?" lock":"")+(a&&!o?" abo":"")+(off?" aboff":"")+(plSel===s.id?" sel":"")+(plMove&&!o&&s.id!==plMove?" target":"")+(inZ(s)?"":" dim");
       const cx=s.x+s.w/2, cy=s.y+s.h/2, vert=s.h>s.w, small=s.w<40;
+      const VT=o?(o.abo?o.abo.tipo:o.tipo):a?a.tipo:off?off.tipo:"";
       const lab=o?(o.abo?abNm(o.abo,small?5:9):(small?normP(o.placaN||o.placa).slice(-4):o.placa)):a?abNm(a,small?5:9):off?abNm(off,small?5:9):"";
       g+='<g class="'+cls+'" data-sp="'+s.id+'" tabindex="0" role="button" aria-label="Espacio '+s.id+(o?(o.abo?', abonado '+(o.abo.nombre||""):', ocupado por '+o.placa):', libre')+'"><rect class="sp" x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="6"/>';
       if(o){
         if(small){ g+='<text x="'+cx+'" y="'+(s.y+10)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-3.6)+' '+(s.y+12.5)+') scale(.45)">'+MOTO+'</g><text x="'+cx+'" y="'+(s.y+33)+'" class="pm-lab xs">'+esc(lab)+'</text>'; }
-        else if(vert){ g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text><g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g><text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>'; }
-        else { g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text><g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g><text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>'; }
+        else if(vert){ g+='<text x="'+cx+'" y="'+(s.y+12)+'" class="pm-id sm">'+s.id+'</text>'+vIcon(VT,true,cx,s)+'<text x="'+cx+'" y="'+(s.y+s.h-5)+'" class="pm-lab">'+esc(lab)+'</text>'; }
+        else { g+='<text x="'+(s.x+6)+'" y="'+(s.y+10)+'" class="pm-id sm" style="text-anchor:start;font-size:9px">'+s.id+'</text>'+vIcon(VT,false,cx,s)+'<text x="'+cx+'" y="'+(s.y+s.h-4)+'" class="pm-lab sm">'+esc(lab)+'</text>'; }
         if(s.key&&!o.abo&&o.llave!=="con") g+='<circle cx="'+(s.x+s.w-7)+'" cy="'+(s.y+7)+'" r="5" class="pm-alert"/>';
       } else {
         const hasL=!!lab;

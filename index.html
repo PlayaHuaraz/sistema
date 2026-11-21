@@ -700,7 +700,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     <div class="card plmapc">
       <h2>Planograma <small>toca un espacio · en el celular desliza a los lados</small></h2>
       <div class="chips" id="plZonas" role="group" aria-label="Zonas"></div>
-      <div class="mapwrap"><svg id="plMap" class="pmap" viewBox="10 10 1085 560" role="img" aria-label="Plano de la playa"></svg></div>
+      <div class="mapwrap"><svg id="plMap" class="pmap" viewBox="-20 10 1115 560" role="img" aria-label="Plano de la playa"></svg></div>
       <div class="legend">
         <span><i class="sw2 abin"></i>Abonado</span>
         <span><i class="sw2 occ"></i>Con ticket</span>
@@ -822,7 +822,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     </details>
       <div class="card">
         <div class="absearch"><input id="aQ" type="search" placeholder="🔎 Nombre, placa, celular…" autocomplete="off" aria-label="Buscar abonados"><select id="aQEsp" aria-label="Filtrar por espacio"><option value="">Todos los espacios</option></select></div>
-        <details class="fold abmapw" id="aMapW" open><summary>Plano de abonados <small class="muted" id="aMapInfo"></small></summary><div class="mapwrap"><svg id="aMap" class="pmap" viewBox="20 10 1075 560" role="img" aria-label="Plano con los espacios de los abonados"></svg></div><div class="legend"><span><i class="sw amon"></i>Abonado (coincide con la búsqueda)</span><span><i class="sw amoff"></i>Abonado (no coincide)</span><span><i class="sw amfree"></i>Sin abonado</span></div></details><div id="aList"></div><div id="aRet"></div>
+        <details class="fold abmapw" id="aMapW" open><summary>Plano de abonados <small class="muted" id="aMapInfo"></small></summary><div class="mapwrap"><svg id="aMap" class="pmap" viewBox="-20 10 1115 560" role="img" aria-label="Plano con los espacios de los abonados"></svg></div><div class="legend"><span><i class="sw amon"></i>Abonado (coincide con la búsqueda)</span><span><i class="sw amoff"></i>Abonado (no coincide)</span><span><i class="sw amfree"></i>Sin abonado</span></div></details><div id="aList"></div><div id="aRet"></div>
       </div>
     </div>
     <div id="aTabCal" hidden>
@@ -2544,10 +2544,10 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     [["9B",881],["10",929],["11",979],["12",1029]].forEach(([id,x])=>add(id,x,36,38,36,"moto",{B:false,key:false}));
     [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
     add("6B",580,134,90,50,"aire"); add("7B",691,134,50,90,"aire"); add("8B",751,134,50,90,"aire");
-    add("35C",105,134,92,46,"aire",{B:true,key:true});
+    add("35B",105,134,93,48,"aire",{chico:true}); add("36B",230,134,93,48,"aire",{key:false,keyOpc:true});
     ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
-    add("34B",20,362,50,90,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
+    add("34C",-14,332,37,38,"moto",{B:false,key:false}); add("34D",30,332,39,38,"moto",{B:false,key:false}); add("34B",-14,379,83,72,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
     ["32B","31B","30B","29B","28B","27B","26B","25B","24B","23B"].forEach((id,i)=>add(id,199+i*59.8,362,50,90,"aire"));
     ["32","31","30","29","28","27","26","25","24","23"].forEach((id,i)=>add(id,199+i*59.8,464,50,90,"aire"));
     add("22",797,464,50,90,"techo");
@@ -2581,7 +2581,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function aboMapFor(mod){ const m={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k&&SPID[k].k!=="moto"&&aboSolapa(a.mod,mod)) m[k]=a; }); return m; }
   function horarioTxt(a){ return a.mod==="dia"?"de 6:30 a. m. a "+(cfg.diaFin||"20:00"):a.mod==="noche"?"de "+(cfg.diaFin||"20:00")+" a "+(cfg.nocheFin||"08:00"):"las 24 horas"; }
   function regularLlenos(){ const occ=occMap(), abo=aboMap(); return !SPACES.some(s=>!s.B&&s.k!=="moto"&&!occ[s.id]&&!abo[s.id]); }
-  function espLabel(s){ return s.k==="moto"?"motos":s.B?"reserva B, con llave":s.k==="techo"?"con techo":"sin techo"; }
+  function espLabel(s){ return s.k==="moto"?"motos":s.chico?"reserva B, con llave · moto, mototaxi o auto pequeño":s.B?(s.key?"reserva B, con llave":"reserva B, llave opcional"):s.k==="techo"?"con techo":"sin techo"; }
   function suggestEsp(tipo){
     const occ=occMap(), abo=aboMap(), free=s=>!occ[s.id]&&!abo[s.id];
     const order=tipo==="moto" ? SPACES.filter(s=>s.k==="moto") : [];
@@ -2598,7 +2598,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(!opts.abo){
       // primero los espacios libres (sin ticket, sin abonado en su horario y habilitados)
       const libre=s=>!occ[s.id]&&!abo[s.id]&&!(s.B&&!bOn);
-      const tipoG=s=>s.k==="techo"?"con techo":s.k==="moto"?"motos":(s.B?"B, con llave":"sin techo");
+      const tipoG=s=>s.k==="techo"?"con techo":s.k==="moto"?"motos":(s.B?(s.key?"B, con llave":"B, llave opcional"):"sin techo");
       const ordK=s=>s.k==="techo"?0:(s.k==="aire"&&!s.B)?1:s.k==="moto"?2:3;
       const F=SPACES.filter(s=>libre(s)||cur===s.id).sort((a,b)=>ordK(a)-ordK(b)||espSort(a.id,b.id));
       const nL=SPACES.filter(libre).length;
@@ -2619,6 +2619,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const s=SPID[k], o=occMap()[k];
     if(o && o.num!==num) return {ok:false,msg:"El espacio "+k+" está ocupado por "+o.placa+"."};
     if(s.k==="moto" && tipo!=="moto") return {ok:false,msg:"El espacio "+k+" es solo para motos."};
+    if(s.chico && tipo!=="moto" && tipo!=="mototaxi" && tipo!=="auto") return {ok:false,msg:"El espacio "+k+" es solo para moto, mototaxi o auto pequeño."};
     const a=aboMap()[k]; const t=active.find(x=>x.num===num);
     const warn=[];
     if(a && s.k!=="moto" && (!t || normP(a.placa)!==t.placaN)) warn.push("es el espacio fijo de "+(a.nombre||a.placa));
@@ -2627,11 +2628,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   }
 
   function abNm(a,n){ return String(a.nombre||a.placa||"").trim().split(/\s+/)[0].slice(0,n); }
-  function planoBase(){ return '<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
-      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
+  function planoBase(){ return '<rect x="-14" y="16" width="1102" height="547" rx="4" class="pm-bg"/>'
+      +'<rect x="-14" y="16" width="212" height="110" class="pm-blk"/><rect x="-14" y="461" width="205" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
-      +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>'; }
+      +'<rect x="-14" y="137" width="28" height="188" class="pm-blk"/><text x="0" y="231" class="pm-io" dominant-baseline="central" transform="rotate(-90 0 231)">INGRESO / SALIDA</text>'; }
   // plano de la pestaña Abonados: muestra dónde está cada abonado y resalta los del filtro
   const CARV='<path class="cb" d="M13 2h8a10 10 0 0 1 10 10v40a10 10 0 0 1-10 10h-8A10 10 0 0 1 3 52V12A10 10 0 0 1 13 2z"/><path class="cg" d="M7 17 Q17 11 27 17 L26 26 L8 26 Z"/><path class="cg" d="M8 46 L26 46 L27 53 Q17 57 7 53 Z"/><rect class="ce" x="0" y="19" width="4" height="6" rx="2"/><rect class="ce" x="30" y="19" width="4" height="6" rx="2"/>';
   const CARH='<path class="cb" d="M12 3h40a10 10 0 0 1 10 10v8a10 10 0 0 1-10 10H12A10 10 0 0 1 2 21v-8A10 10 0 0 1 12 3z"/><path class="cg" d="M47 7 Q53 17 47 27 L38 26 L38 8 Z"/><path class="cg" d="M18 8 L18 26 L11 27 Q7 17 11 7 Z"/><rect class="ce" x="39" y="0" width="6" height="4" rx="2"/><rect class="ce" x="39" y="30" width="6" height="4" rx="2"/>';
@@ -2641,9 +2642,10 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // tipo de ícono: también reconoce «Otro vehículo» escrito como módulo, carretilla o mototaxi
   function vTipo(x){ if(!x) return ""; if(x.tipo!=="otro") return x.tipo||""; const t=String(x.tipoOtro||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     return /mototaxi|moto taxi/.test(t)?"mototaxi":/modulo|carret|venta|kiosk|puesto/.test(t)?"carretilla":"otro"; }
-  function vIcon(tipo,vert,cx,s){ const ic=tipo==="mototaxi"?MTAXI:tipo==="carretilla"?CART:null;
-    if(!ic) return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g>':'<g transform="translate('+(cx-24)+' '+(s.y+8)+') scale(.75)">'+CARH+'</g>';
-    return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+ic+'</g>':'<g transform="translate('+(cx-23.25)+' '+(s.y+8+25.5)+') rotate(-90) scale(.75)">'+ic+'</g>'; }
+  function vIcon(tipo,vert,cx,s){ if(tipo==="moto") return vert?'<g transform="translate('+(cx-8)+' '+(s.y+20)+')">'+MOTO+'</g>':'<g transform="translate('+(cx-17)+' '+(s.y+s.h/2+7)+') rotate(-90)">'+MOTO+'</g>';
+    const ic=tipo==="mototaxi"?MTAXI:tipo==="carretilla"?CART:null;
+    if(!ic) return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g>':'<g transform="translate('+(cx-24)+' '+(s.y+s.h/2-16)+') scale(.75)">'+CARH+'</g>';
+    return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+ic+'</g>':'<g transform="translate('+(cx-23.25)+' '+(s.y+s.h/2-16+25.5)+') rotate(-90) scale(.75)">'+ic+'</g>'; }
   const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
   function renderAbMap(list,filtered){ const svg=$("#aMap"); if(!svg) return; const fe=$("#aQEsp").value;
     const by={}; abonados.forEach(a=>{ const k=espKey(a.esp); if(k) (by[k]=by[k]||[]).push(a); });
@@ -2687,11 +2689,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +'<div class="tile"><div class="k">B y 20 en uso</div><div class="v num">'+(bT-bL)+'<small class="muted" style="font-size:16px"> / '+bT+'</small></div>'+(sinEsp?'<div class="s">'+sinEsp+' sin espacio asignado</div>':'')+(extras.length?'<div class="s">'+extras.length+' en espacio extra</div>':'')+'</div>';
     // mapa
     let g=planoBase();
-    const _unused='<rect x="16" y="16" width="1072" height="547" rx="4" class="pm-bg"/>'
-      +'<rect x="16" y="16" width="182" height="110" class="pm-blk"/><rect x="16" y="461" width="174" height="102" class="pm-blk"/>'
+    const _unused='<rect x="-14" y="16" width="1102" height="547" rx="4" class="pm-bg"/>'
+      +'<rect x="-14" y="16" width="212" height="110" class="pm-blk"/><rect x="-14" y="461" width="205" height="102" class="pm-blk"/>'
       +'<rect x="391" y="16" width="50" height="14" class="pm-blk"/><text x="416" y="26" class="pm-mini">SS.HH. DAMAS</text>'
       +'<rect x="451" y="16" width="50" height="14" class="pm-blk"/><text x="476" y="26" class="pm-mini">SS.HH. VARONES</text>'
-      +'<rect x="16" y="152" width="28" height="189" class="pm-blk"/><text x="30" y="246" class="pm-io" dominant-baseline="central" transform="rotate(-90 30 246)">INGRESO / SALIDA</text>';
+      +'<rect x="-14" y="137" width="28" height="188" class="pm-blk"/><text x="0" y="231" class="pm-io" dominant-baseline="central" transform="rotate(-90 0 231)">INGRESO / SALIDA</text>';
     const modSp=id=>{ const x=occ[id]; return !!(x&&x.abo&&vTipo(x.abo)==="carretilla"); }; // módulo de venta: no deja llave
     const inZ=s=> plZona==="todos" || (plZona==="llave"? (s.key&&!modSp(s.id)) : plZona==="aire"? (s.k==="aire"&&!s.B) : s.k===plZona);
     SPACES.forEach(s=>{ const o=occ[s.id], a=abo[s.id]; const lockB=s.B&&!o&&!regularLlenos(); const off=!o&&!a?aboEn(s.id)[0]:null;
@@ -2795,7 +2797,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(edNum && ae!=="edEsp"){ const t=active.find(x=>x.num===edNum); if(t) fillEspSelect($("#edEsp"),$("#edEsp").dataset.dirty?$("#edEsp").value:t.esp); }
   }
   let inEspTouched=false;
-  function inEspNote(){ const k=espKey($("#inEsp").value), n=$("#inEspNote"); const s=k&&SPID[k]; if(s&&s.key){ n.innerHTML='<strong>Este espacio exige dejar llave.</strong> Pídela al cliente.'; n.classList.remove("hide"); } else if(s&&s.k==="moto"&&inTipo!=="moto"){ n.textContent="Espacio solo para motos."; n.classList.remove("hide"); } else n.classList.add("hide"); }
+  function inEspNote(){ const k=espKey($("#inEsp").value), n=$("#inEspNote"); const s=k&&SPID[k]; if(s&&s.key){ n.innerHTML='<strong>Este espacio exige dejar llave.</strong> Pídela al cliente.'+(s.chico?' Solo para moto, mototaxi o auto pequeño.':''); n.classList.remove("hide"); } else if(s&&s.keyOpc){ n.innerHTML='Aquí la llave es <strong>opcional</strong>: los del 35 y 36 casi nunca salen.'; n.classList.remove("hide"); } else if(s&&s.k==="moto"&&inTipo!=="moto"){ n.textContent="Espacio solo para motos."; n.classList.remove("hide"); } else n.classList.add("hide"); }
   $("#inEsp").addEventListener("change",()=>{ inEspTouched=true; inEspNote(); });
   $("#edEsp").addEventListener("change",()=>{ $("#edEsp").dataset.dirty="1"; });
 

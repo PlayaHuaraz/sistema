@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#7a1f3d">
 <script>try{var t=localStorage.getItem("ph_theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<script>(function(){var i="guinda";try{if(localStorage.getItem("ph_icono")==="blanco")i="blanco"}catch(e){}document.write('<link rel="manifest" href="manifest-'+i+'.webmanifest"><link rel="icon" type="image/png" href="icono-'+i+'-192.png"><link rel="apple-touch-icon" href="icono-'+i+'-192.png">');if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
@@ -543,6 +544,44 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 .lgu{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--muted);margin-right:6px}.lgu.adm{background:var(--acc-soft);color:var(--acc-txt)}
 #lgList .eqlog>div{padding:10px 12px}
 #inAbo,#inCli{margin-top:12px}
+
+.icoopts{display:flex;gap:12px;flex-wrap:wrap}
+.icoopt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.icoopt img{width:64px;height:64px;border-radius:16px;display:block;border:1px solid var(--line)}
+.icoopt[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--acc-soft,transparent)}
+/* ---- rediseño: Ingresos, Boletas y SS.HH. como en Claude Design ---- */
+.ingbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ingnav{display:flex;align-items:center;gap:8px}
+.ingnav h2{margin:0;font-family:var(--display);font-size:22px;min-width:220px;text-align:center;text-transform:none}
+.ingnav input{width:auto}
+.ing2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.ing2>.card:last-child .fields{grid-template-columns:minmax(0,1fr)}
+.otroing .fields{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mes2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;align-items:start}
+.messide{display:grid;gap:16px}
+.messide #fjTiles{grid-template-columns:minmax(0,1fr)}
+.bol2{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);gap:16px;align-items:start}
+#pcBox:empty::before{content:"Toca un vehículo de «En la playa ahora» o busca la placa para ver su pre-cuenta.";color:var(--muted);display:block;padding:6px 0}
+#pcBox>.pre:first-child{margin-top:0 !important}
+.sh2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;align-items:start}
+.shrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 8px}
+.stepper.big{gap:10px}
+.stepper.big .btn{width:56px;height:56px;min-height:56px;font-size:26px;border-radius:14px;padding:0}
+.stepper.big input{width:76px;font-size:40px;font-weight:700;font-family:var(--display);text-align:center;border:0;background:transparent;padding:0}
+.shtot{font-family:var(--display);font-weight:700;font-size:40px;line-height:1}
+.shhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.shhead h2{margin:0}
+.shsum{color:var(--muted);font-size:14px}
+.shsum b{color:var(--ink);font-family:var(--display);font-size:18px}
+@media (max-width:860px){
+  .ing2,.mes2,.bol2,.sh2{grid-template-columns:minmax(0,1fr)}
+  .otroing .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ingnav h2{min-width:0;font-size:18px}
+}
+#dTotal,#mTotal,#yTotal{color:var(--acc-txt)}
+#mLabel::first-letter{text-transform:uppercase}
+.messide #fjTiles .tile{padding:10px 12px}
+.messide #fjTiles .tile .v{font-size:24px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -724,15 +763,17 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   <!-- BOLETA -->
   <section class="view" id="v-boleta" hidden>
-    <div class="grid2">
-      <div class="card" id="cardSal">
+    <div class="card" id="cardSal">
         <h2>Boleta de estacionamiento <small>salida y cobro</small></h2>
         <label for="outQ">Placa o N° de ticket</label>
         <div class="searchrow">
           <input id="outQ" class="num" placeholder="ABC-123 o 42778" autocapitalize="characters" autocomplete="off">
           <button class="btn primary" id="outFind" type="button">Buscar</button>
-          <label class="btn filebtn" id="scanBtn">Escanear ticket<input type="file" accept="image/*" capture="environment" id="scanIn"></label>
+          <label class="btn filebtn" id="scanBtn">📷 Escanear ticket<input type="file" accept="image/*" capture="environment" id="scanIn"></label>
         </div>
+    </div>
+    <div class="bol2">
+      <div class="card" id="pcCard">
         <div id="pcBox"></div>
       </div>
       <div class="card">
@@ -758,32 +799,29 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     <p class="note">Por ahora es un comprobante interno, sin RUC. No reemplaza a la boleta de venta de SUNAT.</p>
   </section>
   <section class="view" id="v-sshh" hidden>
-    <div class="card">
-      <h2>Boleta de SS.HH. <small>alquiler de baño</small></h2>
-      <div class="grid2" style="gap:12px">
-        <div>
-          <div class="fields" style="grid-template-columns:auto 1fr;align-items:end">
-            <div><label for="shCant">Personas</label>
-              <div class="stepper"><button type="button" class="btn small" id="shMinus" aria-label="Menos">−</button><input id="shCant" class="num" type="number" min="1" value="1" inputmode="numeric"><button type="button" class="btn small" id="shPlus" aria-label="Más">+</button></div>
-            </div>
-            <div class="muted" id="shMonto" style="padding-bottom:10px">Total: S/ 1</div>
-          </div>
-          <div class="formfoot">
-            <button class="btn primary" type="button" id="shEf" style="flex:1">Efectivo</button>
-            <button class="btn primary" type="button" id="shYa" style="flex:1">Yape</button>
-          </div>
-          <div class="tiles shtiles" style="margin-top:12px">
-            <div class="tile"><div class="k">Hoy</div><div class="v num" id="shUsos">0</div><div class="s">usos</div></div>
-            <div class="tile"><div class="k">Efectivo</div><div class="v num" id="shTEf">S/ 0</div></div>
-            <div class="tile"><div class="k">Yape</div><div class="v num" id="shTYa">S/ 0</div></div>
-          </div>
+    <div class="sh2">
+      <div class="card">
+        <h2>Boleta de SS.HH. <small id="shSub">alquiler de baño</small></h2>
+        <label for="shCant">Personas</label>
+        <div class="shrow">
+          <div class="stepper big"><button type="button" class="btn" id="shMinus" aria-label="Menos">−</button><input id="shCant" class="num" type="number" min="1" value="1" inputmode="numeric"><button type="button" class="btn" id="shPlus" aria-label="Más">+</button></div>
+          <div class="shtot num" id="shMonto">S/ 1</div>
         </div>
-        <div id="shPrev"><p class="muted">Cada cobro genera su comprobante con número propio (SS.HH. N° 000001…). Toca uno de la lista para verlo o imprimirlo.</p></div>
+        <div class="formfoot">
+          <button class="btn primary" type="button" id="shEf" style="flex:1">Efectivo</button>
+          <button class="btn primary" type="button" id="shYa" style="flex:1">Yape</button>
+        </div>
+        <p class="note">Cada botón cobra y emite la boleta de una vez, con número propio (SS.HH. N° 000001…).</p>
+        <div id="shPrev"></div>
       </div>
-      <div class="tablewrap" style="margin-top:12px"><table>
-        <thead><tr><th>N°</th><th>Hora</th><th>Personas</th><th>Pago</th><th class="r">Monto</th><th></th></tr></thead>
-        <tbody id="shRows"></tbody>
-      </table></div>
+      <div class="card">
+        <div class="shhead"><h2>Boletas de hoy</h2><span class="shsum"><b class="num" id="shUsos">0</b> usos · Efectivo <b class="num" id="shTEf">S/ 0</b> · Yape <b class="num" id="shTYa">S/ 0</b></span></div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>N°</th><th>Hora</th><th>Personas</th><th>Pago</th><th class="r">Monto</th><th></th></tr></thead>
+          <tbody id="shRows"></tbody>
+        </table></div>
+        <p class="note">Toca una boleta de la lista para verla o imprimirla.</p>
+      </div>
     </div>
   </section>
 
@@ -847,20 +885,30 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   <!-- INGRESOS -->
   <section class="view" id="v-ingresos" hidden>
-    <div class="chips tight seg" id="ingSeg" role="group" aria-label="Periodo">
-      <button type="button" class="chip" data-sub="dia">Día</button>
-      <button type="button" class="chip" data-sub="mes">Mes</button>
-      <button type="button" class="chip" data-sub="anio">Año</button>
-    </div>
-    <div class="view" id="ing-dia">
-    <div class="card">
-      <div class="daynav">
+    <div class="ingbar">
+      <div class="chips tight seg" id="ingSeg" role="group" aria-label="Periodo">
+        <button type="button" class="chip" data-sub="dia">Día</button>
+        <button type="button" class="chip" data-sub="mes">Mes</button>
+        <button type="button" class="chip" data-sub="anio">Año</button>
+      </div>
+      <div class="ingnav" id="ingNav-dia">
         <button class="btn small" id="prevD" type="button" aria-label="Día anterior">‹</button>
         <h2 id="dLabel">Día</h2>
         <button class="btn small" id="nextD" type="button" aria-label="Día siguiente">›</button>
         <input type="date" id="dPick" aria-label="Elegir fecha">
       </div>
+      <div class="ingnav" id="ingNav-mes" hidden>
+        <button class="btn small" id="prevM" type="button" aria-label="Mes anterior">‹</button>
+        <h2 id="mLabel">Mes</h2>
+        <button class="btn small" id="nextM" type="button" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="ingnav" id="ingNav-anio" hidden>
+        <button class="btn small" id="prevY" type="button" aria-label="Año anterior">‹</button>
+        <h2 id="yLabel">Año</h2>
+        <button class="btn small" id="nextY" type="button" aria-label="Año siguiente">›</button>
+      </div>
     </div>
+    <div class="view" id="ing-dia">
     <div class="tiles">
       <div class="tile"><div class="k">Total del día</div><div class="v num" id="dTotal">S/ 0</div></div>
       <div class="tile"><div class="k">Efectivo</div><div class="v num" id="dEf">S/ 0</div></div>
@@ -869,7 +917,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     </div>
     <div class="tiles split" id="dSplit"></div>
 
-    <div class="card">
+    <div class="ing2">
+      <div class="card">
       <h2>Reporte del día <small>se arma solo con los tickets y las boletas</small></h2>
       <div class="check" id="repChk" style="margin-top:0;padding-top:0;border-top:0"></div>
       <label style="margin-top:12px">Mensaje para WhatsApp</label>
@@ -881,7 +930,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       </div>
     </div>
 
-    <div class="grid2">
       <div class="card">
         <h2>Cierre de caja <small>efectivo</small></h2>
         <p class="note banner-warn" id="cierreBanner" hidden></p>
@@ -894,7 +942,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <div class="formfoot"><button class="btn primary" id="saveCierre" type="button">Guardar cierre</button></div>
         <div class="check" id="chk"></div>
       </div>
-      <div class="card">
+    </div>
+      <div class="card otroing">
         <h2>Otro ingreso <small>sin ticket</small></h2>
         <div class="chips" role="group" aria-label="Concepto" id="tipos"></div>
         <div class="fields">
@@ -905,8 +954,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         </div>
         <div class="formfoot"><button class="btn primary" id="addMov" type="button">Agregar ingreso</button></div>
       </div>
-    </div>
-
     <div class="card">
       <h2>Pagos del día <small id="dCount"></small></h2>
       <div class="tablewrap">
@@ -935,12 +982,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       <div class="tile"><div class="k">Promedio por día</div><div class="v num" id="mProm">S/ 0</div><div class="s">de los días con registro</div></div>
     </div>
     <div class="tiles split" id="mSplit"></div>
+    <div class="mes2">
     <div class="card">
-      <div class="monthbar">
-        <button class="btn small" id="prevM" type="button" aria-label="Mes anterior">‹</button>
-        <h2 id="mLabel">Mes</h2>
-        <button class="btn small" id="nextM" type="button" aria-label="Mes siguiente">›</button>
-      </div>
+      <h2>Ingresos por día</h2>
       <div class="cal" id="cal"></div>
       <div class="legend">
         <span><i class="dot ok"></i>Caja cuadrada</span>
@@ -949,15 +993,16 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <span>Más oscuro = más ingresos. Toca un día para ver el detalle.</span>
       </div>
     </div>
-    <div class="card" id="fijoCard">
+    <div class="messide">
+      <div class="card"><h2>Ingresos por concepto</h2><div class="rows" id="brk"></div></div>
+      <div class="card" id="fijoCard">
       <h2>Ingresos fijos por semana <small>abonados</small></h2>
       <p class="note" style="margin-top:0">Lo que se espera cobrar a los abonados cada semana según su fecha de pago, sin contar los carros por hora, noche o día.</p>
       <div class="tiles" id="fjTiles"></div>
       <div id="fjWeeks"></div>
     </div>
-    <div class="grid2">
-      <div class="card"><h2>Ingresos por concepto</h2><div class="rows" id="brk"></div></div>
       <div class="card"><h2>Alertas del mes</h2><div class="rows" id="alerts"></div></div>
+    </div>
     </div>
   </div>
     <div class="view" id="ing-anio">
@@ -969,11 +1014,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       </div>
     <div class="tiles split" id="ySplit"></div>
       <div class="card">
-        <div class="monthbar">
-          <button class="btn small" id="prevY" type="button" aria-label="Año anterior">‹</button>
-          <h2 id="yLabel">Año</h2>
-          <button class="btn small" id="nextY" type="button" aria-label="Año siguiente">›</button>
-        </div>
+        <h2>Ingresos por mes</h2>
         <div class="ychart" id="yChart"></div>
         <div class="tablewrap" style="margin-top:14px"><table>
           <thead><tr><th>Mes</th><th class="r">Abonados</th><th class="r">Hora · día · noche</th><th class="r">SS.HH.</th><th class="r">Efectivo</th><th class="r">Yape</th><th class="r">Total</th></tr></thead>
@@ -1031,6 +1072,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <button type="button" class="chip" data-th="light" role="radio">☀️ Claro</button>
         <button type="button" class="chip" data-th="dark" role="radio">🌙 Oscuro</button>
       </div>
+    </div>
+    <div class="card" id="icoCard" hidden>
+      <h2>Ícono de la app</h2>
+      <p class="note" style="margin-top:0">El ícono con el que se instala el sistema en los celulares de la playa. Se aplica a todos los equipos.</p>
+      <div class="icoopts" id="icoFmt" role="radiogroup" aria-label="Ícono de la app">
+        <button type="button" class="icoopt" data-ico="guinda" role="radio"><img src="icono-guinda-192.png" alt="" width="64" height="64"><span>Guinda</span></button>
+        <button type="button" class="icoopt" data-ico="blanco" role="radio"><img src="icono-blanco-192.png" alt="" width="64" height="64"><span>Blanco</span></button>
+      </div>
+      <p class="note">Si el celular ya tiene la app instalada, para ver el ícono nuevo hay que desinstalarla (mantén presionado el ícono → Desinstalar) y volver a instalarla desde Chrome: ⋮ → Instalar.</p>
     </div>
     </div>
     <details class="card tarif fold">
@@ -2970,7 +3020,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // =========================================================
   let shDay=iso(new Date()), shDoc=null, shUn=null, shSel=null, shBlob=null;
   function shCant(){ return Math.max(1,Math.round(num($("#shCant").value)||1)); }
-  function shUpd(){ $("#shMonto").textContent="Total: "+money(shCant()*num(cfg.bano)); }
+  function shUpd(){ $("#shMonto").textContent=money(shCant()*num(cfg.bano)); const sb=$("#shSub"); if(sb) sb.textContent="alquiler de baño · "+money(num(cfg.bano))+" por persona"; }
   $("#shMinus").addEventListener("click",()=>{ $("#shCant").value=Math.max(1,shCant()-1); shUpd(); });
   $("#shPlus").addEventListener("click",()=>{ $("#shCant").value=shCant()+1; shUpd(); });
   $("#shCant").addEventListener("input",shUpd);
@@ -3090,7 +3140,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   setInterval(()=>{ if(!PAGE&&isAdmin()&&num(lsGet("ph_admin_until"))<Date.now()){ ROL="trab"; applyRole(); } if(!isAdmin()&&selDay!==iso(new Date())) setDay(iso(new Date())); },60000);
   function showIng(){
     if(!isAdmin()) ingSub="dia";
-    ["dia","mes","anio"].forEach(k=>$("#ing-"+k).hidden = k!==ingSub);
+    ["dia","mes","anio"].forEach(k=>{ $("#ing-"+k).hidden = k!==ingSub; const nv=$("#ingNav-"+k); if(nv) nv.hidden = k!==ingSub; });
     document.querySelectorAll("#ingSeg [data-sub]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sub===ingSub));
     if(ingSub==="anio") loadYear();
   }
@@ -3355,6 +3405,14 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // apariencia por equipo: automático / claro / oscuro
   function applyTheme(){ const t=lsGet("ph_theme")||"auto"; if(t==="auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme",t);
     document.querySelectorAll("[data-th]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.th===t)); b.setAttribute("aria-checked",String(b.dataset.th===t)); }); }
+  // ícono de la app instalada (manifest): se elige en Opciones y vale para todos los equipos
+  function applyIcono(v){ if(!PAGE) return; const ic=v==="blanco"?"blanco":"guinda"; lsSet("ph_icono",ic==="guinda"?null:ic);
+    const m=document.querySelector('link[rel="manifest"]'); if(m) m.href="manifest-"+ic+".webmanifest";
+    document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]').forEach(l=>{ l.href="icono-"+ic+"-192.png"; });
+    document.querySelectorAll("[data-ico]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.ico===ic)); b.setAttribute("aria-checked",String(b.dataset.ico===ic)); }); }
+  if(PAGE&&$("#icoCard")){ $("#icoCard").hidden=false; applyIcono(lsGet("ph_icono")||"guinda");
+    $("#icoFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-ico]"); if(!b||!isAdmin()||!needDb()) return; const v=b.dataset.ico; applyIcono(v);
+      queue(()=>db.doc("config/general").update({icono:v}).then(()=>toast("Ícono de la app: "+(v==="blanco"?"blanco":"guinda")))); }); }
   $("#thFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-th]"); if(!b) return; lsSet("ph_theme",b.dataset.th==="auto"?null:b.dataset.th); applyTheme(); toast(b.dataset.th==="auto"?"Apariencia automática":b.dataset.th==="dark"?"Modo oscuro":"Modo claro"); });
   applyTheme();
 
@@ -3370,6 +3428,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     }
     try{ db=await window.claude.use("db"); }catch(e){ db=null; }
     if(!db){ $("#bConnTxt").textContent="Para generar tickets y guardar ingresos, abre esta página con tu cuenta de Claude."; $("#bConn").hidden=false; return; }
+    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ applyIcono(s.data().icono); } },()=>{});
     db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);

@@ -596,7 +596,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 .modorow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .espmonto{display:inline-flex;align-items:center;gap:6px;padding:0 4px 0 12px;border:1.5px solid var(--accent);border-radius:999px;background:var(--surface)}
 .espmonto span{font-weight:700;color:var(--acc-txt)}
-.espmonto input{width:96px;min-height:36px;border:0;background:transparent;font-weight:700;font-size:17px;padding:4px 6px}
+.espmonto input{width:175px;min-height:36px;border:0;background:transparent;font-weight:700;font-size:17px;padding:4px 6px}
 .espmonto[hidden]{display:none !important}
 .modo.esp{background:var(--acc-soft);color:var(--acc-txt)}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
@@ -1396,7 +1396,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   let selDay = iso(now0);
   let tipoOtro = "Baño";
   let unMonth=null, unDay=null, prevDoc=null;
-  let inTipo="auto", inModo="hora", inLlave="sin";
+  let inTipo="auto", inModo="hora", inLlave="sin", inTesp=false;
   let selTk=null, outMedio="efectivo";
   let lastTicket=null, lastBlob=null;
 
@@ -1430,16 +1430,18 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // minutos que un abonado pasa fuera de su horario (día 06:30–20:00, noche 20:00–08:00)
   function minsFuera(ent,at,mod){ let n=0; for(let t=ent;t<at;t+=60000){ if(!aboEnHorario({mod},new Date(t))) n+=Math.min(1,(at-t)/60000); } return n; }
   function calc(tk, at, conf){
-    conf=conf||cfg; const tar=(conf.tar||{})[tk.tipo]||{}; const tol=num(conf.tol);
-    const hr = tar.hora==null||tar.hora===""?null:num(tar.hora);
+    conf=conf||cfg; const tt=(tk.tipo==="mototaxi"||tk.tipo==="modulo")?"auto":tk.tipo; const tar=(conf.tar||{})[tt]||{}; const tol=num(conf.tol);
+    const hr0 = tar.hora==null||tar.hora===""?null:num(tar.hora);
+    // tarifa especial: el monto anotado al entrar reemplaza la tarifa de esa modalidad (hora, noche o día)
+    const hr = (tk.tesp&&tk.modo==="hora")?num(tk.tarifa):hr0;
     const mins=(at-tk.ent)/60000; const o={mins,base:0,extra:0,h:0,eh:0,end:null,falta:false};
     if(tk.abx){ const fm=minsFuera(tk.ent,at,tk.abx.mod); o.fm=fm; o.h=fm<=tol?0:Math.ceil((fm-tol)/60); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
     else if(tk.modo==="hora"){ o.h=horas(mins,true,tol); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
     else if(tk.modo==="esp"){ o.base=num(tk.tarifa); } // tarifa especial: monto fijo que se anotó al entrar
     else{
-      const flat = tar[tk.modo]==null||tar[tk.modo]===""?null:num(tar[tk.modo]); if(flat==null) o.falta=true;
+      const flat = tk.tesp?num(tk.tarifa):(tar[tk.modo]==null||tar[tk.modo]===""?null:num(tar[tk.modo])); if(flat==null) o.falta=true;
       o.base=flat||0; o.end=finTramo(tk.ent, tk.modo==="noche"?conf.nocheFin:conf.diaFin);
-      if(at>o.end){ o.eh=horas((at-o.end)/60000,false,tol); if(o.eh && hr==null) o.falta=true; o.extra=o.eh*(hr||0); }
+      if(at>o.end){ o.eh=horas((at-o.end)/60000,false,tol); if(o.eh && hr0==null) o.falta=true; o.extra=o.eh*(hr0||0); }
     }
     o.total=o.base+o.extra;
     o.adel=(tk.adel||[]).reduce((s,a)=>s+num(a.m),0);
@@ -1524,9 +1526,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // =========================================================
   function renderEntrada(){
     $("#inTipo").innerHTML=VEH.map(([k,l])=>'<button type="button" class="chip" data-tipo="'+k+'" aria-pressed="'+(k===inTipo)+'">'+l+'</button>').join("");
-    if(inModo!=="esp"&&rate(inTipo,inModo)==null){ const ok=MODOS.find(([k])=>rate(inTipo,k)!=null); if(ok) inModo=ok[0]; }
-    $("#inModo").innerHTML=MODOS.concat([["esp","Especial"]]).map(([k,l])=>{ const r=k==="esp"?null:rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null&&k!=="esp"?' disabled':'')+'>'+l+(r!=null?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("");
-    { const w=$("#inEspWrap"); if(w) w.hidden=inModo!=="esp"; }
+    if(inModo==="esp") inModo="hora";
+    if(!inTesp&&rate(inTipo,inModo)==null){ const ok=MODOS.find(([k])=>rate(inTipo,k)!=null); if(ok) inModo=ok[0]; }
+    $("#inModo").innerHTML=MODOS.map(([k,l])=>{ const r=rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null&&!inTesp?' disabled':'')+'>'+l+(r!=null&&!inTesp?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("")
+      +'<button type="button" class="chip" data-tesp="1" aria-pressed="'+inTesp+'">Especial</button>';
+    { const w=$("#inEspWrap"); if(w){ w.hidden=!inTesp; const i=$("#inEspMonto"); if(i) i.placeholder=inModo==="hora"?"Monto por hora":inModo==="noche"?"Monto por noche":"Monto por día"; } }
     document.querySelectorAll("#inLlave [data-llave]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.llave===inLlave));
     $("#nextNum").textContent = nextNum? "próximo ticket N° "+nextNum : "";
     if(!inEspTouched && document.activeElement!==$("#inEsp")){ fillEspSelect($("#inEsp"),suggestEsp(inTipo)); } inEspNote();
@@ -1569,7 +1573,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +(espKey(A.esp)&&aboEnHorario(A)?'<div style="margin-top:8px"><button class="btn small'+(aboFuera(A)?' primary':'')+'" type="button" data-abtog="'+A.id+'" data-fuera="'+(aboFuera(A)?0:1)+'">'+(aboFuera(A)?'Registrar ingreso · ocupa el espacio '+esc(A.esp):'Marcar salida · libera el espacio '+esc(A.esp))+'</button></div>':''));
   }
   $("#inTipo").addEventListener("click",e=>{ const b=e.target.closest("[data-tipo]"); if(!b) return; inTipo=b.dataset.tipo; renderEntrada(); });
-  $("#inModo").addEventListener("click",e=>{ const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); if(inModo==="esp"){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } });
+  $("#inModo").addEventListener("click",e=>{ const t=e.target.closest("[data-tesp]"); if(t){ inTesp=!inTesp; renderEntrada(); if(inTesp){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } return; }
+    const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); if(inTesp){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } });
   function espMonto(){ const i=$("#inEspMonto"); const v=i?num(i.value):0; return v>0?v:null; }
   $("#inPlaca").addEventListener("input",checkDup);
   let abxPend=null;
@@ -1623,8 +1628,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const placaN=normP($("#inPlaca").value);
     if(placaN.length<5){ toast("Escribe o dicta la placa."); $("#inPlaca").focus(); return; }
     if(active.find(t=>t.placaN===placaN)){ toast("Esa placa ya tiene un ticket abierto."); return; }
-    if(inModo==="esp"&&espMonto()==null){ toast("Escribe el monto de la tarifa especial."); const i=$("#inEspMonto"); if(i) i.focus(); return; }
-    if(rate(inTipo,inModo)==null){ toast("No hay tarifa "+MODOL[inModo].toLowerCase()+" para "+vehL(inTipo).toLowerCase()+"."); return; }
+    if(inTesp&&espMonto()==null){ toast("Escribe el monto de la tarifa especial."); const i=$("#inEspMonto"); if(i) i.focus(); return; }
+    if(!inTesp&&rate(inTipo,inModo)==null){ toast("No hay tarifa "+MODOL[inModo].toLowerCase()+" para "+vehL(inTipo).toLowerCase()+"."); return; }
     const espV=(abxPend&&normP(abxPend.a.placa)===placaN&&espKey(abxPend.a.esp))?abxPend.a.esp:$("#inEsp").value, ve=(abxPend&&espKey(abxPend.a.esp)&&espKey(abxPend.a.esp)===espKey(espV))?{ok:true,key:false,warn:[]}:checkEsp(espV,inTipo,null); // el abonado usa su propio espacio
     if(!ve.ok){ toast(ve.msg); return; }
     const llaveIni = ve.key ? "con" : "sin";
@@ -1634,7 +1639,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       try{
         const n=await claimNumber(); const d=new Date();
         const ax=(abxPend&&normP(abxPend.a.placa)===placaN)?abxPend:null; abxPend=null; const entT=ax&&ax.desde?ax.desde:d.getTime(), de=new Date(entT);
-        const tk={num:n, placa:fmtP(placaN), placaN, tipo:inTipo, modo:inModo, tarifa:rate(inTipo,inModo), ent:entT, fecha:iso(de), hi:hhmm(de),
+        const tk={num:n, placa:fmtP(placaN), placaN, tipo:inTipo, modo:inModo, tarifa:inTesp?espMonto():rate(inTipo,inModo), ...(inTesp?{tesp:1}:{}), ent:entT, fecha:iso(de), hi:hhmm(de),
           esp:espV, llave:llaveIni, obs:$("#inObs").value.trim(), marca:$("#inMarca").value.trim(), color:$("#inColor").value.trim(), tel:(clientes[placaN]&&clientes[placaN].tel)||"",
           adel: [adelEf>0?{m:adelEf,p:"efectivo",h:hhmm(d)}:null, adelYa>0?{m:adelYa,p:"yape",h:hhmm(d)}:null].filter(Boolean), estado:"dentro"};
         if(ax) tk.abx={id:ax.a.id,nombre:ax.a.nombre,mod:ax.a.mod};
@@ -1642,7 +1647,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         if(!ax) cliSave(placaN,{tipo:tk.tipo,marca:tk.marca,color:tk.color,obs:tk.obs,visita:true});
         if(adel>0){ const mv={}; tk.adel.forEach(a=>{ mv[rid()]={t:MODOL[tk.modo],m:a.m,p:a.p,h:tk.hi,tk:n,placa:tk.placa,n:"Adelanto"}; }); await writeDay(tk.fecha,{movs:mv}); }
         armAuto(); await showTicket(tk); active=active.filter(x=>x.num!==tk.num).concat([tk]); openEd(tk.num);
-        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; cliAuto=null; if(inModo==="esp"){ inModo="hora"; $("#inEspMonto").value=""; } $("#inCli").classList.add("hide"); renderEntrada();
+        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; cliAuto=null; if(inTesp){ inTesp=false; $("#inEspMonto").value=""; } $("#inCli").classList.add("hide"); renderEntrada();
         inEspTouched=false; refreshEspSelects();
         toast("Ticket N° "+n+" generado"+(ve.key?" · espacio "+espV+": pide la llave":"")+(ve.warn&&ve.warn.length?" · ojo: "+ve.warn.join(", "):""));
       } finally { b.disabled=false; b.textContent="Generar ticket"; }
@@ -1684,8 +1689,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     c.font="700 58px 'Barlow Condensed'"; const pw=c.measureText(money(tk.tarifa)).width; c.textAlign="right"; c.fillText(money(tk.tarifa),W-P-12,y+3); c.textAlign="left";
     const lw2=cw-pw-40;
     c.font="700 24px Barlow";
-    if(!tk.abx&&tk.modo==="hora"){ c.fillText("HORA",P+12,y+7,lw2); c.fillText("O FRACCIÓN",P+12,y+34,lw2); }
+    if(!tk.abx&&tk.modo==="hora"){ c.fillText(tk.tesp?"HORA ESPECIAL":"HORA",P+12,y+7,lw2); c.fillText("O FRACCIÓN",P+12,y+34,lw2); }
     else if(!tk.abx&&tk.modo==="esp"){ c.fillText("TARIFA",P+12,y+7,lw2); c.fillText("ESPECIAL",P+12,y+34,lw2); }
+    else if(!tk.abx&&tk.tesp){ c.fillText(modoTxt,P+12,y+7,lw2); c.fillText("ESPECIAL",P+12,y+34,lw2); }
     else c.fillText(modoTxt,P+12,y+(tk.abx?8:20),lw2);
     if(tk.abx){ c.font="600 15px Barlow"; c.fillText("por hora fuera de su plan",P+12,y+38,lw2); }
     y+=78;
@@ -1825,7 +1831,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     T("TICKET DE INGRESO",{a:"c",b:1,z:2}); T("N° "+tk.num,{a:"c",b:1});
     D.push({t:"rule",c:"-"});
     const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA",esp:"TARIFA ESPECIAL"}[tk.modo];
-    { const L=tk.abx?["ABONADO","TIEMPO EXTRA"]:({hora:["HORA","O FRACCIÓN"],noche:["NOCHE"],dia:["TARIFA","DEL DÍA"],esp:["TARIFA","ESPECIAL"]})[tk.modo]||[modoTxt];
+    { const L=tk.abx?["ABONADO","TIEMPO EXTRA"]:(tk.tesp?({hora:["HORA","O FRACCIÓN · TARIFA ESPECIAL"],noche:["NOCHE","TARIFA ESPECIAL"],dia:["DÍA","TARIFA ESPECIAL"]})[tk.modo]:({hora:["HORA","O FRACCIÓN"],noche:["NOCHE"],dia:["TARIFA","DEL DÍA"],esp:["TARIFA","ESPECIAL"]})[tk.modo])||[modoTxt];
       const mv=money(tk.tarifa); if(noTildes(L[0]).length+1+mv.length<=COLS/2) D.push({t:"lr",k:L[0],v:mv,b:1,z:2}); else D.push({t:"lr2",k:L[0],v:mv});
       if(L[1]) T(L[1],{b:1}); }
     if(tk.abx) T("por hora fuera de su plan ("+horarioTxt({mod:tk.abx.mod})+")",{a:"c"});
@@ -1893,8 +1899,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     return new Uint8Array(o);
   }
   // vista previa aproximada de cómo sale en modo rápido (fuente propia de la impresora)
-  async function previewDoc(D){
-    const W=PW(), CW=12, CH=24, P=0; const cv=document.createElement("canvas"); cv.width=W; cv.height=4000; const c=cv.getContext("2d");
+  async function previewDoc(D){ if(pLang()!=="tspl") return await previewDoc2(D,12); const COLS0=COLS; try{ COLS=pPaper()===80?40:26; return await previewDoc2(D,14.4); } finally{ COLS=COLS0; } }
+  async function previewDoc2(D,CW){
+    const W=PW(), CH=24, P=0; const cv=document.createElement("canvas"); cv.width=W; cv.height=4000; const c=cv.getContext("2d");
     c.fillStyle="#fff"; c.fillRect(0,0,W,cv.height); c.fillStyle="#000"; c.textBaseline="top"; let y=8;
     const line=(s,e)=>{ const sx=e.z===2?2:1, sy=e.z?2:1; const cw=CW*sx, ch=CH*sy; const len=[...s].length*cw; const x0=e.a==="c"?Math.round((W-len)/2):e.a==="r"?W-len:0;
       c.font=(e.b?"700 ":"500 ")+"20px 'DejaVu Sans Mono','Courier New',monospace";
@@ -1952,10 +1959,12 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const out=new Uint8Array(head.length+bits.length+tail.length); out.set(head,0); out.set(bits,head.length); out.set(tail,head.length+bits.length); return out; }
   // TSPL con texto y código de barras propios de la impresora (solo el logo va como imagen):
   // pesa ~15 veces menos que mandar todo como imagen, así empieza a imprimir casi al instante
-  async function tsplFromDoc(D){ const W=PW(), CW=12, CH=24, cmds=[]; let y=8;
+  // en la SAT AF330 la letra "2" ocupa ~14 puntos de ancho (no 12): se usan 40 columnas en 80 mm
+  async function tsplFromDoc(D){ const COLS0=COLS; try{ COLS=pPaper()===80?40:26; return await tsplFromDoc2(D); } finally{ COLS=COLS0; } }
+  async function tsplFromDoc2(D){ const W=PW(), CW=14.4, CH=24, cmds=[]; let y=8;
     const q=t=>String(t).replace(/[^\x20-\x7E]/g,"?").replace(/"/g,'\\["]');
     const text=(s,x,yy,mx,my,b)=>{ cmds.push("TEXT "+x+","+yy+',"2",0,'+mx+","+my+',"'+q(s)+'"'); if(b) cmds.push("TEXT "+(x+1)+","+yy+',"2",0,'+mx+","+my+',"'+q(s)+'"'); };
-    const line=(s,e)=>{ const sx=e.z===2?2:1, sy=e.z?2:1, len=[...s].length*CW*sx; const x0=e.a==="c"?Math.round((W-len)/2):e.a==="r"?W-len:0;
+    const line=(s,e)=>{ const sx=e.z===2?2:1, sy=e.z?2:1, len=[...s].length*CW*sx; const x0=Math.round(e.a==="c"?(W-len)/2:e.a==="r"?W-len:0);
       text(s,Math.max(0,x0),y+2*sy,sx,sy,e.b); y+=CH*sy; };
     for(const e of D){
       if(e.t==="logo"){ const L=await getLogoBits(); if(L){ const inv=new Uint8Array(L.bytes.length); for(let i=0;i<inv.length;i++) inv[i]=~L.bytes[i]&255;
@@ -1964,7 +1973,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       if(e.t==="feed"){ y+=CH*(e.n||1); continue; }
       if(e.t==="bar"){ const mods=code128Mods(e.s).reduce((a,b)=>a+b,0), n=Math.max(1,Math.min(4,Math.floor(W*0.85/mods)));
         cmds.push("BARCODE "+Math.max(0,Math.round((W-mods*n)/2))+","+y+',"128",72,0,0,'+n+","+n+',"'+q(e.s)+'"'); y+=78; continue; }
-      if(e.t==="lr2"){ const k=noTildes(e.k), v=noTildes(e.v), y0=y; y+=CH; line(k,{b:1}); text(v,W-[...v].length*CW*2,y0+4,2,2,1); y=y0+CH*2; continue; }
+      if(e.t==="lr2"){ const k=noTildes(e.k), v=noTildes(e.v), y0=y; y+=CH; line(k,{b:1}); text(v,Math.round(W-[...v].length*CW*2),y0+4,2,2,1); y=y0+CH*2; continue; }
       docLines(e).forEach(l=>line(l,e));
     }
     const HT=y+96; const enc=t=>new TextEncoder().encode(t); const parts=[];
@@ -2060,11 +2069,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const tk=active.find(t=>t.num===selTk);
     if(!tk){ $("#pcBox").innerHTML=""; return; }
     const bol=$("#pcBol")?$("#pcBol").value:"";
-    const c=calc(tk,Date.now()); const tar=(cfg.tar||{})[tk.tipo]||{};
+    const c=calc(tk,Date.now()); const tar=(cfg.tar||{})[(tk.tipo==="mototaxi"||tk.tipo==="modulo")?"auto":tk.tipo]||{};
     let rows='';
-    if(tk.modo==="hora") rows+='<div><span>'+c.h+(c.h===1?' hora':' horas')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.base)+'</strong></div>';
+    if(tk.modo==="hora") rows+='<div><span>'+c.h+(c.h===1?' hora':' horas')+' × '+money(tk.tesp?tk.tarifa:tar.hora)+(tk.tesp?' (especial)':'')+'</span><strong class="num">'+money(c.base)+'</strong></div>';
     else if(tk.modo==="esp") rows+='<div><span>Tarifa especial (monto fijo)</span><strong class="num">'+money(c.base)+'</strong></div>';
-    else rows+='<div><span>Tarifa '+MODOL[tk.modo].toLowerCase()+' (hasta '+hhmm(new Date(c.end))+')</span><strong class="num">'+money(c.base)+'</strong></div>';
+    else rows+='<div><span>Tarifa '+MODOL[tk.modo].toLowerCase()+(tk.tesp?' especial':'')+' (hasta '+hhmm(new Date(c.end))+')</span><strong class="num">'+money(c.base)+'</strong></div>';
     if(c.eh) rows+='<div><span>'+c.eh+(c.eh===1?' hora extra':' horas extra')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.extra)+'</strong></div>';
     if(c.adel) rows+='<div><span>Pagó por adelantado ('+adelTxt(tk.adel)+')</span><strong class="num">− '+money(c.adel)+'</strong></div>';
     if(c.falta) rows+='<div><span></span><span class="pill warn">Falta una tarifa en Tarifas: revisa el monto</span></div>';
@@ -2678,7 +2687,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     [["9C",881],["10B",929],["11B",979],["12B",1029]].forEach(([id,x])=>add(id,x,81,38,36,"moto",{B:false,key:false}));
     add("6B",580,134,90,50,"aire"); add("7B",691,134,50,90,"aire"); add("8B",751,134,50,90,"aire");
     add("35B",105,134,93,48,"aire",{chico:true,key:false,keyOpc:true}); add("36B",230,134,93,48,"aire",{key:false,keyOpc:true});
-    ["13B","14B","15B","16B"].forEach((id,i)=>add(id,880,141+i*60,90,50,"aire"));
+    add("16B",919,274,50,90,"aire");
     ["13","14","15","16","17","18","19"].forEach((id,i)=>add(id,981,141+i*60.2,90,50,"techo"));
     add("34C",-14,332,37,38,"moto",{B:false,key:false}); add("34D",30,332,39,38,"moto",{B:false,key:false}); add("34B",-14,379,83,72,"aire"); add("34",79,362,50,90,"aire"); add("33",139,362,50,90,"aire");
     ["32B","31B","30B","29B","28B","27B","26B","25B","24B","23B"].forEach((id,i)=>add(id,199+i*59.8,362,50,90,"aire"));
@@ -2973,11 +2982,11 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function detalle(t){
     let base=t.base, extra=t.extra, h=t.h, eh=t.eh, mins=t.mins;
     if(base==null){ const c=calc(t,t.sal); base=c.base; extra=c.extra; h=c.h; eh=c.eh; mins=c.mins; }
-    const r=((cfg.tar||{})[t.tipo]||{});
+    const r=((cfg.tar||{})[(t.tipo==="mototaxi"||t.tipo==="modulo")?"auto":t.tipo]||{});
     const L=[];
     if(t.abx) L.push([h+(h===1?" hora":" horas")+" fuera de su plan × "+money(r.hora),base]);
-    else if(t.modo==="hora") L.push([h+(h===1?" hora":" horas")+" × "+money(r.hora),base]);
-    else L.push(["Tarifa "+MODOL[t.modo].toLowerCase(),base]);
+    else if(t.modo==="hora") L.push([h+(h===1?" hora":" horas")+" × "+money(t.tesp?t.tarifa:r.hora)+(t.tesp?" (especial)":""),base]);
+    else L.push(["Tarifa "+MODOL[t.modo].toLowerCase()+(t.tesp?" especial":""),base]);
     if(eh) L.push([eh+(eh===1?" hora extra":" horas extra")+" × "+money(r.hora),extra]);
     return {L,total:num(base)+num(extra),mins};
   }

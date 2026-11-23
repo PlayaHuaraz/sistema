@@ -1860,11 +1860,12 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(o.t==="kv"){ const w=o.w||10; const v=cv(String(o.v)); const L=wrapCols(v,COLS-w); return L.map((l,i)=>(i?" ".repeat(w):cv(o.k+":").padEnd(w))+l); }
     return []; }
   let logoBits=null;
-  async function getLogoBits(){ if(logoBits&&logoBits.w===PW()) return logoBits; const img=await loadLogo(); if(!img) return null;
-    const w=PW(), lw=Math.round(144*w/384), h=Math.round(img.height*lw/img.width); if(logoBits&&logoBits.w===w) return logoBits; const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,(w-lw)/2,0,lw,h); // centrado en el ancho del papel
+  // el logo se manda solo con su ancho (no el del papel) y la impresora lo centra: menos datos, así no se llena el búfer de la impresora
+  async function getLogoBits(){ if(logoBits&&logoBits.pw===PW()) return logoBits; const img=await loadLogo(); if(!img) return null;
+    const pw=PW(), w=Math.round(144*pw/384/8)*8, lw=w, h=Math.round(img.height*lw/img.width); const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,0,0,lw,h); // centrado en el ancho del papel
     const d=x.getImageData(0,0,w,h).data; const bw=w/8, bytes=new Uint8Array(bw*h);
     for(let yy=0;yy<h;yy++) for(let xx=0;xx<w;xx++){ const i=(yy*w+xx)*4; if((d[i]*299+d[i+1]*587+d[i+2]*114)/1000<140) bytes[yy*bw+(xx>>3)]|=0x80>>(xx&7); }
-    logoBits={w,h,bw,bytes,canvas:c}; return logoBits; }
+    logoBits={w,h,bw,bytes,canvas:c,pw}; return logoBits; }
   async function escposFromDoc(D){
     const o=[]; const P=(...a)=>a.forEach(v=>Array.isArray(v)?o.push(...v):o.push(v));
     const cp=pCP();
@@ -1893,7 +1894,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       c.font=(e.b?"700 ":"500 ")+"20px 'DejaVu Sans Mono','Courier New',monospace";
       [...(pCP()==="none"?noTildes(s):plain(s))].forEach((ch,i)=>{ c.save(); c.translate(x0+i*cw,y+2*sy); c.scale(sx*CW/12.04,sy); c.fillText(ch,0,0); c.restore(); }); y+=ch; };
     for(const e of D){
-      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ c.drawImage(L.canvas,0,y); y+=L.h+2; } continue; }
+      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ c.drawImage(L.canvas,Math.round((W-L.w)/2),y); y+=L.h+2; } continue; }
       if(e.t==="rule"){ line(e.c.repeat(COLS),{}); continue; }
       if(e.t==="feed"){ y+=CH*(e.n||1); continue; }
       if(e.t==="bar"){ drawCode128(c,e.s,W/2,y,W,72); y+=74; continue; }

@@ -679,7 +679,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
         <div class="formfoot"><button class="btn primary" id="btnTicket" type="button" style="flex:1">Generar ticket</button></div>
         <label class="autoprint"><input type="checkbox" id="autoPrint"> Imprimir automáticamente tickets y boletas</label>
-        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><label>Papel <select id="pPaper"><option value="80">80 mm</option><option value="58">58 mm</option></select></label><label class="chk"><input type="checkbox" id="pLogo"> Logo</label><span class="muted">Se usa en tickets y boletas.</span></div>
+        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><label>Papel <select id="pPaper"><option value="80">80 mm</option><option value="58">58 mm</option></select></label><label>Impresora <select id="pLang"><option value="tspl">SAT AF330 (TSPL)</option><option value="esc">Otra (ESC/POS)</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
         <p class="note" id="pIosNote" hidden>En iPhone, al tocar 🖨 Imprimir se abre Compartir: elige la app de la impresora (por ejemplo, Express Thermal Print).</p>
         <div class="btprn"><button class="btn small" type="button" id="btConnect">🖨 Conectar impresora Bluetooth</button><span class="muted" id="btState">Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)</span></div>
               </div>
@@ -1731,6 +1731,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function blobToDataUrl(bl){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(bl); }); }
   async function rawPrint(bl){
     if(!bl){ toast("Todavía se está preparando la imagen. Toca Imprimir otra vez."); return; }
+    if(pLang()==="tspl"&&(btChar||isAndroid)){ if(await sendRaw(tsplFromCanvas(await blobCanvas(bl)))) return; }
     if(btChar){ const ok=await btPrint(bl); if(ok) return; }
     if(!isAndroid){ // iPhone / otros: abrir la hoja de compartir para enviarla a la app de la impresora
       try{ const f=new File([bl],"ticket-playa-huaraz.png",{type:"image/png"});
@@ -1800,7 +1801,10 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   let COLS=pPaper()===80?48:32; // fuente A: 48 caracteres en 80 mm, 32 en 58 mm
   function pModeFast(){ return lsGet("ph_pmode")!=="img"; }
   function pCP(){ return "none"; } // siempre sin tildes: evita símbolos raros en cualquier impresora
-  function pLogoOn(){ return lsGet("ph_logo")!=="no"; } // logo en la impresión rápida (se puede apagar por equipo)
+  function pLogoOn(){ return true; } // el logo sale siempre
+  // lenguaje de la impresora: la SAT AF330 trabaja mejor en su modo nativo de etiquetas (TSPL):
+  // recibe el ticket completo en su memoria y recién imprime, así no pierde datos por Bluetooth
+  function pLang(){ return lsGet("ph_plang")==="esc"?"esc":"tspl"; }
   const CP850={"á":0xA0,"é":0x82,"í":0xA1,"ó":0xA2,"ú":0xA3,"Á":0xB5,"É":0x90,"Í":0xD6,"Ó":0xE0,"Ú":0xE9,"ñ":0xA4,"Ñ":0xA5,"ü":0x81,"Ü":0x9A,"°":0xF8,"¡":0xAD,"¿":0xA8,"·":0xFA,"×":0x9E};
   function plain(s){ return String(s).replace(/[“”«»]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,"-").replace(/…/g,"..."); }
   function noTildes(s){ return plain(s).replace(/N°\s?/g,"Nro. ").replace(/°/g,"o").replace(/·/g,"-").replace(/×/g,"x").replace(/[¡¿]/g,"").normalize("NFD").replace(/[̀-ͯ]/g,""); }
@@ -1936,6 +1940,26 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     D.push({t:"rule",c:"="}); R("TOTAL",money(m.m),{b:1,z:1}); docFoot(D,T,false); return D; }
   window.__bolDoc=bolDoc; window.__bolAbDoc=bolAbDoc; window.__banoDoc=banoDoc;
   window.__tkDoc=tkDoc; window.__escposDoc=escposFromDoc; window.__previewDoc=previewDoc;
+  // TSPL: el ticket va como una sola imagen; la impresora la guarda entera y luego imprime
+  function tsplFromCanvas(cv){ const W=PW(), bw=W/8, MB=96; // MB: margen en blanco al final para cortar
+    const sc=W/cv.width, H=Math.round(cv.height*sc), HT=H+MB;
+    const c=document.createElement("canvas"); c.width=W; c.height=HT; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,HT); x.drawImage(cv,0,0,W,H);
+    const d=x.getImageData(0,0,W,HT).data, bits=new Uint8Array(bw*HT).fill(0xFF); // en TSPL: 1 = blanco, 0 = negro
+    for(let yy=0;yy<HT;yy++) for(let xx=0;xx<W;xx++){ const i=(yy*W+xx)*4; if((d[i]*299+d[i+1]*587+d[i+2]*114)/1000<150) bits[yy*bw+(xx>>3)]&=~(0x80>>(xx&7)); }
+    const enc=t=>new TextEncoder().encode(t);
+    const head=enc("SIZE "+(W/8)+" mm,"+Math.ceil(HT/8)+" mm\r\nGAP 0 mm,0 mm\r\nDIRECTION 0,0\r\nREFERENCE 0,0\r\nOFFSET 0 mm\r\nSET TEAR ON\r\nDENSITY 10\r\nCLS\r\nBITMAP 0,0,"+bw+","+HT+",0,");
+    const tail=enc("\r\nPRINT 1,1\r\n");
+    const out=new Uint8Array(head.length+bits.length+tail.length); out.set(head,0); out.set(bits,head.length); out.set(tail,head.length+bits.length); return out; }
+  async function blobCanvas(bl){ const bmp=await createImageBitmap(bl); const c=document.createElement("canvas"); c.width=bmp.width; c.height=bmp.height; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(bmp,0,0); return c; }
+  window.__tspl=tsplFromCanvas;
+  // manda bytes a la impresora: Bluetooth del navegador si está conectado, si no RawBT (Android)
+  async function sendRaw(data){
+    if(btChar) return await sendBytes(data);
+    if(!isAndroid) return false;
+    const url="intent:base64,"+bytesB64(data)+"#Intent;scheme=rawbt;package="+RAWBT_PKG+";S.browser_fallback_url="+encodeURIComponent("https://play.google.com/store/apps/details?id="+RAWBT_PKG)+";end;";
+    let w=null; try{ w=window.open(url,"_blank"); }catch(e){}
+    if(!w){ try{ const l=document.createElement("a"); l.href=url; l.target="_blank"; l.rel="noopener"; document.body.appendChild(l); l.click(); l.remove(); }catch(e){ return false; } }
+    return true; }
   async function sendBytes(data){ // impresora conectada por Bluetooth desde el navegador
     if(btBusy){ toast("Imprimiendo… espera un momento."); return true; } btBusy=true;
     try{ await btWrite(data); return true;
@@ -1943,19 +1967,16 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function bytesB64(u8){ let s=""; for(let i=0;i<u8.length;i+=8192) s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(s); }
   // imprime un documento en modo rápido; devuelve false si en este equipo no se puede (iPhone sin Bluetooth web)
   async function fastPrint(D){
-    const data=await escposFromDoc(D);
-    if(btChar) return await sendBytes(data);
-    if(!isAndroid) return false;
-    const url="intent:base64,"+bytesB64(data)+"#Intent;scheme=rawbt;package="+RAWBT_PKG+";S.browser_fallback_url="+encodeURIComponent("https://play.google.com/store/apps/details?id="+RAWBT_PKG)+";end;";
-    let w=null; try{ w=window.open(url,"_blank"); }catch(e){}
-    if(!w){ try{ const l=document.createElement("a"); l.href=url; l.target="_blank"; l.rel="noopener"; document.body.appendChild(l); l.click(); l.remove(); }catch(e){ return false; } }
-    return true;
+    if(pLang()==="tspl") return await sendRaw(tsplFromCanvas(await previewDoc(D)));
+    return await sendRaw(await escposFromDoc(D));
   }
   // modo rápido solo donde se puede mandar texto (Bluetooth del navegador o Android con RawBT);
   // en iPhone va directo a la imagen, sin esperas, para que se abra el menú Compartir
   function rawOK(){ return !!btChar||isAndroid; }
   function fastAvail(){ return btSupported()||isAndroid; }
-  async function printAny(blob,docFn){ if(docFn&&pModeFast()&&rawOK()){ const ok=await fastPrint(docFn()); if(ok) return; } rawPrint(blob); }
+  async function printAny(blob,docFn){
+    if(pLang()==="tspl"&&rawOK()){ if(docFn&&pModeFast()){ if(await fastPrint(docFn())) return; } else if(blob){ if(await sendRaw(tsplFromCanvas(await blobCanvas(blob)))) return; } }
+    if(docFn&&pModeFast()&&rawOK()){ const ok=await fastPrint(docFn()); if(ok) return; } rawPrint(blob); }
   let bDocFn=null, abDocFn=null, shDocFn=null;
   function printTicket(){ printAny(lastBlob,lastTicket?(()=>tkDoc(lastTicket)):null); }
   // ajustes de impresión en esta pantalla
@@ -1964,7 +1985,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     m.value=pModeFast()?"fast":"img";
     const sync=()=>{};
     m.addEventListener("change",()=>{ lsSet("ph_pmode",m.value==="img"?"img":null); sync(); refreshFastPrev(); });
-    const lg=$("#pLogo"); if(lg){ lg.checked=pLogoOn(); lg.addEventListener("change",()=>{ lsSet("ph_logo",lg.checked?null:"no"); refreshFastPrev(); toast(lg.checked?"Logo activado":"Logo desactivado"); }); }
+    const pl=$("#pLang"); if(pl){ pl.value=pLang(); pl.addEventListener("change",()=>{ lsSet("ph_plang",pl.value==="esc"?"esc":null); toast(pl.value==="esc"?"Impresora ESC/POS":"Impresora SAT AF330 (modo TSPL)"); }); }
     const pp=$("#pPaper"); if(pp){ pp.value=String(pPaper()); pp.addEventListener("change",()=>{ lsSet("ph_papel",pp.value==="58"?"58":null); COLS=pPaper()===80?48:32; refreshFastPrev(); toast("Papel de "+pPaper()+" mm"); }); }
     sync(); })();
   async function refreshFastPrev(){ const b=$("#tkFastWrap"); if(!b||b.hidden||!lastTicket) return; const cv=await previewDoc(tkDoc(lastTicket)); $("#tkFastImg").src=cv.toDataURL("image/png"); }

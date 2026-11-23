@@ -582,17 +582,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 #mLabel::first-letter{text-transform:uppercase}
 .messide #fjTiles .tile{padding:10px 12px}
 .messide #fjTiles .tile .v{font-size:24px}
-.rb-quien{font:inherit;cursor:pointer;background:var(--acc-soft);color:var(--acc-txt);border:1px solid transparent;border-radius:999px;padding:4px 10px;font-weight:700}
-.turnodlg{position:fixed;inset:0;z-index:60;background:rgba(10,15,22,.55);display:grid;place-items:center;padding:16px}
-.turnobox{background:var(--surface);color:var(--ink);border-radius:20px;padding:22px;width:min(360px,100%);display:grid;gap:12px;text-align:center}
-.turnobox h2{margin:0;font-family:var(--display);font-size:26px}
-.turnobtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.turnobtns .btn{min-height:64px;font-size:20px;border-radius:14px}
-.rolebar .rb-quien{display:inline-flex !important;align-items:center;white-space:nowrap}
-.trlist{display:flex;flex-wrap:wrap;gap:8px}
-.trchip{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;border-radius:999px;background:var(--acc-soft);color:var(--acc-txt);font-weight:700}
-.trchip button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--bad);border-radius:999px;min-width:28px;height:28px;padding:0 8px;cursor:pointer}
-.turnobtns{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -1084,15 +1073,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <button type="button" class="chip" data-th="dark" role="radio">🌙 Oscuro</button>
       </div>
     </div>
-    <div class="card" id="trCard">
-      <h2>Trabajadores de turno</h2>
-      <p class="note" style="margin-top:0">Quienes atienden con el usuario «playahuaraz». Al entrar, eligen su nombre y así aparece en Registros.</p>
-      <div class="trlist" id="trList"></div>
-      <div class="searchrow" style="margin-top:12px">
-        <input id="trNew" placeholder="Nombre del trabajador" autocomplete="off" maxlength="20">
-        <button class="btn primary" type="button" id="trAdd">Agregar</button>
-      </div>
-    </div>
     <div class="card" id="icoCard" hidden>
       <h2>Ícono de la app</h2>
       <p class="note" style="margin-top:0">El ícono con el que se instala el sistema en los celulares de la playa. Se aplica a todos los equipos.</p>
@@ -1197,8 +1177,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   // ---------- llamadas al servidor ----------
   async function call(a, body){
-    let quien = ""; try { quien = localStorage.getItem("ph_quien") || ""; } catch (e) {}
-    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st, quien }, body || {})) });
+    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st }, body || {})) });
     const j = await r.json();
     if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; e.msg = j.msg || "";
       if (j.err === "no_session" && a !== "login" && !document.getElementById("phLogin")) askLogin(true);
@@ -1350,7 +1329,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     throw new Error("no disponible");
   } };
   window.__phPending = () => pending.length;
-  window.PH = { standalone: true, turno: () => call("turno"),
+  window.PH = { standalone: true,
     user: () => me,
     ready: () => keyReady,
     users: () => call("users").then(j => j.users),
@@ -1368,7 +1347,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   const $ = s => document.querySelector(s);
   const DEF = {
     tar:{auto:{hora:6,noche:10,dia:25},camioneta:{hora:6,noche:10,dia:25},moto:{hora:3,noche:6,dia:10},camion:{hora:6,noche:12,dia:35}},
-    tol:5, nocheFin:"08:00", diaFin:"20:00", bano:1, abonado:200, turno:["Alberto","Nancy","Daniel"]
+    tol:5, nocheFin:"08:00", diaFin:"20:00", bano:1, abonado:200
   };
   const VEH = [["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["mototaxi","Mototaxi"],["camion","Camión"]];
   const VEHTAR = VEH.filter(([k])=>k!=="mototaxi"); // la mototaxi paga la tarifa de auto
@@ -3126,28 +3105,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function canAdmin(){ const u=phUser(); return !!(u&&u.rol==="admin"); }
   var ROL=PAGE?(canAdmin()?"admin":"trab"):(()=>{ const t=num(lsGet("ph_admin_until")); return t>Date.now()?"admin":"trab"; })(), roleAsk=false;
   function isAdmin(){ return ROL==="admin"&&(!PAGE||canAdmin()); }
-  // turno: en la cuenta de trabajador se elige quién está en la playa; el registro de cambios anota su nombre
-  function turnoList(){ const L=(cfg&&Array.isArray(cfg.turno))?cfg.turno:DEF.turno; return L.map(x=>String(x||"").trim()).filter(Boolean); }
-  function turnoQuien(){ const v=(lsGet("ph_quien")||"").toLowerCase(); const n=turnoList().find(x=>x.toLowerCase()===v); return n||""; }
-  function turnoAsk(force){ if(!PAGE||canAdmin()) return; if(!force&&turnoQuien()) return; if($("#turnoDlg")) return;
-    const cur=turnoQuien(), d=document.createElement("div"); d.id="turnoDlg"; d.className="turnodlg"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-labelledby","turnoT");
-    d.innerHTML='<div class="turnobox"><h2 id="turnoT">¿Quién está en la playa?</h2><p class="note" style="margin-top:0">Tu nombre aparecerá en el registro de cambios.</p><div class="turnobtns">'
-      +turnoList().map(n=>'<button type="button" class="btn'+(n===cur?' primary':'')+'" data-quien="'+n+'">'+n+'</button>').join("")+'</div>'
-      +(cur?'<button type="button" class="btn small" data-quien="">Cancelar</button>':'')+'</div>';
-    document.body.appendChild(d); const f=d.querySelector('[data-quien]'); if(f) f.focus();
-    d.addEventListener("click",e=>{ const b=e.target.closest("[data-quien]"); if(!b) return; const n=b.dataset.quien; d.remove(); if(!n) return;
-      const prev=turnoQuien(); lsSet("ph_quien",n.toLowerCase()); renderRoleBar();
-      if(n!==prev){ toast("Turno de "+n); if(window.PH&&window.PH.turno) window.PH.turno().catch(()=>{}); } }); }
   function renderRoleBar(){ const rb=$("#roleBar"); if(!rb) return;
     if(PAGE){ const u=phUser()||{};
-      const q=!canAdmin()?turnoQuien():"";
-      rb.innerHTML=(!canAdmin()?'<button class="rb-user rb-quien" type="button" id="rbQuien" title="Cambiar quién está en la playa">👤 '+esc(q||"¿Quién eres?")+' ⇄</button>':'<span class="rb-user" title="Usuario">👤 '+esc(u.u||"")+'</span>')
-        +(canAdmin()?'<button class="rb-tag'+(isAdmin()?' adm':'')+'" type="button" id="rbSw" title="Cambiar de vista">'+(isAdmin()?'Admin':'Trabajador')+' ⇄</button>':'')
+      rb.innerHTML='<span class="rb-user" title="Usuario">👤 '+esc(u.u||"")+'</span>'
+        +(canAdmin()?'<button class="rb-tag'+(isAdmin()?' adm':'')+'" type="button" id="rbSw" title="Cambiar de vista">'+(isAdmin()?'Admin':'Trabajador')+' ⇄</button>':'<span class="rb-tag">Trabajador</span>')
         +'<button class="btn small" type="button" id="rbLogout">Salir</button>'; return; }
     if(isAdmin()) rb.innerHTML='<span class="rb-tag adm">Admin</span><button class="btn small" type="button" id="rbOut">Salir</button>';
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
-  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); setTimeout(()=>turnoAsk(false),300); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
+  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
     const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]'), nr=document.querySelector('nav a[data-v="registros"]'), np=document.querySelector('nav a[data-v="planograma"]');
     if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin(); if(np) np.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
@@ -3157,8 +3123,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbSw")){ if(!canAdmin()) return; ROL=isAdmin()?"trab":"admin"; applyRole(); toast(isAdmin()?"Vista de administrador":"Vista de trabajador"); return; }
-    if(e.target.closest("#rbQuien")){ turnoAsk(true); return; }
-    if(e.target.closest("#rbLogout")){ if(e.target.dataset.armed!=="1"){ const b=e.target.closest("#rbLogout"); b.dataset.armed="1"; b.textContent="¿Cerrar sesión?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Salir"; } },3000); return; } lsSet("ph_quien",null); window.PH.logout(); return; }
+    if(e.target.closest("#rbLogout")){ if(e.target.dataset.armed!=="1"){ const b=e.target.closest("#rbLogout"); b.dataset.armed="1"; b.textContent="¿Cerrar sesión?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Salir"; } },3000); return; } window.PH.logout(); return; }
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
     if(e.target.closest("#rbX")){ roleAsk=false; renderRoleBar(); return; }
     if(e.target.closest("#rbOut")){ ROL="trab"; lsSet("ph_admin_until",null); if(window.PH&&window.PH.adminOff) window.PH.adminOff(); applyRole(); toast("Modo trabajador"); return; }
@@ -3379,9 +3344,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   $("#lgD").value=iso(new Date()); $("#lgD").max=iso(new Date());
   let lgUsers=null;
   function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; if(!PAGE||!canAdmin()) return;
-    if(!lgUsers){ lgUsers=[]; window.PH.users().then(L=>{ lgUsers=L.map(x=>x.u); lgEqOpts(); pwUsers(L); }).catch(()=>{ lgUsers=null; }); }
-    const v=se.value, all=[...new Set(lgUsers.concat(turnoList().map(n=>n.toLowerCase())))].sort();
-    se.innerHTML='<option value="">Todos los usuarios</option>'+all.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=all.includes(v)?v:""; }
+    if(!lgUsers){ lgUsers=[]; window.PH.users().then(L=>{ lgUsers=L.map(x=>x.u).sort(); lgEqOpts(); pwUsers(L); }).catch(()=>{ lgUsers=null; }); }
+    const v=se.value; se.innerHTML='<option value="">Todos los usuarios</option>'+lgUsers.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=lgUsers.includes(v)?v:""; }
   // cambiar contraseña (Opciones)
   function pwUsers(L){ const se=$("#pwUser"); if(!se) return; const me=(phUser()||{}).u; se.innerHTML=L.map(x=>'<option value="'+esc(x.u)+'"'+(x.u===me?' selected':'')+'>'+esc(x.u)+(x.rol==="admin"?' (administrador)':' (trabajador)')+(x.u===me?' · tú':'')+'</option>').join(""); }
   if($("#pwSave")) $("#pwSave").addEventListener("click",()=>{ if(!PAGE||!canAdmin()) return; const u=$("#pwUser").value, a=$("#pwNew").value, b=$("#pwNew2").value;
@@ -3395,7 +3359,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
     $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
     let h=""; lgRows.forEach(r=>{ const d=new Date(r[0]);
-      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><span class="lgu'+(r[1]==="playahuaraz"||!(lgUsers||[]).includes(r[1])?'':' adm')+'">'+esc(r[1])+'</span> '+esc(r[2])+'</span></div>'; });
+      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><span class="lgu'+(r[1]==="playahuaraz"?'':' adm')+'">'+esc(r[1])+'</span> '+esc(r[2])+'</span></div>'; });
     box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
     $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
   async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; } lgEqOpts();
@@ -3449,23 +3413,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   if(PAGE&&$("#icoCard")){ $("#icoCard").hidden=false; applyIcono(lsGet("ph_icono")||"guinda");
     $("#icoFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-ico]"); if(!b||!isAdmin()||!needDb()) return; const v=b.dataset.ico; applyIcono(v);
       queue(()=>db.doc("config/general").update({icono:v}).then(()=>toast("Ícono de la app: "+(v==="blanco"?"blanco":"guinda")))); }); }
-  // trabajadores de turno (Opciones, solo administrador)
-  function renderTurnoOpts(){ const box=$("#trList"); if(!box) return; const L=turnoList();
-    box.innerHTML=L.length?L.map((n,i)=>'<span class="trchip">'+esc(n)+'<button type="button" data-trdel="'+i+'" aria-label="Quitar a '+esc(n)+'">✕</button></span>').join(""):'<span class="muted">No hay trabajadores. Agrega al menos uno.</span>'; }
-  function saveTurno(L,msg){ if(!isAdmin()||!needDb()) return; cfg.turno=L; renderTurnoOpts(); renderRoleBar(); lgEqOpts();
-    queue(()=>db.doc("config/general").update({turno:L}).then(()=>toast(msg))); }
-  if($("#trCard")){
-    $("#trList").addEventListener("click",e=>{ const b=e.target.closest("[data-trdel]"); if(!b) return; const L=turnoList(), n=L[num(b.dataset.trdel)];
-      if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="¿Quitar?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="✕"; } },3000); return; }
-      saveTurno(L.filter((x,i)=>i!==num(b.dataset.trdel)),"Se quitó a "+n); });
-    const add=()=>{ const i=$("#trNew"); const raw=(i.value||"").trim().replace(/\s+/g," ");
-      if(!/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü ]{2,20}$/.test(raw)){ toast("Escribe solo el nombre (letras, de 2 a 20)."); i.focus(); return; }
-      const n=raw.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" "), L=turnoList();
-      if(L.some(x=>x.toLowerCase()===n.toLowerCase())){ toast(n+" ya está en la lista."); return; }
-      if(["playahuaraz","rcorrea","dcorrea"].includes(n.toLowerCase())){ toast("Ese nombre ya es un usuario."); return; }
-      i.value=""; saveTurno(L.concat([n]),"Se agregó a "+n); };
-    $("#trAdd").addEventListener("click",add); $("#trNew").addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
-    renderTurnoOpts(); }
   $("#thFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-th]"); if(!b) return; lsSet("ph_theme",b.dataset.th==="auto"?null:b.dataset.th); applyTheme(); toast(b.dataset.th==="auto"?"Apariencia automática":b.dataset.th==="dark"?"Modo oscuro":"Modo claro"); });
   applyTheme();
 
@@ -3482,7 +3429,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     try{ db=await window.claude.use("db"); }catch(e){ db=null; }
     if(!db){ $("#bConnTxt").textContent="Para generar tickets y guardar ingresos, abre esta página con tu cuenta de Claude."; $("#bConn").hidden=false; return; }
     db.doc("config/general").onSnapshot(s=>{ if(s.exists){ applyIcono(s.data().icono); } },()=>{});
-    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); renderTurnoOpts(); renderRoleBar(); lgEqOpts(); setTimeout(()=>turnoAsk(false),300); },subErr);
+    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);
     db.collection("clientes").onSnapshot(s=>{ const m={}; s.docs.forEach(d=>{ const v=d.data(); if(v) m[d.id]=v; }); clientes=m; },()=>{});

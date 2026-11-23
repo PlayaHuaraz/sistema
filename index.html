@@ -582,6 +582,23 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 #mLabel::first-letter{text-transform:uppercase}
 .messide #fjTiles .tile{padding:10px 12px}
 .messide #fjTiles .tile .v{font-size:24px}
+.rb-quien{font:inherit;cursor:pointer;background:var(--acc-soft);color:var(--acc-txt);border:1px solid transparent;border-radius:999px;padding:4px 10px;font-weight:700}
+.turnodlg{position:fixed;inset:0;z-index:60;background:rgba(10,15,22,.55);display:grid;place-items:center;padding:16px}
+.turnobox{background:var(--surface);color:var(--ink);border-radius:20px;padding:22px;width:min(360px,100%);display:grid;gap:12px;text-align:center}
+.turnobox h2{margin:0;font-family:var(--display);font-size:26px}
+.turnobtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.turnobtns .btn{min-height:64px;font-size:20px;border-radius:14px}
+.rolebar .rb-quien{display:inline-flex !important;align-items:center;white-space:nowrap}
+.trlist{display:flex;flex-wrap:wrap;gap:8px}
+.trchip{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;border-radius:999px;background:var(--acc-soft);color:var(--acc-txt);font-weight:700}
+.trchip button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--bad);border-radius:999px;min-width:28px;height:28px;padding:0 8px;cursor:pointer}
+.turnobtns{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.modorow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.espmonto{display:inline-flex;align-items:center;gap:6px;padding:0 4px 0 12px;border:1.5px solid var(--accent);border-radius:999px;background:var(--surface)}
+.espmonto span{font-weight:700;color:var(--acc-txt)}
+.espmonto input{width:96px;min-height:36px;border:0;background:transparent;font-weight:700;font-size:17px;padding:4px 6px}
+.espmonto[hidden]{display:none !important}
+.modo.esp{background:var(--acc-soft);color:var(--acc-txt)}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -635,7 +652,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <div class="abonote ok hide" id="inCli"></div>
 
         <div class="grp"><label>Vehículo</label><div class="chips tight" id="inTipo" role="group" aria-label="Vehículo"></div></div>
-        <div class="grp"><label>Tarifa</label><div class="chips tight" id="inModo" role="group" aria-label="Tarifa"></div></div>
+        <div class="grp"><label>Tarifa</label><div class="modorow"><div class="chips tight" id="inModo" role="group" aria-label="Tarifa"></div><div class="espmonto" id="inEspWrap" hidden><label for="inEspMonto" class="sr">Monto de la tarifa especial</label><span>S/</span><input id="inEspMonto" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Monto"></div></div></div>
 
         <div class="fields grp">
           <div><label for="inEsp">Espacio</label><select id="inEsp"></select><p class="note hide" id="inEspNote" style="margin:4px 0 0"></p></div>
@@ -662,7 +679,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
         <div class="formfoot"><button class="btn primary" id="btnTicket" type="button" style="flex:1">Generar ticket</button></div>
         <label class="autoprint"><input type="checkbox" id="autoPrint"> Imprimir automáticamente tickets y boletas</label>
-        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
+        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><label>Papel <select id="pPaper"><option value="80">80 mm</option><option value="58">58 mm</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
         <p class="note" id="pIosNote" hidden>En iPhone, al tocar 🖨 Imprimir se abre Compartir: elige la app de la impresora (por ejemplo, Express Thermal Print).</p>
         <div class="btprn"><button class="btn small" type="button" id="btConnect">🖨 Conectar impresora Bluetooth</button><span class="muted" id="btState">Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)</span></div>
               </div>
@@ -1073,6 +1090,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <button type="button" class="chip" data-th="dark" role="radio">🌙 Oscuro</button>
       </div>
     </div>
+    <div class="card" id="trCard">
+      <h2>Trabajadores de turno</h2>
+      <p class="note" style="margin-top:0">Quienes atienden con el usuario «playahuaraz». Al entrar, eligen su nombre y así aparece en Registros.</p>
+      <div class="trlist" id="trList"></div>
+      <div class="searchrow" style="margin-top:12px">
+        <input id="trNew" placeholder="Nombre del trabajador" autocomplete="off" maxlength="20">
+        <button class="btn primary" type="button" id="trAdd">Agregar</button>
+      </div>
+    </div>
     <div class="card" id="icoCard" hidden>
       <h2>Ícono de la app</h2>
       <p class="note" style="margin-top:0">El ícono con el que se instala el sistema en los celulares de la playa. Se aplica a todos los equipos.</p>
@@ -1177,7 +1203,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
   // ---------- llamadas al servidor ----------
   async function call(a, body){
-    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st }, body || {})) });
+    let quien = ""; try { quien = localStorage.getItem("ph_quien") || ""; } catch (e) {}
+    const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ a, st, quien }, body || {})) });
     const j = await r.json();
     if (!j.ok){ const e = new Error(j.err || "error"); e.code = j.err; e.msg = j.msg || "";
       if (j.err === "no_session" && a !== "login" && !document.getElementById("phLogin")) askLogin(true);
@@ -1329,7 +1356,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     throw new Error("no disponible");
   } };
   window.__phPending = () => pending.length;
-  window.PH = { standalone: true,
+  window.PH = { standalone: true, turno: () => call("turno"),
     user: () => me,
     ready: () => keyReady,
     users: () => call("users").then(j => j.users),
@@ -1347,15 +1374,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   const $ = s => document.querySelector(s);
   const DEF = {
     tar:{auto:{hora:6,noche:10,dia:25},camioneta:{hora:6,noche:10,dia:25},moto:{hora:3,noche:6,dia:10},camion:{hora:6,noche:12,dia:35}},
-    tol:5, nocheFin:"08:00", diaFin:"20:00", bano:1, abonado:200
+    tol:5, nocheFin:"08:00", diaFin:"20:00", bano:1, abonado:200, turno:["Alberto","Nancy","Daniel"]
   };
-  const VEH = [["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["mototaxi","Mototaxi"],["camion","Camión"]];
-  const VEHTAR = VEH.filter(([k])=>k!=="mototaxi"); // la mototaxi paga la tarifa de auto
+  const VEH = [["auto","Auto"],["camioneta","Camioneta"],["moto","Moto"],["mototaxi","Mototaxi"],["modulo","Módulo"],["camion","Camión"]];
+  const VEHTAR = VEH.filter(([k])=>k!=="mototaxi"&&k!=="modulo"); // la mototaxi paga la tarifa de auto
   const TIPOL = {mototaxi:"Mototaxi",carretilla:"Módulo de venta"};
   const MODOS = [["hora","Hora o fracción"],["noche","Noche"],["dia","Día"]];
-  const MODOL = {hora:"Hora",noche:"Noche",dia:"Día"};
+  const MODOL = {hora:"Hora",noche:"Noche",dia:"Día",esp:"Especial"};
   const OTROS = ["Baño","Abonado","Otro"];
-  const CONCEPTOS = ["Estacionamiento","Hora","Noche","Día","Abonado","Baño","Otro"];
+  const CONCEPTOS = ["Estacionamiento","Hora","Noche","Día","Especial","Abonado","Baño","Otro"];
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const ME = "d"+Math.random().toString(36).slice(2,10);
@@ -1395,7 +1422,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function fmtP(n){ n=normP(n); return n.length===6 ? n.slice(0,3)+"-"+n.slice(3) : n; }
   function vehL(k){ const v=VEH.find(x=>x[0]===k); return v?v[1]:(TIPOL[k]||k); }
   function dur(mins){ mins=Math.max(0,Math.round(mins)); const h=Math.floor(mins/60), m=mins%60; return (h? h+" h ":"")+m+" min"; }
-  function rate(tipo,modo){ if(tipo==="mototaxi") tipo="auto"; const r=(cfg.tar||{})[tipo]||{}; const v=r[modo]; return (v===null||v===undefined||v==="")?null:num(v); }
+  function rate(tipo,modo){ if(modo==="esp") return espMonto(); if(tipo==="mototaxi"||tipo==="modulo") tipo="auto"; const r=(cfg.tar||{})[tipo]||{}; const v=r[modo]; return (v===null||v===undefined||v==="")?null:num(v); }
 
   // ---------- cálculo de cobro (función pura) ----------
   function horas(m, min1, tol){ if(m<=tol) return min1?1:0; return Math.ceil((m-tol)/60); }
@@ -1408,6 +1435,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const mins=(at-tk.ent)/60000; const o={mins,base:0,extra:0,h:0,eh:0,end:null,falta:false};
     if(tk.abx){ const fm=minsFuera(tk.ent,at,tk.abx.mod); o.fm=fm; o.h=fm<=tol?0:Math.ceil((fm-tol)/60); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
     else if(tk.modo==="hora"){ o.h=horas(mins,true,tol); if(hr==null) o.falta=true; o.base=o.h*(hr||0); }
+    else if(tk.modo==="esp"){ o.base=num(tk.tarifa); } // tarifa especial: monto fijo que se anotó al entrar
     else{
       const flat = tar[tk.modo]==null||tar[tk.modo]===""?null:num(tar[tk.modo]); if(flat==null) o.falta=true;
       o.base=flat||0; o.end=finTramo(tk.ent, tk.modo==="noche"?conf.nocheFin:conf.diaFin);
@@ -1438,7 +1466,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       const v=num(m.m); t.total+=v; if(m.p==="yape") t.ya+=v; else t.ef+=v;
       t.por[m.t]=(t.por[m.t]||0)+v;
       if(m.t==="Baño") t.bano+=num(m.c)||0;
-      if(m.tk){ seen.add(m.tk); } else if(["Hora","Noche","Día","Abonado"].includes(m.t)) t.car++;
+      if(m.tk){ seen.add(m.tk); } else if(["Hora","Noche","Día","Especial","Abonado"].includes(m.t)) t.car++;
     }
     t.car+=seen.size;
     if(r && !list.some(m=>m.t==="Baño")){ const u=num(r.tm)+num(r.tt); if(u){ const bm=u*num(cfg.bano); t.bano+=u; t.ef+=bm; t.total+=bm; t.por["Baño"]=(t.por["Baño"]||0)+bm; } }
@@ -1446,7 +1474,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     return t;
   }
   // separa ingresos: abonados (fijos), estacionamiento (hora/día/noche), SS.HH. y otros
-  function split(t){ const ab=num(t.por["Abonado"]), ss=num(t.por["Baño"]), est=["Hora","Noche","Día","Estacionamiento"].reduce((s,k)=>s+num(t.por[k]),0); return {ab,est,ss,ot:Math.round((t.total-ab-ss-est)*100)/100}; }
+  function split(t){ const ab=num(t.por["Abonado"]), ss=num(t.por["Baño"]), est=["Hora","Noche","Día","Especial","Estacionamiento"].reduce((s,k)=>s+num(t.por[k]),0); return {ab,est,ss,ot:Math.round((t.total-ab-ss-est)*100)/100}; }
   function addSplit(A,B){ A.ab+=B.ab; A.est+=B.est; A.ss+=B.ss; A.ot+=B.ot; return A; }
   function splitTiles(S,total,sub){ sub=sub||{}; const p=v=>total?Math.round(v/total*100)+"% del total":"—";
     return '<div class="tile sp-ab"><div class="k">Abonados · ingreso fijo</div><div class="v num">'+money(S.ab)+'</div><div class="s">'+p(S.ab)+(sub.ab?' · '+sub.ab:'')+'</div></div>'
@@ -1496,8 +1524,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // =========================================================
   function renderEntrada(){
     $("#inTipo").innerHTML=VEH.map(([k,l])=>'<button type="button" class="chip" data-tipo="'+k+'" aria-pressed="'+(k===inTipo)+'">'+l+'</button>').join("");
-    if(rate(inTipo,inModo)==null){ const ok=MODOS.find(([k])=>rate(inTipo,k)!=null); if(ok) inModo=ok[0]; }
-    $("#inModo").innerHTML=MODOS.map(([k,l])=>{ const r=rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null?' disabled':'')+'>'+l+(r!=null?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("");
+    if(inModo!=="esp"&&rate(inTipo,inModo)==null){ const ok=MODOS.find(([k])=>rate(inTipo,k)!=null); if(ok) inModo=ok[0]; }
+    $("#inModo").innerHTML=MODOS.concat([["esp","Especial"]]).map(([k,l])=>{ const r=k==="esp"?null:rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null&&k!=="esp"?' disabled':'')+'>'+l+(r!=null?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("");
+    { const w=$("#inEspWrap"); if(w) w.hidden=inModo!=="esp"; }
     document.querySelectorAll("#inLlave [data-llave]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.llave===inLlave));
     $("#nextNum").textContent = nextNum? "próximo ticket N° "+nextNum : "";
     if(!inEspTouched && document.activeElement!==$("#inEsp")){ fillEspSelect($("#inEsp"),suggestEsp(inTipo)); } inEspNote();
@@ -1540,7 +1569,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +(espKey(A.esp)&&aboEnHorario(A)?'<div style="margin-top:8px"><button class="btn small'+(aboFuera(A)?' primary':'')+'" type="button" data-abtog="'+A.id+'" data-fuera="'+(aboFuera(A)?0:1)+'">'+(aboFuera(A)?'Registrar ingreso · ocupa el espacio '+esc(A.esp):'Marcar salida · libera el espacio '+esc(A.esp))+'</button></div>':''));
   }
   $("#inTipo").addEventListener("click",e=>{ const b=e.target.closest("[data-tipo]"); if(!b) return; inTipo=b.dataset.tipo; renderEntrada(); });
-  $("#inModo").addEventListener("click",e=>{ const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); });
+  $("#inModo").addEventListener("click",e=>{ const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); if(inModo==="esp"){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } });
+  function espMonto(){ const i=$("#inEspMonto"); const v=i?num(i.value):0; return v>0?v:null; }
   $("#inPlaca").addEventListener("input",checkDup);
   let abxPend=null;
   function abxTipo(a){ return a.tipo&&a.tipo!=="otro"&&rate(a.tipo,"hora")!=null?a.tipo:(a.tipo==="otro"&&rate("moto","hora")!=null?"moto":"auto"); }
@@ -1593,6 +1623,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const placaN=normP($("#inPlaca").value);
     if(placaN.length<5){ toast("Escribe o dicta la placa."); $("#inPlaca").focus(); return; }
     if(active.find(t=>t.placaN===placaN)){ toast("Esa placa ya tiene un ticket abierto."); return; }
+    if(inModo==="esp"&&espMonto()==null){ toast("Escribe el monto de la tarifa especial."); const i=$("#inEspMonto"); if(i) i.focus(); return; }
     if(rate(inTipo,inModo)==null){ toast("No hay tarifa "+MODOL[inModo].toLowerCase()+" para "+vehL(inTipo).toLowerCase()+"."); return; }
     const espV=(abxPend&&normP(abxPend.a.placa)===placaN&&espKey(abxPend.a.esp))?abxPend.a.esp:$("#inEsp").value, ve=(abxPend&&espKey(abxPend.a.esp)&&espKey(abxPend.a.esp)===espKey(espV))?{ok:true,key:false,warn:[]}:checkEsp(espV,inTipo,null); // el abonado usa su propio espacio
     if(!ve.ok){ toast(ve.msg); return; }
@@ -1611,7 +1642,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         if(!ax) cliSave(placaN,{tipo:tk.tipo,marca:tk.marca,color:tk.color,obs:tk.obs,visita:true});
         if(adel>0){ const mv={}; tk.adel.forEach(a=>{ mv[rid()]={t:MODOL[tk.modo],m:a.m,p:a.p,h:tk.hi,tk:n,placa:tk.placa,n:"Adelanto"}; }); await writeDay(tk.fecha,{movs:mv}); }
         armAuto(); await showTicket(tk); active=active.filter(x=>x.num!==tk.num).concat([tk]); openEd(tk.num);
-        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; cliAuto=null; $("#inCli").classList.add("hide"); renderEntrada();
+        $("#inPlaca").value=""; $("#inObs").value=""; $("#inMarca").value=""; $("#inColor").value=""; $("#inAdel").value=""; $("#inAdelY").value=""; inLlave="sin"; cliAuto=null; if(inModo==="esp"){ inModo="hora"; $("#inEspMonto").value=""; } $("#inCli").classList.add("hide"); renderEntrada();
         inEspTouched=false; refreshEspSelects();
         toast("Ticket N° "+n+" generado"+(ve.key?" · espacio "+espV+": pide la llave":"")+(ve.warn&&ve.warn.length?" · ojo: "+ve.warn.join(", "):""));
       } finally { b.disabled=false; b.textContent="Generar ticket"; }
@@ -1646,14 +1677,15 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     y=Math.max(y+lh,ty)+12;
     const center=(t,f,dy)=>{ c.font=f; c.textAlign="center"; c.fillText(t,W/2,y); y+=dy; c.textAlign="left"; };
     // franja de tarifa: el precio en grande
-    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
-    center("TICKET N° "+tk.num,"700 26px 'Barlow Condensed'",36);
+    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA",esp:"TARIFA ESPECIAL"}[tk.modo];
+    center("TICKET DE INGRESO","700 22px 'Barlow Condensed'",26); center("N° "+tk.num,"700 22px 'Barlow Condensed'",30);
     // recuadro con borde (sin relleno negro: imprime más rápido y más nítido en térmica)
     c.fillRect(P,y,cw,4); c.fillRect(P,y+62,cw,4); c.fillRect(P,y,4,66); c.fillRect(W-P-4,y,4,66);
     c.font="700 58px 'Barlow Condensed'"; const pw=c.measureText(money(tk.tarifa)).width; c.textAlign="right"; c.fillText(money(tk.tarifa),W-P-12,y+3); c.textAlign="left";
     const lw2=cw-pw-40;
     c.font="700 24px Barlow";
     if(!tk.abx&&tk.modo==="hora"){ c.fillText("HORA",P+12,y+7,lw2); c.fillText("O FRACCIÓN",P+12,y+34,lw2); }
+    else if(!tk.abx&&tk.modo==="esp"){ c.fillText("TARIFA",P+12,y+7,lw2); c.fillText("ESPECIAL",P+12,y+34,lw2); }
     else c.fillText(modoTxt,P+12,y+(tk.abx?8:20),lw2);
     if(tk.abx){ c.font="600 15px Barlow"; c.fillText("por hora fuera de su plan",P+12,y+38,lw2); }
     y+=78;
@@ -1669,7 +1701,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(tk.esp) row("Espacio",tk.esp);
     const adel=(tk.adel||[]).reduce((s,a)=>s+num(a.m),0);
     if(adel) row("Adelanto",money(adel)+" ("+adelTxt(tk.adel)+")");
-    if(tk.modo!=="hora"){ row("Válido hasta",tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()); }
+    if(tk.modo!=="hora"&&tk.modo!=="esp"){ row("Válido hasta",tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()); }
     y+=6;
     y+=4; drawCode128(c,String(tk.num),W/2,y,cw,78); y+=92;
     c.font="600 15px Barlow"; c.textAlign="center"; ["Conserve su ticket, es indispensable","para retirar su vehículo."].forEach(l=>{ c.fillText(l,W/2,y,cw); y+=19; }); c.textAlign="left"; y+=8;
@@ -1739,7 +1771,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       else btSetState("No se pudo conectar. Enciende la impresora, acércala e inténtalo otra vez."); } }
   function btDisconnect(){ try{ if(btDev&&btDev.gatt.connected) btDev.gatt.disconnect(); }catch(e){} btChar=null; btDev=null; btSetState("Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)"); }
   // convierte la imagen a comandos ESC/POS (raster GS v 0, en bloques)
-  async function escposFromBlob(bl){ const bmp=await createImageBitmap(bl); const W=384, H=Math.round(bmp.height*W/bmp.width);
+  async function escposFromBlob(bl){ const bmp=await createImageBitmap(bl); const W=PW(), H=Math.round(bmp.height*W/bmp.width);
     const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,W,H); x.drawImage(bmp,0,0,W,H);
     const d=x.getImageData(0,0,W,H).data, bw=W/8, out=[0x18,0x1b,0x40,0x1c,0x2e];
     for(let y0=0;y0<H;y0+=64){ const h=Math.min(64,H-y0); out.push(0x1d,0x76,0x30,0x00,bw&255,bw>>8,h&255,h>>8);
@@ -1763,7 +1795,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   // =========================================================
   // MODO RÁPIDO: el ticket se manda como texto ESC/POS (≈2 KB en vez de ≈48 KB de imagen)
   // =========================================================
-  const COLS=32; // fuente A de 58 mm: 32 caracteres por línea
+  function pPaper(){ return lsGet("ph_papel")==="58"?58:80; } // ancho del papel de la impresora (por equipo)
+  function PW(){ return pPaper()===80?576:384; } // puntos por línea: 80 mm = 576, 58 mm = 384
+  let COLS=pPaper()===80?48:32; // fuente A: 48 caracteres en 80 mm, 32 en 58 mm
   function pModeFast(){ return lsGet("ph_pmode")!=="img"; }
   function pCP(){ return "none"; } // siempre sin tildes: evita símbolos raros en cualquier impresora
   function pLogoOn(){ return true; } // el logo sale siempre
@@ -1784,10 +1818,10 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     T("Jr. Huaraz 747, Breña - Lima",{a:"c"});
     T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
     D.push({t:"rule",c:"="});
-    T("TICKET N° "+tk.num,{a:"c",b:1});
+    T("TICKET DE INGRESO",{a:"c",b:1,z:2}); T("N° "+tk.num,{a:"c",b:1});
     D.push({t:"rule",c:"-"});
-    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA"}[tk.modo];
-    { const L=tk.abx?["ABONADO","TIEMPO EXTRA"]:({hora:["HORA","O FRACCIÓN"],noche:["NOCHE"],dia:["TARIFA","DEL DÍA"]})[tk.modo]||[modoTxt];
+    const modoTxt=tk.abx?"ABONADO · TIEMPO EXTRA":{hora:"HORA O FRACCIÓN",noche:"NOCHE",dia:"TARIFA DEL DÍA",esp:"TARIFA ESPECIAL"}[tk.modo];
+    { const L=tk.abx?["ABONADO","TIEMPO EXTRA"]:({hora:["HORA","O FRACCIÓN"],noche:["NOCHE"],dia:["TARIFA","DEL DÍA"],esp:["TARIFA","ESPECIAL"]})[tk.modo]||[modoTxt];
       const mv=money(tk.tarifa); if(noTildes(L[0]).length+1+mv.length<=COLS/2) D.push({t:"lr",k:L[0],v:mv,b:1,z:2}); else D.push({t:"lr2",k:L[0],v:mv});
       if(L[1]) T(L[1],{b:1}); }
     if(tk.abx) T("por hora fuera de su plan ("+horarioTxt({mod:tk.abx.mod})+")",{a:"c"});
@@ -1799,15 +1833,14 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(tk.esp) D.push({t:"kv",w:14,k:"Espacio",v:tk.esp});
     const adel=(tk.adel||[]).reduce((s,a)=>s+num(a.m),0);
     if(adel) D.push({t:"kv",w:14,k:"Adelanto",v:money(adel)+" ("+adelTxt(tk.adel)+")"});
-    if(tk.modo!=="hora") D.push({t:"kv",w:14,k:"Válido hasta",v:tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()});
+    if(tk.modo!=="hora"&&tk.modo!=="esp") D.push({t:"kv",w:14,k:"Válido hasta",v:tk.modo==="noche"?cfg.nocheFin.replace(/^0/,"")+" a. m.":(()=>{const [h,m]=cfg.diaFin.split(":").map(Number);return (h>12?h-12:h)+":"+String(m).padStart(2,"0")+" p. m.";})()});
     D.push({t:"feed",n:1}); D.push({t:"bar",s:String(tk.num)});
     D.push({t:"feed",n:1});
     T("Conserve su ticket, es indispensable para retirar su vehículo.",{a:"c",b:1});
     D.push({t:"rule",c:"-"});
     T("HORARIO DE ATENCIÓN",{b:1});
-    T("Lunes a viernes:"); T("6:30 a.m. a 10:30 p.m.",{a:"r"});
-    T("Sáb., dom. y feriados:");
-    T("6:30 a.m. a 10:00 a.m.",{a:"r"}); T("6:30 p.m. a 10:30 p.m.",{a:"r"});
+    D.push({t:"lr",k:"Lunes a viernes:",v:"6:30 a.m. a 10:30 p.m."});
+    D.push({t:"lr",k:"Sáb., dom. y feriados:",v:"6:30 a.m. a 10:00 a.m."}); T("6:30 p.m. a 10:30 p.m.",{a:"r"});
     D.push({t:"rule",c:"-"});
     T("CONDICIONES",{b:1});
     ["Servicio de parqueo según la Ley 29461.",
@@ -1827,8 +1860,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     if(o.t==="kv"){ const w=o.w||10; const v=cv(String(o.v)); const L=wrapCols(v,COLS-w); return L.map((l,i)=>(i?" ".repeat(w):cv(o.k+":").padEnd(w))+l); }
     return []; }
   let logoBits=null;
-  async function getLogoBits(){ if(logoBits) return logoBits; const img=await loadLogo(); if(!img) return null;
-    const lw=144, h=Math.round(img.height*lw/img.width), w=384; const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,(w-lw)/2,0,lw,h); // centrado en el ancho del papel
+  async function getLogoBits(){ if(logoBits&&logoBits.w===PW()) return logoBits; const img=await loadLogo(); if(!img) return null;
+    const w=PW(), lw=Math.round(144*w/384), h=Math.round(img.height*lw/img.width); if(logoBits&&logoBits.w===w) return logoBits; const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,w,h); x.drawImage(img,(w-lw)/2,0,lw,h); // centrado en el ancho del papel
     const d=x.getImageData(0,0,w,h).data; const bw=w/8, bytes=new Uint8Array(bw*h);
     for(let yy=0;yy<h;yy++) for(let xx=0;xx<w;xx++){ const i=(yy*w+xx)*4; if((d[i]*299+d[i+1]*587+d[i+2]*114)/1000<140) bytes[yy*bw+(xx>>3)]|=0x80>>(xx&7); }
     logoBits={w,h,bw,bytes,canvas:c}; return logoBits; }
@@ -1854,7 +1887,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   }
   // vista previa aproximada de cómo sale en modo rápido (fuente propia de la impresora)
   async function previewDoc(D){
-    const W=384, CW=12, CH=24, P=0; const cv=document.createElement("canvas"); cv.width=W; cv.height=4000; const c=cv.getContext("2d");
+    const W=PW(), CW=12, CH=24, P=0; const cv=document.createElement("canvas"); cv.width=W; cv.height=4000; const c=cv.getContext("2d");
     c.fillStyle="#fff"; c.fillRect(0,0,W,cv.height); c.fillStyle="#000"; c.textBaseline="top"; let y=8;
     const line=(s,e)=>{ const sx=e.z===2?2:1, sy=e.z?2:1; const cw=CW*sx, ch=CH*sy; const len=[...s].length*cw; const x0=e.a==="c"?Math.round((W-len)/2):e.a==="r"?W-len:0;
       c.font=(e.b?"700 ":"500 ")+"20px 'DejaVu Sans Mono','Courier New',monospace";
@@ -1876,7 +1909,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     T("Jr. Huaraz 747, Breña - Lima",{a:"c"}); T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
     D.push({t:"rule",c:"="}); T(titulo,{a:"c",b:1,z:1}); T("N° "+pad6(nro),{a:"c",b:1,z:2}); D.push({t:"rule",c:"="}); return T; }
   function docFoot(D,T,horario){ D.push({t:"feed",n:1}); T("¡Gracias por su preferencia!",{a:"c",b:1}); D.push({t:"rule",c:"-"}); T("Documento interno de control.");
-    if(horario){ T("Lunes a viernes:"); T("6:30 a.m. a 10:30 p.m.",{a:"r"}); T("Sáb., dom. y feriados:"); T("6:30 a.m. a 10:00 a.m.",{a:"r"}); T("6:30 p.m. a 10:30 p.m.",{a:"r"}); } }
+    if(horario){ D.push({t:"lr",k:"Lunes a viernes:",v:"6:30 a.m. a 10:30 p.m."}); D.push({t:"lr",k:"Sáb., dom. y feriados:",v:"6:30 a.m. a 10:00 a.m."}); T("6:30 p.m. a 10:30 p.m.",{a:"r"}); } }
   const emiTxt=ms=>{ const e=new Date(ms||Date.now()); return ddmm(e)+"/"+e.getFullYear()+" "+hhmm(e); };
   function bolDoc(t){ const D=[]; const T=docHead(D,"COMPROBANTE DE PAGO",t.comp); const R=(k,v,o)=>D.push(Object.assign({t:"lr",k,v:String(v)},o||{}));
     R("Emitido",emiTxt(t.compAt)); R("Ticket N°",t.num); R("Placa",t.placa,{b:1,z:1}); R("Vehículo",vehL(t.tipo));
@@ -1928,6 +1961,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     m.value=pModeFast()?"fast":"img";
     const sync=()=>{};
     m.addEventListener("change",()=>{ lsSet("ph_pmode",m.value==="img"?"img":null); sync(); refreshFastPrev(); });
+    const pp=$("#pPaper"); if(pp){ pp.value=String(pPaper()); pp.addEventListener("change",()=>{ lsSet("ph_papel",pp.value==="58"?"58":null); COLS=pPaper()===80?48:32; refreshFastPrev(); toast("Papel de "+pPaper()+" mm"); }); }
     sync(); })();
   async function refreshFastPrev(){ const b=$("#tkFastWrap"); if(!b||b.hidden||!lastTicket) return; const cv=await previewDoc(tkDoc(lastTicket)); $("#tkFastImg").src=cv.toDataURL("image/png"); }
   $("#tkFastBtn").addEventListener("click",async()=>{ const b=$("#tkFastWrap"); b.hidden=!b.hidden; $("#tkFastBtn").textContent=b.hidden?"Ver cómo sale en modo rápido":"Ocultar vista de modo rápido"; refreshFastPrev(); });
@@ -1981,6 +2015,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const c=calc(tk,Date.now()); const tar=(cfg.tar||{})[tk.tipo]||{};
     let rows='';
     if(tk.modo==="hora") rows+='<div><span>'+c.h+(c.h===1?' hora':' horas')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.base)+'</strong></div>';
+    else if(tk.modo==="esp") rows+='<div><span>Tarifa especial (monto fijo)</span><strong class="num">'+money(c.base)+'</strong></div>';
     else rows+='<div><span>Tarifa '+MODOL[tk.modo].toLowerCase()+' (hasta '+hhmm(new Date(c.end))+')</span><strong class="num">'+money(c.base)+'</strong></div>';
     if(c.eh) rows+='<div><span>'+c.eh+(c.eh===1?' hora extra':' horas extra')+' × '+money(tar.hora)+'</span><strong class="num">'+money(c.extra)+'</strong></div>';
     if(c.adel) rows+='<div><span>Pagó por adelantado ('+adelTxt(tk.adel)+')</span><strong class="num">− '+money(c.adel)+'</strong></div>';
@@ -2279,7 +2314,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   $("#copyRep").addEventListener("click",async ()=>{ try{ await navigator.clipboard.writeText(repText()); toast("Reporte copiado. Pégalo en WhatsApp."); }catch(e){ toast("No se pudo copiar. Mantén presionado el mensaje para copiarlo."); } });
   // efectivo del día separado por concepto (lo que entró a la caja, ya sin el vuelto)
   function efPor(doc){ const o={est:0,ab:0,ss:0,ot:0}; movs(doc).forEach(m=>{ if(m.p==="yape") return; const v=num(m.m);
-      if(m.t==="Abonado") o.ab+=v; else if(m.t==="Baño") o.ss+=v; else if(["Hora","Noche","Día","Estacionamiento","Adelanto"].includes(m.t)||m.tk) o.est+=v; else o.ot+=v; }); return o; }
+      if(m.t==="Abonado") o.ab+=v; else if(m.t==="Baño") o.ss+=v; else if(["Hora","Noche","Día","Especial","Estacionamiento","Adelanto"].includes(m.t)||m.tk) o.est+=v; else o.ot+=v; }); return o; }
   function cajaCalc(){ const t=totals(dayData), fondo=num($("#cFondo").value), ef=$("#cEf").value, fc=$("#cFondoC").value;
     return {t,fondo,cont:ef===""?null:num(ef),dif:ef===""?null:num(ef)-t.ef,fcont:fc===""?null:num(fc),fdif:fc===""?null:num(fc)-fondo}; }
   function renderCheck(){
@@ -2644,6 +2679,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const bOn=regularLlenos();
     const grp=[["Con techo",s=>s.k==="techo"],["Sin techo",s=>s.k==="aire"&&!s.B],["Motos",s=>s.k==="moto"],[bOn?"Espacios B (dejar llave)":"Espacios B · se habilitan cuando se llenen los espacios normales",s=>s.B]];
     let h='<option value="">'+(opts.empty||"Sin asignar")+'</option>';
+    if(!opts.abo){ const nx=active.filter(t=>isExtra(t.esp)).length; h+='<option value="'+EXTRA+'"'+(isExtra(current)?' selected':'')+'>Espacio extra (vehículo pequeño)'+(nx?' · '+nx+' ahora':'')+'</option>'; }
     const opt=(s,g)=>{ const o=occ[s.id], a=abo[s.id]; const mine=cur===s.id; const busy=(!opts.abo && o && !mine) || (!opts.abo && s.B && !bOn && !mine); const note=o&&!mine?" · ocupado "+o.placa:(a&&!opts.abo?" · fijo de "+(a.placa||a.nombre):(opts.abo&&a&&!mine?" · fijo de "+(a.placa||a.nombre):"")); return '<option value="'+s.id+'"'+(busy||(opts.abo&&a&&!mine)?' disabled':'')+(mine?' selected':'')+'>'+s.id+(g?' · '+g:'')+(s.id==="20"&&!opts.abo?' · deja llave':'')+note+'</option>'; };
     if(!opts.abo){
       // primero los espacios libres (sin ticket, sin abonado en su horario y habilitados)
@@ -2654,7 +2690,6 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       const nL=SPACES.filter(libre).length;
       [["con techo",0],["sin techo",1],["motos",2],["B, con llave",3]].forEach(([g,k])=>{ const L=F.filter(s=>ordK(s)===k); if(L.length) h+='<optgroup label="Libres · '+g+' ('+L.length+')">'+L.map(s=>opt(s)).join("")+'</optgroup>'; });
       if(!nL) h+='<optgroup label="No hay espacios libres"></optgroup>';
-      const nx=active.filter(t=>isExtra(t.esp)).length; h+='<optgroup label="Fuera del plano"><option value="'+EXTRA+'"'+(isExtra(current)?' selected':'')+'>Espacio extra (vehículo pequeño)'+(nx?' · '+nx+' ahora':'')+'</option></optgroup>';
       grp.forEach(([g,f])=>{ const L=SPACES.filter(s=>f(s)&&!libre(s)&&cur!==s.id).sort((a,b)=>espSort(a.id,b.id)); if(L.length) h+='<optgroup label="'+(g.startsWith("Espacios B")?g:g+' · ocupados o reservados')+'">'+L.map(s=>opt(s)).join("")+'</optgroup>'; });
     } else {
       grp.forEach(([g,f])=>{ const L=SPACES.filter(f).sort((a,b)=>espSort(a.id,b.id)); h+='<optgroup label="'+g+'">'+L.map(s=>opt(s)).join("")+'</optgroup>'; });
@@ -2693,7 +2728,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function vTipo(x){ if(!x) return ""; if(x.tipo!=="otro") return x.tipo||""; const t=String(x.tipoOtro||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
     return /mototaxi|moto taxi/.test(t)?"mototaxi":/modulo|carret|venta|kiosk|puesto/.test(t)?"carretilla":"otro"; }
   function vIcon(tipo,vert,cx,s){ if(tipo==="moto") return vert?'<g transform="translate('+(cx-8)+' '+(s.y+20)+')">'+MOTO+'</g>':'<g transform="translate('+(cx-17)+' '+(s.y+s.h/2+7)+') rotate(-90)">'+MOTO+'</g>';
-    const ic=tipo==="mototaxi"?MTAXI:tipo==="carretilla"?CART:null;
+    const ic=tipo==="mototaxi"?MTAXI:(tipo==="carretilla"||tipo==="modulo")?CART:null;
     if(!ic) return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+CARV+'</g>':'<g transform="translate('+(cx-24)+' '+(s.y+s.h/2-16)+') scale(.75)">'+CARH+'</g>';
     return vert?'<g transform="translate('+(cx-13.6)+' '+(s.y+17)+') scale(.8)">'+ic+'</g>':'<g transform="translate('+(cx-23.25)+' '+(s.y+s.h/2-16+25.5)+') rotate(-90) scale(.75)">'+ic+'</g>'; }
   const KEY='<g class="pm-key" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></g>';
@@ -3105,17 +3140,31 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function canAdmin(){ const u=phUser(); return !!(u&&u.rol==="admin"); }
   var ROL=PAGE?(canAdmin()?"admin":"trab"):(()=>{ const t=num(lsGet("ph_admin_until")); return t>Date.now()?"admin":"trab"; })(), roleAsk=false;
   function isAdmin(){ return ROL==="admin"&&(!PAGE||canAdmin()); }
+  // turno: en la cuenta de trabajador se elige quién está en la playa; el registro de cambios anota su nombre
+  function turnoList(){ const L=(cfg&&Array.isArray(cfg.turno))?cfg.turno:DEF.turno; return L.map(x=>String(x||"").trim()).filter(Boolean); }
+  function turnoQuien(){ const v=(lsGet("ph_quien")||"").toLowerCase(); const n=turnoList().find(x=>x.toLowerCase()===v); return n||""; }
+  function turnoAsk(force){ if(!PAGE||canAdmin()) return; if(!force&&turnoQuien()) return; if($("#turnoDlg")) return;
+    const cur=turnoQuien(), d=document.createElement("div"); d.id="turnoDlg"; d.className="turnodlg"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-labelledby","turnoT");
+    d.innerHTML='<div class="turnobox"><h2 id="turnoT">¿Quién está en la playa?</h2><p class="note" style="margin-top:0">Tu nombre aparecerá en el registro de cambios.</p><div class="turnobtns">'
+      +turnoList().map(n=>'<button type="button" class="btn'+(n===cur?' primary':'')+'" data-quien="'+n+'">'+n+'</button>').join("")+'</div>'
+      +(cur?'<button type="button" class="btn small" data-quien="">Cancelar</button>':'')+'</div>';
+    document.body.appendChild(d); const f=d.querySelector('[data-quien]'); if(f) f.focus();
+    d.addEventListener("click",e=>{ const b=e.target.closest("[data-quien]"); if(!b) return; const n=b.dataset.quien; d.remove(); if(!n) return;
+      const prev=turnoQuien(); lsSet("ph_quien",n.toLowerCase()); renderRoleBar();
+      if(n!==prev){ toast("Turno de "+n); if(window.PH&&window.PH.turno) window.PH.turno().catch(()=>{}); } }); }
   function renderRoleBar(){ const rb=$("#roleBar"); if(!rb) return;
     if(PAGE){ const u=phUser()||{};
-      rb.innerHTML='<span class="rb-user" title="Usuario">👤 '+esc(u.u||"")+'</span>'
-        +(canAdmin()?'<button class="rb-tag'+(isAdmin()?' adm':'')+'" type="button" id="rbSw" title="Cambiar de vista">'+(isAdmin()?'Admin':'Trabajador')+' ⇄</button>':'<span class="rb-tag">Trabajador</span>')
+      const q=!canAdmin()?turnoQuien():"";
+      rb.innerHTML=(!canAdmin()?'<button class="rb-user rb-quien" type="button" id="rbQuien" title="Cambiar quién está en la playa">👤 '+esc(q||"¿Quién eres?")+' ⇄</button>':'<span class="rb-user" title="Usuario">👤 '+esc(u.u||"")+'</span>')
+        +(canAdmin()?'<button class="rb-tag'+(isAdmin()?' adm':'')+'" type="button" id="rbSw" title="Cambiar de vista">'+(isAdmin()?'Admin':'Trabajador')+' ⇄</button>':'')
         +'<button class="btn small" type="button" id="rbLogout">Salir</button>'; return; }
     if(isAdmin()) rb.innerHTML='<span class="rb-tag adm">Admin</span><button class="btn small" type="button" id="rbOut">Salir</button>';
     else if(roleAsk) rb.innerHTML='<label for="rbPin" class="sr">PIN de administrador</label><input id="rbPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off"><button class="btn small primary" type="button" id="rbGo">Entrar</button><button class="btn small" type="button" id="rbX">✕</button>';
     else rb.innerHTML='<span class="rb-tag">Trabajador</span><button class="btn small" type="button" id="rbIn" aria-label="Entrar como administrador">🔒 Admin</button>'; }
-  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
+  function applyRole(){ document.body.dataset.rol=ROL; renderRoleBar(); setTimeout(()=>turnoAsk(false),300); try{ renderDia(); }catch(e){} try{ renderBano(); }catch(e){}
     const ni=document.querySelector('nav a[data-v="ingresos"]'), nt=document.querySelector('nav a[data-v="tarifas"]'), nr=document.querySelector('nav a[data-v="registros"]'), np=document.querySelector('nav a[data-v="planograma"]');
-    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día"; if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin(); if(np) np.hidden=!isAdmin();
+    if(ni) ni.textContent=isAdmin()?"Ingresos":"Cierre del día";
+    { const a=document.querySelector('nav a[data-v="ticketera"]'), b=document.querySelector('nav a[data-v="boleta"]'); if(a) a.textContent=isAdmin()?"Ticketera":"Entrada"; if(b) b.textContent=isAdmin()?"Boletas":"Salida"; } if(nt) nt.hidden=!isAdmin(); if(nr) nr.hidden=!isAdmin(); if(np) np.hidden=!isAdmin();
     ["#ingSeg","#expCard"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     ["#prevD","#nextD","#dPick"].forEach(s=>{ const e=$(s); if(e) e.hidden=!isAdmin(); });
     { const f=$("#cFondo"); if(f&&f.parentElement) f.parentElement.hidden=!isAdmin(); } // solo el administrador cambia el monto del fondo
@@ -3123,7 +3172,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     showIng(); }
   $("#roleBar").addEventListener("click",e=>{
     if(e.target.closest("#rbSw")){ if(!canAdmin()) return; ROL=isAdmin()?"trab":"admin"; applyRole(); toast(isAdmin()?"Vista de administrador":"Vista de trabajador"); return; }
-    if(e.target.closest("#rbLogout")){ if(e.target.dataset.armed!=="1"){ const b=e.target.closest("#rbLogout"); b.dataset.armed="1"; b.textContent="¿Cerrar sesión?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Salir"; } },3000); return; } window.PH.logout(); return; }
+    if(e.target.closest("#rbQuien")){ turnoAsk(true); return; }
+    if(e.target.closest("#rbLogout")){ if(e.target.dataset.armed!=="1"){ const b=e.target.closest("#rbLogout"); b.dataset.armed="1"; b.textContent="¿Cerrar sesión?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="Salir"; } },3000); return; } lsSet("ph_quien",null); window.PH.logout(); return; }
     if(e.target.closest("#rbIn")){ roleAsk=true; renderRoleBar(); const p=$("#rbPin"); if(p) p.focus(); return; }
     if(e.target.closest("#rbX")){ roleAsk=false; renderRoleBar(); return; }
     if(e.target.closest("#rbOut")){ ROL="trab"; lsSet("ph_admin_until",null); if(window.PH&&window.PH.adminOff) window.PH.adminOff(); applyRole(); toast("Modo trabajador"); return; }
@@ -3250,7 +3300,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     const R=[["Fecha","Total","Efectivo","Yape","Estacionamiento","Abonados","SS.HH. (S/)","SS.HH. (usos)","Otros","Tickets","Fondo contado","Efectivo contado","Diferencia caja","Nota del día"]];
     const T={total:0,ef:0,ya:0,est:0,ab:0,ss:0,usos:0,ot:0,tk:0};
     for(const d of docs){ const t=totals(d); if(!t.total&&!dayTickets(d).length&&!(d.rep&&d.rep.nota)) continue;
-      const est=num(t.por["Hora"])+num(t.por["Noche"])+num(t.por["Día"])+num(t.por["Adelanto"])+num(t.por["Estacionamiento"]), ab=num(t.por["Abonado"]), ss=num(t.por["Baño"]), ot=t.total-est-ab-ss;
+      const est=num(t.por["Hora"])+num(t.por["Noche"])+num(t.por["Día"])+num(t.por["Especial"])+num(t.por["Adelanto"])+num(t.por["Estacionamiento"]), ab=num(t.por["Abonado"]), ss=num(t.por["Baño"]), ot=t.total-est-ab-ss;
       const c=d.cierre&&d.cierre.ef!=null&&d.cierre.ef!==""?num(d.cierre.ef):"", fo=d.cierre&&d.cierre.fondoCont!=null?num(d.cierre.fondoCont):"";
       R.push([d.fecha,t.total,t.ef,t.ya,est,ab,ss,t.bano,Math.round(ot*100)/100,t.tick,fo,c,c===""?"":Math.round((c-t.ef)*100)/100,(d.rep&&d.rep.nota)||""]);
       T.total+=t.total;T.ef+=t.ef;T.ya+=t.ya;T.est+=est;T.ab+=ab;T.ss+=ss;T.usos+=t.bano;T.ot+=ot;T.tk+=t.tick; }
@@ -3344,8 +3394,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   $("#lgD").value=iso(new Date()); $("#lgD").max=iso(new Date());
   let lgUsers=null;
   function lgEqOpts(){ const se=$("#lgEq"); if(!se) return; if(!PAGE||!canAdmin()) return;
-    if(!lgUsers){ lgUsers=[]; window.PH.users().then(L=>{ lgUsers=L.map(x=>x.u).sort(); lgEqOpts(); pwUsers(L); }).catch(()=>{ lgUsers=null; }); }
-    const v=se.value; se.innerHTML='<option value="">Todos los usuarios</option>'+lgUsers.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=lgUsers.includes(v)?v:""; }
+    if(!lgUsers){ lgUsers=[]; window.PH.users().then(L=>{ lgUsers=L.map(x=>x.u); lgEqOpts(); pwUsers(L); }).catch(()=>{ lgUsers=null; }); }
+    const v=se.value, all=[...new Set(lgUsers.concat(turnoList().map(n=>n.toLowerCase())))].sort();
+    se.innerHTML='<option value="">Todos los usuarios</option>'+all.map(n=>'<option>'+esc(n)+'</option>').join(""); se.value=all.includes(v)?v:""; }
   // cambiar contraseña (Opciones)
   function pwUsers(L){ const se=$("#pwUser"); if(!se) return; const me=(phUser()||{}).u; se.innerHTML=L.map(x=>'<option value="'+esc(x.u)+'"'+(x.u===me?' selected':'')+'>'+esc(x.u)+(x.rol==="admin"?' (administrador)':' (trabajador)')+(x.u===me?' · tú':'')+'</option>').join(""); }
   if($("#pwSave")) $("#pwSave").addEventListener("click",()=>{ if(!PAGE||!canAdmin()) return; const u=$("#pwUser").value, a=$("#pwNew").value, b=$("#pwNew2").value;
@@ -3359,7 +3410,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   function renderLog(){ const box=$("#lgList"); if(!box) return; const eq=$("#lgEq").value, q=$("#lgQ").value.trim();
     $("#lgInfo").textContent=lgBusy&&!lgRows.length?"Cargando…":(lgRows.length?lgRows.length+(lgCur>=0?"+":"")+(lgRows.length===1?" cambio":" cambios"):"No hay cambios")+" "+lgPerTxt()+(eq?" · "+eq:"")+(q?" · «"+q+"»":"");
     let h=""; lgRows.forEach(r=>{ const d=new Date(r[0]);
-      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><span class="lgu'+(r[1]==="playahuaraz"?'':' adm')+'">'+esc(r[1])+'</span> '+esc(r[2])+'</span></div>'; });
+      h+='<div><span class="num muted">'+hhmm(d)+'</span><span><span class="lgu'+(r[1]==="playahuaraz"||!(lgUsers||[]).includes(r[1])?'':' adm')+'">'+esc(r[1])+'</span> '+esc(r[2])+'</span></div>'; });
     box.innerHTML=lgRows.length?'<div class="eqlog">'+h+'</div>':'';
     $("#lgMore").hidden=lgCur<0; $("#lgMore").disabled=lgBusy; $("#lgMore").textContent=lgBusy?"Cargando…":"Cargar más"; }
   async function loadLog(more){ if(!window.PH||!window.PH.logq){ $("#lgInfo").textContent="El registro se ve en la página de la playa (playahuaraz.github.io)."; return; } lgEqOpts();
@@ -3413,6 +3464,23 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   if(PAGE&&$("#icoCard")){ $("#icoCard").hidden=false; applyIcono(lsGet("ph_icono")||"guinda");
     $("#icoFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-ico]"); if(!b||!isAdmin()||!needDb()) return; const v=b.dataset.ico; applyIcono(v);
       queue(()=>db.doc("config/general").update({icono:v}).then(()=>toast("Ícono de la app: "+(v==="blanco"?"blanco":"guinda")))); }); }
+  // trabajadores de turno (Opciones, solo administrador)
+  function renderTurnoOpts(){ const box=$("#trList"); if(!box) return; const L=turnoList();
+    box.innerHTML=L.length?L.map((n,i)=>'<span class="trchip">'+esc(n)+'<button type="button" data-trdel="'+i+'" aria-label="Quitar a '+esc(n)+'">✕</button></span>').join(""):'<span class="muted">No hay trabajadores. Agrega al menos uno.</span>'; }
+  function saveTurno(L,msg){ if(!isAdmin()||!needDb()) return; cfg.turno=L; renderTurnoOpts(); renderRoleBar(); lgEqOpts();
+    queue(()=>db.doc("config/general").update({turno:L}).then(()=>toast(msg))); }
+  if($("#trCard")){
+    $("#trList").addEventListener("click",e=>{ const b=e.target.closest("[data-trdel]"); if(!b) return; const L=turnoList(), n=L[num(b.dataset.trdel)];
+      if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="¿Quitar?"; setTimeout(()=>{ if(b.isConnected){ b.dataset.armed=""; b.textContent="✕"; } },3000); return; }
+      saveTurno(L.filter((x,i)=>i!==num(b.dataset.trdel)),"Se quitó a "+n); });
+    const add=()=>{ const i=$("#trNew"); const raw=(i.value||"").trim().replace(/\s+/g," ");
+      if(!/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü ]{2,20}$/.test(raw)){ toast("Escribe solo el nombre (letras, de 2 a 20)."); i.focus(); return; }
+      const n=raw.split(" ").map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" "), L=turnoList();
+      if(L.some(x=>x.toLowerCase()===n.toLowerCase())){ toast(n+" ya está en la lista."); return; }
+      if(["playahuaraz","rcorrea","dcorrea"].includes(n.toLowerCase())){ toast("Ese nombre ya es un usuario."); return; }
+      i.value=""; saveTurno(L.concat([n]),"Se agregó a "+n); };
+    $("#trAdd").addEventListener("click",add); $("#trNew").addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
+    renderTurnoOpts(); }
   $("#thFmt").addEventListener("click",e=>{ const b=e.target.closest("[data-th]"); if(!b) return; lsSet("ph_theme",b.dataset.th==="auto"?null:b.dataset.th); applyTheme(); toast(b.dataset.th==="auto"?"Apariencia automática":b.dataset.th==="dark"?"Modo oscuro":"Modo claro"); });
   applyTheme();
 
@@ -3429,7 +3497,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     try{ db=await window.claude.use("db"); }catch(e){ db=null; }
     if(!db){ $("#bConnTxt").textContent="Para generar tickets y guardar ingresos, abre esta página con tu cuenta de Claude."; $("#bConn").hidden=false; return; }
     db.doc("config/general").onSnapshot(s=>{ if(s.exists){ applyIcono(s.data().icono); } },()=>{});
-    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); },subErr);
+    db.doc("config/general").onSnapshot(s=>{ if(s.exists){ const v=s.data(); cfg=Object.assign(clone(DEF),v); cfg.tar=Object.assign(clone(DEF.tar),v.tar||{}); } renderTarifas(); renderEntrada(); renderTipos(); renderMes(); renderInside(); shUpd(); renderCkFmt(); renderTurnoOpts(); renderRoleBar(); lgEqOpts(); setTimeout(()=>turnoAsk(false),300); },subErr);
     db.doc("config/contador").onSnapshot(s=>{ nextNum=s.exists?num(s.data().next):null; renderEntrada(); renderTarifas(); },subErr);
     db.collection("tickets").onSnapshot(s=>{ active=s.docs.map(d=>d.data()).filter(t=>t&&t.estado==="dentro"); renderInside(); renderEntrada(); if(selTk) renderPre(); renderDia(); renderMes(); },subErr);
     db.collection("clientes").onSnapshot(s=>{ const m={}; s.docs.forEach(d=>{ const v=d.data(); if(v) m[d.id]=v; }); clientes=m; },()=>{});

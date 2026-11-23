@@ -679,7 +679,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 
         <div class="formfoot"><button class="btn primary" id="btnTicket" type="button" style="flex:1">Generar ticket</button></div>
         <label class="autoprint"><input type="checkbox" id="autoPrint"> Imprimir automáticamente tickets y boletas</label>
-        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><label>Papel <select id="pPaper"><option value="80">80 mm</option><option value="58">58 mm</option></select></label><span class="muted">Se usa en tickets y boletas.</span></div>
+        <div class="pmode" id="pModeWrap"><label>Impresión <select id="pMode"><option value="fast">Rápida (texto)</option><option value="img">Imagen (como se ve en pantalla)</option></select></label><label>Papel <select id="pPaper"><option value="80">80 mm</option><option value="58">58 mm</option></select></label><label class="chk"><input type="checkbox" id="pLogo"> Logo</label><span class="muted">Se usa en tickets y boletas.</span></div>
         <p class="note" id="pIosNote" hidden>En iPhone, al tocar 🖨 Imprimir se abre Compartir: elige la app de la impresora (por ejemplo, Express Thermal Print).</p>
         <div class="btprn"><button class="btn small" type="button" id="btConnect">🖨 Conectar impresora Bluetooth</button><span class="muted" id="btState">Sin impresora conectada · se usará RawBT (Android) o Compartir (iPhone)</span></div>
               </div>
@@ -1800,7 +1800,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   let COLS=pPaper()===80?48:32; // fuente A: 48 caracteres en 80 mm, 32 en 58 mm
   function pModeFast(){ return lsGet("ph_pmode")!=="img"; }
   function pCP(){ return "none"; } // siempre sin tildes: evita símbolos raros en cualquier impresora
-  function pLogoOn(){ return true; } // el logo sale siempre
+  function pLogoOn(){ return lsGet("ph_logo")!=="no"; } // logo en la impresión rápida (se puede apagar por equipo)
   const CP850={"á":0xA0,"é":0x82,"í":0xA1,"ó":0xA2,"ú":0xA3,"Á":0xB5,"É":0x90,"Í":0xD6,"Ó":0xE0,"Ú":0xE9,"ñ":0xA4,"Ñ":0xA5,"ü":0x81,"Ü":0x9A,"°":0xF8,"¡":0xAD,"¿":0xA8,"·":0xFA,"×":0x9E};
   function plain(s){ return String(s).replace(/[“”«»]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,"-").replace(/…/g,"..."); }
   function noTildes(s){ return plain(s).replace(/N°\s?/g,"Nro. ").replace(/°/g,"o").replace(/·/g,"-").replace(/×/g,"x").replace(/[¡¿]/g,"").normalize("NFD").replace(/[̀-ͯ]/g,""); }
@@ -1872,7 +1872,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     P(0x18, 0x1B,0x40, 0x1C,0x2E); // cancela restos, reinicia y apaga el modo chino
     if(cp!=="none") P(0x1B,0x74, cp==="858"?19:2);
     for(const e of D){
-      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ P(0x1B,0x61,1, 0x1D,0x76,0x30,0, L.bw&255,L.bw>>8, L.h&255,L.h>>8); for(const b of L.bytes) o.push(b); P(0x0A); } continue; }
+      // el logo va en franjas de 24 líneas: la impresora imprime cada franja apenas llega y libera su memoria,
+      // en vez de guardar todo el logo y desbordarse con el texto que viene detrás
+      if(e.t==="logo"){ const L=await getLogoBits(); if(L){ P(0x1B,0x61,1); for(let y0=0;y0<L.h;y0+=24){ const hh=Math.min(24,L.h-y0); P(0x1D,0x76,0x30,0, L.bw&255,L.bw>>8, hh&255,hh>>8); const s=L.bytes.subarray(y0*L.bw,(y0+hh)*L.bw); for(const b of s) o.push(b); } P(0x0A); } continue; }
       if(e.t==="rule"){ P(0x1B,0x61,0, encTxt(e.c.repeat(COLS)), 0x0A); continue; }
       if(e.t==="feed"){ P(0x1B,0x64,e.n||1); continue; }
       if(e.t==="lr2"){ const k=noTildes(e.k), v=noTildes(e.v), pad=Math.max(1,COLS-k.length-v.length*2);
@@ -1906,7 +1908,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
   }
   // ---------- boletas en modo rápido ----------
   function docHead(D,titulo,nro){ const T=(s,o)=>D.push(Object.assign({t:"txt",s:String(s)},o||{}));
-    D.push({t:"logo"}); T("PLAYA DE ESTACIONAMIENTO",{a:"c",b:1}); T("\u201cHUARAZ\u201d",{a:"c",b:1,z:2});
+    if(pLogoOn()) D.push({t:"logo"}); T("PLAYA DE ESTACIONAMIENTO",{a:"c",b:1}); T("\u201cHUARAZ\u201d",{a:"c",b:1,z:2});
     T("Jr. Huaraz 747, Breña - Lima",{a:"c"}); T("Telf. (01) 909 2978",{a:"c"}); T("WhatsApp 965 016 455",{a:"c"});
     D.push({t:"rule",c:"="}); T(titulo,{a:"c",b:1,z:1}); T("N° "+pad6(nro),{a:"c",b:1,z:2}); D.push({t:"rule",c:"="}); return T; }
   function docFoot(D,T,horario){ D.push({t:"feed",n:1}); T("¡Gracias por su preferencia!",{a:"c",b:1}); D.push({t:"rule",c:"-"}); T("Documento interno de control.");
@@ -1962,6 +1964,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     m.value=pModeFast()?"fast":"img";
     const sync=()=>{};
     m.addEventListener("change",()=>{ lsSet("ph_pmode",m.value==="img"?"img":null); sync(); refreshFastPrev(); });
+    const lg=$("#pLogo"); if(lg){ lg.checked=pLogoOn(); lg.addEventListener("change",()=>{ lsSet("ph_logo",lg.checked?null:"no"); refreshFastPrev(); toast(lg.checked?"Logo activado":"Logo desactivado"); }); }
     const pp=$("#pPaper"); if(pp){ pp.value=String(pPaper()); pp.addEventListener("change",()=>{ lsSet("ph_papel",pp.value==="58"?"58":null); COLS=pPaper()===80?48:32; refreshFastPrev(); toast("Papel de "+pPaper()+" mm"); }); }
     sync(); })();
   async function refreshFastPrev(){ const b=$("#tkFastWrap"); if(!b||b.hidden||!lastTicket) return; const cv=await previewDoc(tkDoc(lastTicket)); $("#tkFastImg").src=cv.toDataURL("image/png"); }

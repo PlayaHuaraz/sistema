@@ -599,6 +599,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
 .espmonto input{width:175px;min-height:36px;border:0;background:transparent;font-weight:700;font-size:17px;padding:4px 6px}
 .espmonto[hidden]{display:none !important}
 .modo.esp{background:var(--acc-soft);color:var(--acc-txt)}
+.tesprow{margin-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.tesprow .chip small{font-weight:500;opacity:.8;margin-left:4px}
 #phLogin{position:fixed;inset:0;z-index:9999;background:rgba(20,10,14,.82);display:flex;align-items:center;justify-content:center;padding:20px}#phLogin form{background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}#phLogin h2{margin:0}.phbrand{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:4px;color:#111}.phbrand img{width:96px;height:auto;margin-bottom:6px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}.phbrand .phb1{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;color:#111}.phbrand .phb2{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;color:#111}.phbox h2{color:#111}#phLogin p{margin:0;font-size:14px;color:#555}#phLogin input{font-size:20px;text-align:center}
 </style>
 </head>
@@ -652,7 +654,7 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
         <div class="abonote ok hide" id="inCli"></div>
 
         <div class="grp"><label>Vehículo</label><div class="chips tight" id="inTipo" role="group" aria-label="Vehículo"></div></div>
-        <div class="grp"><label>Tarifa</label><div class="modorow"><div class="chips tight" id="inModo" role="group" aria-label="Tarifa"></div><div class="espmonto" id="inEspWrap" hidden><label for="inEspMonto" class="sr">Monto de la tarifa especial</label><span>S/</span><input id="inEspMonto" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Monto"></div></div></div>
+        <div class="grp"><label>Tarifa</label><div class="chips tight" id="inModo" role="group" aria-label="Tarifa"></div><div class="modorow tesprow"><button type="button" class="chip" id="inTespBtn" aria-pressed="false">Tarifa especial</button><div class="espmonto" id="inEspWrap" hidden><label for="inEspMonto" class="sr">Monto de la tarifa especial</label><span>S/</span><input id="inEspMonto" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Monto"></div></div></div>
 
         <div class="fields grp">
           <div><label for="inEsp">Espacio</label><select id="inEsp"></select><p class="note hide" id="inEspNote" style="margin:4px 0 0"></p></div>
@@ -1528,9 +1530,9 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
     $("#inTipo").innerHTML=VEH.map(([k,l])=>'<button type="button" class="chip" data-tipo="'+k+'" aria-pressed="'+(k===inTipo)+'">'+l+'</button>').join("");
     if(inModo==="esp") inModo="hora";
     if(!inTesp&&rate(inTipo,inModo)==null){ const ok=MODOS.find(([k])=>rate(inTipo,k)!=null); if(ok) inModo=ok[0]; }
-    $("#inModo").innerHTML=MODOS.map(([k,l])=>{ const r=rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null&&!inTesp?' disabled':'')+'>'+l+(r!=null&&!inTesp?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("")
-      +'<button type="button" class="chip" data-tesp="1" aria-pressed="'+inTesp+'">Especial</button>';
-    { const w=$("#inEspWrap"); if(w){ w.hidden=!inTesp; const i=$("#inEspMonto"); if(i) i.placeholder=inModo==="hora"?"Monto por hora":inModo==="noche"?"Monto por noche":"Monto por día"; } }
+    $("#inModo").innerHTML=MODOS.map(([k,l])=>{ const r=rate(inTipo,k); return '<button type="button" class="chip" data-modo="'+k+'" aria-pressed="'+(k===inModo)+'"'+(r==null&&!inTesp?' disabled':'')+'>'+l+(r!=null?'<small>'+money(r)+'</small>':'')+'</button>'; }).join("");
+    { const t=$("#inTespBtn"); if(t){ t.setAttribute("aria-pressed",inTesp); const base=rate(inTipo,inModo); t.innerHTML="Tarifa especial"+(base!=null?' <small>(base '+money(base)+' '+(inModo==="hora"?"por hora":inModo==="noche"?"la noche":"el día")+')</small>':""); }
+      const w=$("#inEspWrap"); if(w){ w.hidden=!inTesp; const i=$("#inEspMonto"); if(i) i.placeholder=inModo==="hora"?"Monto por hora":inModo==="noche"?"Monto por noche":"Monto por día"; } }
     document.querySelectorAll("#inLlave [data-llave]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.llave===inLlave));
     $("#nextNum").textContent = nextNum? "próximo ticket N° "+nextNum : "";
     if(!inEspTouched && document.activeElement!==$("#inEsp")){ fillEspSelect($("#inEsp"),suggestEsp(inTipo)); } inEspNote();
@@ -1573,8 +1575,12 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       +(espKey(A.esp)&&aboEnHorario(A)?'<div style="margin-top:8px"><button class="btn small'+(aboFuera(A)?' primary':'')+'" type="button" data-abtog="'+A.id+'" data-fuera="'+(aboFuera(A)?0:1)+'">'+(aboFuera(A)?'Registrar ingreso · ocupa el espacio '+esc(A.esp):'Marcar salida · libera el espacio '+esc(A.esp))+'</button></div>':''));
   }
   $("#inTipo").addEventListener("click",e=>{ const b=e.target.closest("[data-tipo]"); if(!b) return; inTipo=b.dataset.tipo; renderEntrada(); });
-  $("#inModo").addEventListener("click",e=>{ const t=e.target.closest("[data-tesp]"); if(t){ inTesp=!inTesp; renderEntrada(); if(inTesp){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } return; }
-    const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); if(inTesp){ const i=$("#inEspMonto"); if(i){ i.focus(); i.select(); } } });
+  // al activar la tarifa especial (o cambiar de modalidad) el monto arranca con el precio base de esa modalidad
+  function tespPrefill(){ const i=$("#inEspMonto"); if(!i) return; const base=rate(inTipo,inModo); if(base!=null) i.value=base; i.focus(); i.select(); }
+  $("#inTespBtn").addEventListener("click",()=>{ inTesp=!inTesp; renderEntrada(); if(inTesp) tespPrefill(); });
+  $("#inModo").addEventListener("click",e=>{
+    const b=e.target.closest("[data-modo]"); if(!b||b.disabled) return; inModo=b.dataset.modo; renderEntrada(); if(inTesp){ tespPrefill(); }
+  });
   function espMonto(){ const i=$("#inEspMonto"); const v=i?num(i.value):0; return v>0?v:null; }
   $("#inPlaca").addEventListener("input",checkDup);
   let abxPend=null;
@@ -1968,7 +1974,8 @@ header .head-in{flex-wrap:wrap;row-gap:10px}
       text(s,Math.max(0,x0),y+2*sy,sx,sy,e.b); y+=CH*sy; };
     for(const e of D){
       if(e.t==="logo"){ const L=await getLogoBits(); if(L){ const inv=new Uint8Array(L.bytes.length); for(let i=0;i<inv.length;i++) inv[i]=~L.bytes[i]&255;
-        cmds.push({bmp:inv,x:Math.round((W-L.w)/2),y,bw:L.bw,h:L.h}); y+=L.h+2; } continue; }
+        // en franjas de 8 líneas: si se pierde algún dato por Bluetooth, solo se daña una franja y no el resto del ticket
+        const x0=Math.round((W-L.w)/2); for(let r=0;r<L.h;r+=8){ const hh=Math.min(8,L.h-r); cmds.push({bmp:inv.subarray(r*L.bw,(r+hh)*L.bw),x:x0,y:y+r,bw:L.bw,h:hh}); } y+=L.h+2; } continue; }
       if(e.t==="rule"){ line(e.c.repeat(COLS),{}); continue; }
       if(e.t==="feed"){ y+=CH*(e.n||1); continue; }
       if(e.t==="bar"){ const mods=code128Mods(e.s).reduce((a,b)=>a+b,0), n=Math.max(1,Math.min(4,Math.floor(W*0.85/mods)));
